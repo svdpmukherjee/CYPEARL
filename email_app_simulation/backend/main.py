@@ -2,12 +2,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router
 
-app = FastAPI(title="BizMail API")
+app = FastAPI(title="Email App Simulation API")
+
+import os
 
 origins = [
     "http://localhost:5173",  # Vite default port
     "http://localhost:3000",
 ]
+
+# Add production origins from environment variable
+if os.getenv("ALLOWED_ORIGINS"):
+    origins.extend(os.getenv("ALLOWED_ORIGINS").split(","))
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,4 +27,4 @@ app.include_router(router)
 
 @app.get("/")
 async def root():
-    return {"message": "BizMail API is running"}
+    return {"message": "Email App Simulation API is running"}

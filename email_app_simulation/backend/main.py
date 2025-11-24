@@ -7,8 +7,10 @@ app = FastAPI(title="Email App Simulation API")
 import os
 
 origins = [
-    "http://localhost:5173",  # Vite default port
+    "http://localhost:5173",
     "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://0.0.0.0:8000",
 ]
 
 # Add production origins from environment variable
@@ -26,5 +28,6 @@ app.add_middleware(
 app.include_router(router)
 
 @app.get("/")
+@app.head("/")
 async def root():
     return {"message": "Email App Simulation API is running"}

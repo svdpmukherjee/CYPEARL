@@ -100,7 +100,7 @@ const EmailListItem = ({ sender, subject, preview, time, initials, selected, rea
                                 e.stopPropagation();
                                 onDone();
                             }}
-                            className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded shadow-md hover:bg-blue-700 flex items-center"
+                            className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded shadow-md hover:bg-blue-700 animate-pulse flex items-center"
                         >
                             <CheckCircle size={16} strokeWidth={1.5} className="mr-1.5" />  Done
                         </button>

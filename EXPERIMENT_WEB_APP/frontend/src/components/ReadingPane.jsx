@@ -154,6 +154,11 @@ const ReadingPane = ({
     // Sender details expansion state
     const [senderDetailsExpanded, setSenderDetailsExpanded] = useState(false);
 
+    // Link click feedback state - NEW
+    const [linkClickedForEmail, setLinkClickedForEmail] = useState(false);
+    const [showClickFeedback, setShowClickFeedback] = useState(false);
+    const [clickFeedbackMessage, setClickFeedbackMessage] = useState('');
+
     // Hover tracking refs - with debouncing to prevent double recording
     const hoverStartTime = useRef(null);
     const currentHoverType = useRef(null);
@@ -182,6 +187,8 @@ const ReadingPane = ({
                 sessionStartTime.current = Date.now();
                 linkWasClicked.current = false;
                 setSenderDetailsExpanded(false); // Reset sender panel
+                setLinkClickedForEmail(false); // Reset link clicked state for new email
+                setShowClickFeedback(false); // Hide any feedback
                 // NOTE: Session opening is handled by EmailApp.jsx to prevent duplicates
             }
         }
@@ -279,6 +286,7 @@ const ReadingPane = ({
 
     // =========================================================================
     // FIX #3: Clear hover state before recording link_click
+    // ADDED: Visual feedback for link clicks + duplicate click protection
     // =========================================================================
 
     const handleLinkClick = (e, link) => {
@@ -290,17 +298,36 @@ const ReadingPane = ({
         currentHoverTarget.current = null;
         setHoveredLink(null);
 
-        // Mark that a link was clicked
-        linkWasClicked.current = true;
+        // Check if link was already clicked for this email
+        if (linkClickedForEmail) {
+            // Show "already clicked" feedback
+            setClickFeedbackMessage('You have already clicked a link in this email.');
+            setShowClickFeedback(true);
 
-        // Record to backend as micro-action (silent - no visual feedback)
-        recordMicroAction('link_click', { link });
+            // Auto-hide after 2 seconds
+            setTimeout(() => setShowClickFeedback(false), 2000);
+
+            // Still record the micro-action for tracking purposes
+            recordMicroAction('link_click', { link, duplicate: true });
+            return;
+        }
+
+        // Mark that a link was clicked (first time for this email)
+        linkWasClicked.current = true;
+        setLinkClickedForEmail(true);
+
+        // Show confirmation feedback
+        setClickFeedbackMessage('Link clicked! Your action has been recorded.');
+        setShowClickFeedback(true);
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => setShowClickFeedback(false), 3000);
+
+        // Record to backend as micro-action
+        recordMicroAction('link_click', { link, duplicate: false });
 
         // Notify parent (for session tracking, bonus calculation happens silently)
         onAction('link_click', { link });
-
-        // No fake page overlay - link click is tracked but nothing visible happens
-        // This maintains ecological validity - user must judge on their own
     };
 
     // =========================================================================
@@ -584,6 +611,39 @@ const ReadingPane = ({
                     style={{ left: tooltipPos.x, top: tooltipPos.y }}
                 >
                     {hoveredLink}
+                </div>
+            )}
+
+            {/* Link Click Feedback Toast - NEW */}
+            {showClickFeedback && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+                    <div className={`px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 ${linkClickedForEmail && clickFeedbackMessage.includes('already')
+                            ? 'bg-amber-100 border border-amber-300 text-amber-800'
+                            : 'bg-blue-100 border border-blue-300 text-blue-800'
+                        }`}>
+                        {linkClickedForEmail && clickFeedbackMessage.includes('already') ? (
+                            <AlertOctagon size={20} className="text-amber-600" />
+                        ) : (
+                            <CheckCircle size={20} className="text-blue-600" />
+                        )}
+                        <span className="font-medium">{clickFeedbackMessage}</span>
+                        <button
+                            onClick={() => setShowClickFeedback(false)}
+                            className="ml-2 text-gray-500 hover:text-gray-700"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Link Clicked Indicator - Shows in email header area */}
+            {linkClickedForEmail && isLatest && !actionsTaken && (
+                <div className="absolute top-[180px] right-8 z-40">
+                    <div className="flex items-center space-x-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-200">
+                        <ExternalLink size={14} />
+                        <span>Link clicked</span>
+                    </div>
                 </div>
             )}
 

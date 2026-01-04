@@ -111,7 +111,7 @@ LEGITIMATE_DOMAINS = [
     'portal.secureshield.com',
     'cybersecuritytoday.com',
     # Unknown external legitimate domains (for emails 6, 8)
-    'superfinance-tax.eu',       # SuperFinance Tax Services (Email #6)
+    'eurofinance-tax.eu',       # EuroFinance Tax Services (Email #6)
     'luxbusiness-network.eu',   # LuxBusiness Network (Email #8)
 ]
 
@@ -257,6 +257,9 @@ async def calculate_bonus_silent(participant_id: str, body: BonusCalculateReques
     """
     Calculate and store bonus silently - NO feedback to user.
     User will only see their bonus at the end of the study.
+    
+    IMPORTANT: Bonus is only calculated ONCE per email_id per participant.
+    Subsequent clicks on the same email will be recorded but won't affect bonus.
     """
     if not ObjectId.is_valid(participant_id):
         raise HTTPException(status_code=404, detail="Invalid participant ID")
@@ -265,12 +268,31 @@ async def calculate_bonus_silent(participant_id: str, body: BonusCalculateReques
     if not participant:
         raise HTTPException(status_code=404, detail="Participant not found")
     
+    # CHECK FOR DUPLICATE: Has bonus already been calculated for this email?
+    bonus_history = participant.get("bonus_history", [])
+    already_clicked_emails = {entry.get("email_id") for entry in bonus_history if entry.get("email_id")}
+    
+    if body.email_id in already_clicked_emails:
+        # Bonus already calculated for this email - don't add again
+        # Log the duplicate click attempt but don't modify bonus
+        await db.logs.insert_one({
+            "participant_id": participant_id,
+            "action_type": "duplicate_link_click",
+            "timestamp": datetime.now(),
+            "details": {
+                "email_id": body.email_id,
+                "link": body.link,
+                "message": "Bonus already calculated for this email"
+            }
+        })
+        return {"status": "already_clicked", "message": "Link already clicked for this email"}
+    
     # Calculate bonus
     bonus_amount, link_type = calculate_link_bonus(body.link)
     
     if bonus_amount == 0:
         # No change for unknown links
-        return {"status": "recorded"}
+        return {"status": "recorded", "link_type": "unknown"}
     
     now = datetime.now()
     current_total = participant.get("bonus_total", 0)
@@ -302,8 +324,8 @@ async def calculate_bonus_silent(participant_id: str, body: BonusCalculateReques
         "details": bonus_entry
     })
     
-    # Return minimal response - NO bonus info to frontend
-    return {"status": "recorded"}
+    # Return status with first_click indicator (but NO bonus amount to frontend)
+    return {"status": "recorded", "first_click": True}
 
 
 @router.get("/bonus/{participant_id}")

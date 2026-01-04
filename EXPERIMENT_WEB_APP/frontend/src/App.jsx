@@ -281,10 +281,13 @@ function App() {
                     updated.linkHovered = true;
                     updated.linkHoverCount = (prev.linkHoverCount || 0) + 1;
                 } else if (actionType === 'link_click') {
-                    updated.linkClicked = true;
-
-                    // Silent bonus calculation - send to backend but don't display
-                    calculateBonusSilently(data.link);
+                    // Only calculate bonus on FIRST click for this email
+                    if (!prev.linkClicked) {
+                        updated.linkClicked = true;
+                        // Silent bonus calculation - send to backend but don't display
+                        calculateBonusSilently(data.link);
+                    }
+                    // Note: subsequent clicks are still tracked but won't affect bonus
                 } else if (actionType === 'sender_click') {
                     updated.senderInspected = true;
                     updated.senderClickCount = (prev.senderClickCount || 0) + 1;

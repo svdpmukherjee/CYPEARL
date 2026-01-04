@@ -111,7 +111,7 @@ LEGITIMATE_DOMAINS = [
     'portal.secureshield.com',
     'cybersecuritytoday.com',
     # Unknown external legitimate domains (for emails 6, 8)
-    'eurofinance-tax.eu',       # EuroFinance Tax Services (Email #6)
+    'superfinance-tax.eu',       # SuperFinance Tax Services (Email #6)
     'luxbusiness-network.eu',   # LuxBusiness Network (Email #8)
 ]
 

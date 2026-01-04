@@ -23,7 +23,7 @@ FICTIONAL COMPANY ECOSYSTEM:
 - Productivity Suite: OfficeSuite Pro
 - Domain Registrar: DomainHost
 - Research Platform: ResearchConnect
-- Tax Services: EuroFinance Tax Services (external)
+- Tax Services: SuperFinance Tax Services (external)
 - Business Network: LuxBusiness Network (external)
 - Security Newsletter: Cybersecurity Today (external)
 
@@ -110,7 +110,7 @@ def get_seed_emails():
                 </ul>
                 <p style="margin: 12px 0 8px 0;">You may also receive emails from external services such as:</p>
                 <ul style="margin: 0 0 0 20px; padding: 0; list-style-type: disc;">
-                    <li style="margin: 2px 0;"><strong>EuroFinance Tax Services</strong>: Corporate tax preparation</li>
+                    <li style="margin: 2px 0;"><strong>SuperFinance Tax Services</strong>: Corporate tax preparation</li>
                     <li style="margin: 2px 0;"><strong>LuxBusiness Network</strong>: Business events and networking</li>
                     <li style="margin: 2px 0;"><strong>Cybersecurity Today</strong>: Industry newsletter</li>
                 </ul>
@@ -385,13 +385,13 @@ def get_seed_emails():
         # FIXED: Changed from known_external (NexusCloud) to unknown_external
         # Using fictional tax/finance service name
         {
-            "sender_name": "EuroFinance Tax Services",
-            "sender_email": "notifications@eurofinance-tax.eu",
+            "sender_name": "SuperFinance Tax Services",
+            "sender_email": "notifications@superfinance-tax.eu",
             "subject": "Action Required: Annual Tax Declaration Due January 31st",
             "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <p>Dear Client,</p>
                 
-                <p>This is a reminder from EuroFinance Tax Services that your <strong>annual tax declaration for fiscal year 2024</strong> must be submitted by <strong>January 31, 2025</strong>.</p>
+                <p>This is a reminder from SuperFinance Tax Services that your <strong>annual tax declaration for fiscal year 2024</strong> must be submitted by <strong>January 31, 2025</strong>.</p>
                 
                 <p>As your registered tax preparation service, we want to ensure you meet all deadlines. Failure to submit on time may result in:</p>
                 
@@ -403,13 +403,13 @@ def get_seed_emails():
                 
                 <p>Access your tax documents through our client portal:</p>
                 
-                <p><a href="https://portal.eurofinance-tax.eu/declarations" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Access Tax Portal</a></p>
+                <p><a href="https://portal.superfinance-tax.eu/declarations" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Access Tax Portal</a></p>
                 
                 <p>If you have already submitted your declaration, please disregard this notice.</p>
                 
-                <p>For assistance, contact our support team at support@eurofinance-tax.eu or call +352 247-5000.</p>
+                <p>For assistance, contact our support team at support@superfinance-tax.eu or call +352 247-5000.</p>
                 
-                <p>EuroFinance Tax Services<br>Your Trusted Tax Partner</p>
+                <p>SuperFinance Tax Services<br>Your Trusted Tax Partner</p>
             </div>""",
             "is_phishing": False,
             "order_id": 6,

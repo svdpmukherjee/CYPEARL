@@ -19,6 +19,10 @@ async def reset():
     result = await db.participants.delete_many({})
     print(f"Deleted {result.deleted_count} participants.")
     
+    # Clear responses
+    result = await db.responses.delete_many({})
+    print(f"Deleted {result.deleted_count} responses.")
+    
     # Clear logs (optional, but good for fresh start)
     result = await db.logs.delete_many({})
     print(f"Deleted {result.deleted_count} logs.")

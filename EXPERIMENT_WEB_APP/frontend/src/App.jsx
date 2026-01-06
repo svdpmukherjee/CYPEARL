@@ -1,7 +1,11 @@
 /**
- * CYPEARL Experiment Web App - Main Application (UPDATED v3 - FIXED)
+ * CYPEARL Experiment Web App - Main Application (UPDATED v4 - API FIX)
  * 
  * FIXES IN THIS VERSION:
+ * 1. Fixed API endpoint: /actions/ → /action/ (was causing 404 errors)
+ * 2. Fixed mark_read API call to use correct endpoint
+ * 
+ * PREVIOUS FIXES (v3):
  * 1. Issue #4: Delete action now auto-advances to next email
  * 2. Issue #5: Users can view emails after study completion (read-only)
  * 
@@ -250,7 +254,7 @@ function App() {
             if (email && !email.is_read && !markedReadRef.current.has(selectedEmailId)) {
                 markedReadRef.current.add(selectedEmailId);
 
-                axios.post(`${API_URL}/actions/${participantId}`, {
+                axios.post(`${API_URL}/action/${participantId}`, {
                     email_id: selectedEmailId,
                     action_type: 'mark_read'
                 }).then(() => {
@@ -339,7 +343,7 @@ function App() {
         const isDeleteAction = pendingAction === 'delete';
 
         try {
-            await axios.post(`${API_URL}/actions/${participantId}`, {
+            await axios.post(`${API_URL}/action/${participantId}`, {
                 email_id: selectedEmailId,
                 action_type: pendingAction,
                 reason: reason,

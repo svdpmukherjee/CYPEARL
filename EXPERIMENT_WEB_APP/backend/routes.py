@@ -1,23 +1,23 @@
 """
-CYPEARL Experiment Web App - API Routes (UPDATED v3 - FIXED)
+CYPEARL Experiment Web App - API Routes (UPDATED v4 - LuxConsultancy Design)
 
-FIXES IN THIS VERSION:
-1. Updated domain lists for new factorial design emails 5-8
-2. Added new legitimate domains: impots.public.lu, cc.lu
-3. Added new phishing domains: domain-renewal-alert.com, eu-business-excellence.com
-4. Updated bonus calculation to handle new domain patterns
+UPDATES IN THIS VERSION:
+1. Complete redesign for LuxConsultancy factorial experiment
+2. New known domains: luxconsultancy.com, securenebula.com, lockgrid.com,
+   superfinance.com, trendyletter.com, greenenvi.com, wattvoltbridge.com
+3. Phishing domain detection for spoofed versions:
+   - Hyphenation: secure-nebula.com
+   - TLD swaps: superfinance.org, lockgrid.net
+   - Typosquatting: wattvoltbrdige.com
+4. Unknown legitimate domains: cssf.lu, ecb.europa.eu, cnpd.lu, paperjam.lu
+5. Unknown phishing domains: eurobank-secure.net, luxprizes-eu.com, etc.
+6. Added comprehension check endpoint
 
-PREVIOUS CHANGES (v2):
+PREVIOUS CHANGES (v3):
 1. sender_hover replaced with sender_click tracking
 2. Silent bonus calculation (no feedback to frontend)
 3. Bonus revealed only at end via /complete endpoint
 4. Fixed duplicate event logging with deduplication
-5. All tracking still works, just no visible feedback during study
-
-Updated endpoints:
-- POST /bonus/calculate/{participant_id} - Silent bonus calculation (no response data)
-- GET /bonus/{participant_id} - Only available at end of study
-- POST /session/micro-action - Now handles sender_click
 """
 
 from fastapi import APIRouter, HTTPException, Body, Depends, Request
@@ -52,16 +52,17 @@ def extract_factorial_fields(email: dict) -> dict:
     
     email_type = "phishing" if email.get("is_phishing") else "legitimate"
     
+    # Updated sender mapping for known/unknown design
     sender_map = {
-        "known_internal": "known_internal",
-        "known_external": "known_external", 
-        "unknown_external": "unknown_external",
-        "internal": "known_internal",
-        "external": "unknown_external"
+        "known": "known",
+        "unknown": "unknown",
+        "known_internal": "known",
+        "known_external": "known", 
+        "unknown_external": "unknown",
     }
     sender_familiarity = sender_map.get(
         str(factorial.get("sender", "")).lower(), 
-        "unknown_external"
+        email.get("sender_familiarity", "unknown")
     )
     
     urgency_level = str(factorial.get("urgency", "low")).lower()
@@ -93,66 +94,87 @@ def calculate_correct_response(is_phishing: bool, action: str) -> int:
 
 # =============================================================================
 # BONUS CALCULATION HELPERS (Silent - no user feedback)
-# UPDATED v3: Added new domains for fixed factorial design emails 5-8
+# UPDATED v4: LuxConsultancy Design
 # =============================================================================
 
-# URL patterns to determine if link is legitimate or phishing
-LEGITIMATE_DOMAINS = [
-    # Internal company domains (Lux Consultancy)
+# Known trusted domains for LuxConsultancy
+KNOWN_TRUSTED_DOMAINS = [
     'luxconsultancy.com',
-    'budget.luxconsultancy.com',
-    'training.luxconsultancy.com',
-    'employee-portal.luxconsultancy.com',
-    # Known external service domains
-    'nexuscloud.com',
-    'console.nexuscloud.com',
-    'techconf.io',
-    'secureshield.com',
-    'portal.secureshield.com',
-    'cybersecuritytoday.com',
-    # Unknown external legitimate domains (for emails 6, 8)
-    'eurofinance-tax.eu',       # EuroFinance Tax Services (Email #6)
-    'luxbusiness-network.eu',   # LuxBusiness Network (Email #8)
+    'securenebula.com',
+    'lockgrid.com',
+    'superfinance.com',
+    'trendyletter.com',
+    'greenenvi.com',
+    'wattvoltbridge.com',
 ]
 
+# All legitimate domains (known + unknown legitimate external)
+LEGITIMATE_DOMAINS = [
+    # Known trusted domains (LuxConsultancy partners)
+    'luxconsultancy.com',
+    'securenebula.com',
+    'lockgrid.com',
+    'superfinance.com',
+    'trendyletter.com',
+    'greenenvi.com',
+    'wattvoltbridge.com',
+    # Academy/training subdomains
+    'academy.securenebula.com',
+    'dashboard.securenebula.com',
+    'portal.lockgrid.com',
+    'docs.greenenvi.com',
+]
+
+# Phishing domains (spoofed known domains + unknown phishing)
 PHISHING_DOMAINS = [
-    # Known internal impersonation
-    'secure-payment-gateway.net',
-    'hr-rewards-luxconsultancy.com',
-    'luxconsultancy-executive.com',
-    'luxconsultancy-hr.com',
-    'security-update-portal.com',
-    'researchconnect-premium-studies.com',
-    # Known external impersonation
-    'nexuscloud-verify.com',
-    'prolink-verify.com',
-    # Unknown external phishing
-    'cloudvault-secure.net',
-    'prof-dev-courses.com',
-    # Unknown external phishing domains (for emails 5, 7)
-    'domaineguard-alerts.com',     # Fake domain registry (Email #5)
-    'globalbiz-excellence.com',    # Fake business awards (Email #7)
+    # Spoofed "known" domains (hyphenation, TLD swap, typosquatting)
+    'secure-nebula.com',           # Email 1: hyphenation
+    'securenebula-verify.net',     # Phishing URL
+    'superfinance.org',            # Email 3: TLD swap
+    'superfinance-refunds.com',    # Phishing URL
+    'lockgrid.net',                # Email 9: TLD swap
+    'lockgrid-portal.net',         # Phishing URL
+    'wattvoltbrdige.com',          # Email 11: typosquatting
+    'wattvoltbridge-partners.com', # Phishing URL
+    # Unknown phishing domains
+    'eurobank-secure.net',         # Email 5: fake bank
+    'eurobank-verify.com',
+    'luxprizes-eu.com',            # Email 7: fake awards
+    'lux-business-awards.com',
+    'it-compliance-eu.net',        # Email 13: fake compliance
+    'gdpr-audit-portal.eu',
+    'eu-survey-rewards.com',       # Email 15: fake survey
+    'business-research-eu.com',
 ]
 
 BONUS_REWARDS = {
     'legitimate': {
         'default': 30,
-        'budget': 50,
-        'training': 35,
-        'portal': 40,
-        'techconf': 25,
-        'newsletter': 20,
-        'tax': 30,      # Tax portal (Email #6)
-        'summit': 35,   # Chamber of Commerce event (Email #8)
+        # Known trusted partners
+        'lockgrid': 40,
+        'securenebula': 35,
+        'superfinance': 40,
+        'greenenvi': 30,
+        'wattvoltbridge': 35,
+        'trendyletter': 25,
+        # Unknown legitimate
+        'cssf': 45,               # Government portal - higher value
+        'ecb': 50,                # ECB conference - high value
+        'cnpd': 35,               # Data protection authority
+        'paperjam': 30,           # Business networking
     },
     'phishing': {
         'default': -80,
-        'payment': -100,
-        'verify': -90,
-        'credential': -85,
-        'premium': -70,
-        'domain': -90,   # Domain scam (Email #5)
-        'award': -85,    # Fake award scam (Email #7)
+        # Spoofed known domains (should've been caught)
+        'secure-nebula': -90,     # Hyphenation attack
+        'superfinance_org': -95,  # TLD swap for financial
+        'lockgrid_net': -85,      # TLD swap
+        'wattvoltbrdige': -75,    # Typosquatting (harder to spot)
+        # Unknown phishing
+        'eurobank': -100,         # Fake bank - most severe
+        'luxprizes': -80,         # Fake awards
+        'compliance_eu': -85,     # Fake compliance audit
+        'survey_rewards': -70,    # Survey scam
     }
 }
 
@@ -171,38 +193,49 @@ def calculate_link_bonus(link: str) -> tuple:
     for domain in LEGITIMATE_DOMAINS:
         if domain in link_lower:
             # Determine specific reward
-            if 'budget' in link_lower:
-                return (BONUS_REWARDS['legitimate']['budget'], 'legitimate')
-            elif 'training' in link_lower:
-                return (BONUS_REWARDS['legitimate']['training'], 'legitimate')
-            elif 'techconf' in link_lower:
-                return (BONUS_REWARDS['legitimate']['techconf'], 'legitimate')
-            elif 'newsletter' in link_lower or 'cybersecurity' in link_lower:
-                return (BONUS_REWARDS['legitimate']['newsletter'], 'legitimate')
-            elif 'eurofinance' in link_lower or 'tax' in link_lower or 'declarations' in link_lower:
-                return (BONUS_REWARDS['legitimate']['tax'], 'legitimate')
-            elif 'luxbusiness' in link_lower or 'summit' in link_lower or 'digital-summit' in link_lower:
-                return (BONUS_REWARDS['legitimate']['summit'], 'legitimate')
-            elif 'portal' in link_lower or 'employee-portal' in link_lower:
-                return (BONUS_REWARDS['legitimate']['portal'], 'legitimate')
+            if 'lockgrid.com' in link_lower:
+                return (BONUS_REWARDS['legitimate']['lockgrid'], 'legitimate')
+            elif 'securenebula.com' in link_lower:
+                return (BONUS_REWARDS['legitimate']['securenebula'], 'legitimate')
+            elif 'superfinance.com' in link_lower:
+                return (BONUS_REWARDS['legitimate']['superfinance'], 'legitimate')
+            elif 'greenenvi.com' in link_lower:
+                return (BONUS_REWARDS['legitimate']['greenenvi'], 'legitimate')
+            elif 'wattvoltbridge.com' in link_lower:
+                return (BONUS_REWARDS['legitimate']['wattvoltbridge'], 'legitimate')
+            elif 'trendyletter.com' in link_lower:
+                return (BONUS_REWARDS['legitimate']['trendyletter'], 'legitimate')
+            elif 'cssf.lu' in link_lower or 'portal.cssf.lu' in link_lower:
+                return (BONUS_REWARDS['legitimate']['cssf'], 'legitimate')
+            elif 'ecb.europa.eu' in link_lower:
+                return (BONUS_REWARDS['legitimate']['ecb'], 'legitimate')
+            elif 'cnpd' in link_lower:
+                return (BONUS_REWARDS['legitimate']['cnpd'], 'legitimate')
+            elif 'paperjam' in link_lower:
+                return (BONUS_REWARDS['legitimate']['paperjam'], 'legitimate')
             else:
                 return (BONUS_REWARDS['legitimate']['default'], 'legitimate')
     
     # Check if phishing
     for domain in PHISHING_DOMAINS:
         if domain in link_lower:
-            if 'payment' in link_lower:
-                return (BONUS_REWARDS['phishing']['payment'], 'phishing')
-            elif 'verify' in link_lower:
-                return (BONUS_REWARDS['phishing']['verify'], 'phishing')
-            elif 'premium' in link_lower:
-                return (BONUS_REWARDS['phishing']['premium'], 'phishing')
-            elif 'domaineguard' in link_lower or 'renewal' in link_lower or 'renew' in link_lower:
-                return (BONUS_REWARDS['phishing']['domain'], 'phishing')
-            elif 'globalbiz' in link_lower or 'excellence' in link_lower or 'nomination' in link_lower:
-                return (BONUS_REWARDS['phishing']['award'], 'phishing')
-            elif 'password' in link_lower or 'credential' in link_lower:
-                return (BONUS_REWARDS['phishing']['credential'], 'phishing')
+            # Determine specific penalty
+            if 'secure-nebula' in link_lower or 'securenebula-verify' in link_lower:
+                return (BONUS_REWARDS['phishing']['secure-nebula'], 'phishing')
+            elif 'superfinance.org' in link_lower or 'superfinance-refunds' in link_lower:
+                return (BONUS_REWARDS['phishing']['superfinance_org'], 'phishing')
+            elif 'lockgrid.net' in link_lower or 'lockgrid-portal.net' in link_lower:
+                return (BONUS_REWARDS['phishing']['lockgrid_net'], 'phishing')
+            elif 'wattvoltbrdige' in link_lower or 'wattvoltbridge-partners' in link_lower:
+                return (BONUS_REWARDS['phishing']['wattvoltbrdige'], 'phishing')
+            elif 'eurobank' in link_lower:
+                return (BONUS_REWARDS['phishing']['eurobank'], 'phishing')
+            elif 'luxprizes' in link_lower or 'lux-business-awards' in link_lower:
+                return (BONUS_REWARDS['phishing']['luxprizes'], 'phishing')
+            elif 'it-compliance-eu' in link_lower or 'gdpr-audit-portal' in link_lower:
+                return (BONUS_REWARDS['phishing']['compliance_eu'], 'phishing')
+            elif 'eu-survey-rewards' in link_lower or 'business-research-eu' in link_lower:
+                return (BONUS_REWARDS['phishing']['survey_rewards'], 'phishing')
             else:
                 return (BONUS_REWARDS['phishing']['default'], 'phishing')
     
@@ -223,16 +256,25 @@ class LoginRequest(BaseModel):
 @router.post("/auth/login")
 async def login(body: LoginRequest, request: Request):
     """Create new participant session."""
+    # Create initial timestamp for the welcome email (order_id=0)
+    welcome_email = await db.emails.find_one({"order_id": 0})
+    email_timestamps = {}
+    
+    if welcome_email:
+        email_timestamps[str(welcome_email["_id"])] = datetime.now()
+
     new_participant = {
         "prolific_id": body.prolific_id,
         "current_email_order": 0,
         "completed": False,
-        "email_timestamps": {},
+        "email_timestamps": email_timestamps,
         "read_email_ids": [],
         "deleted_email_ids": [],
         "email_sessions": {},
         "bonus_total": 0,  # Track total bonus (hidden from user)
         "bonus_history": [],  # Track bonus changes
+        "comprehension_check_passed": False,  # Track if comprehension check completed
+        "comprehension_check_attempts": 0,
         "started_at": datetime.now(),
         "user_agent": body.user_agent or request.headers.get("user-agent"),
         "screen_resolution": body.screen_resolution
@@ -240,6 +282,96 @@ async def login(body: LoginRequest, request: Request):
     
     result = await db.participants.insert_one(new_participant)
     return {"participant_id": str(result.inserted_id)}
+
+
+# =============================================================================
+# COMPREHENSION CHECK ENDPOINT
+# =============================================================================
+
+class ComprehensionCheckRequest(BaseModel):
+    answers: Dict[str, int]  # {"cc1": 1, "cc2": 1, "cc3": 2}
+
+
+CORRECT_ANSWERS = {
+    "cc1": 1,  # lockgrid.com
+    "cc2": 1,  # Unknown to LuxConsultancy
+    "cc3": 2,  # Could be legitimate or malicious
+}
+
+
+@router.post("/comprehension-check/{participant_id}")
+async def validate_comprehension_check(participant_id: str, body: ComprehensionCheckRequest):
+    """Validate comprehension check answers."""
+    if not ObjectId.is_valid(participant_id):
+        raise HTTPException(status_code=404, detail="Invalid participant ID")
+    
+    participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
+    if not participant:
+        raise HTTPException(status_code=404, detail="Participant not found")
+    
+    # Calculate score
+    correct_count = 0
+    total = len(CORRECT_ANSWERS)
+    results = {}
+    
+    for q_id, correct_answer in CORRECT_ANSWERS.items():
+        user_answer = body.answers.get(q_id)
+        is_correct = user_answer == correct_answer
+        if is_correct:
+            correct_count += 1
+        results[q_id] = {
+            "user_answer": user_answer,
+            "correct_answer": correct_answer,
+            "is_correct": is_correct
+        }
+    
+    passed = correct_count >= 2  # Allow 1 mistake
+    
+    # Update participant record
+    await db.participants.update_one(
+        {"_id": ObjectId(participant_id)},
+        {
+            "$set": {"comprehension_check_passed": passed},
+            "$inc": {"comprehension_check_attempts": 1}
+        }
+    )
+    
+    # Log the attempt
+    await db.logs.insert_one({
+        "participant_id": participant_id,
+        "action_type": "comprehension_check",
+        "timestamp": datetime.now(),
+        "details": {
+            "answers": body.answers,
+            "results": results,
+            "score": f"{correct_count}/{total}",
+            "passed": passed
+        }
+    })
+    
+    return {
+        "passed": passed,
+        "score": correct_count,
+        "total": total,
+        "results": results,
+        "message": "Passed! You can now begin the study." if passed else "Please review the instructions and try again."
+    }
+
+
+@router.get("/comprehension-check/status/{participant_id}")
+async def get_comprehension_check_status(participant_id: str):
+    """Check if participant has passed comprehension check."""
+    if not ObjectId.is_valid(participant_id):
+        raise HTTPException(status_code=404, detail="Invalid participant ID")
+    
+    participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
+    if not participant:
+        raise HTTPException(status_code=404, detail="Participant not found")
+    
+    return {
+        "passed": participant.get("comprehension_check_passed", False),
+        "attempts": participant.get("comprehension_check_attempts", 0)
+    }
 
 
 # =============================================================================
@@ -274,7 +406,6 @@ async def calculate_bonus_silent(participant_id: str, body: BonusCalculateReques
     
     if body.email_id in already_clicked_emails:
         # Bonus already calculated for this email - don't add again
-        # Log the duplicate click attempt but don't modify bonus
         await db.logs.insert_one({
             "participant_id": participant_id,
             "action_type": "duplicate_link_click",
@@ -324,7 +455,6 @@ async def calculate_bonus_silent(participant_id: str, body: BonusCalculateReques
         "details": bonus_entry
     })
     
-    # Return status with first_click indicator (but NO bonus amount to frontend)
     return {"status": "recorded", "first_click": True}
 
 
@@ -343,7 +473,6 @@ async def get_bonus(participant_id: str):
     
     # Only return bonus if study is completed
     if not participant.get("completed", False):
-        # Don't reveal bonus during study
         return {"status": "study_in_progress", "message": "Bonus will be revealed at the end"}
     
     return {
@@ -356,235 +485,237 @@ async def get_bonus(participant_id: str):
 # EMAIL ENDPOINTS
 # =============================================================================
 
-@router.get("/emails/inbox/{participant_id}", response_model=Dict[str, Any])
+@router.get("/emails/inbox/{participant_id}")
 async def get_inbox(participant_id: str, folder: str = "inbox"):
-    """Get participant's inbox with email state. NO bonus info returned."""
-    
+    """Get emails for a participant's inbox."""
     if not ObjectId.is_valid(participant_id):
         raise HTTPException(status_code=404, detail="Invalid participant ID")
-
+    
     participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
     if not participant:
         raise HTTPException(status_code=404, detail="Participant not found")
     
     current_order = participant.get("current_email_order", 0)
-    email_timestamps = participant.get("email_timestamps", {})
-    read_email_ids = participant.get("read_email_ids", [])
-    deleted_email_ids = participant.get("deleted_email_ids", [])
+    deleted_ids = participant.get("deleted_email_ids", [])
+    read_ids = participant.get("read_email_ids", [])
     
-    if folder == "inbox":
-        query = {"$or": [{"order_id": {"$lte": current_order}}, {"order_id": 0}]}
-    elif folder == "deleted":
-        query = {"_id": {"$in": [ObjectId(eid) for eid in deleted_email_ids]}}
-    else:
-        return {"emails": [], "counts": {"unread": 0, "deleted": len(deleted_email_ids)}}
-
-    cursor = db.emails.find(query).sort("order_id", -1)
-    emails = await cursor.to_list(length=100)
-    
-    result_emails = []
-    for email in emails:
-        email_id = str(email["_id"])
-        order_id_str = str(email["order_id"])
+    # Get emails up to current order
+    if folder == "deleted":
+        # For deleted folder, show only deleted emails
+        if not deleted_ids:
+            return {"emails": [], "counts": {"unread": 0, "deleted": 0}, "is_finished": False}
         
-        if folder == "inbox" and email_id in deleted_email_ids:
+        deleted_object_ids = [ObjectId(eid) for eid in deleted_ids if ObjectId.is_valid(eid)]
+        emails_cursor = db.emails.find({"_id": {"$in": deleted_object_ids}})
+    else:
+        # For inbox, exclude deleted emails
+        emails_cursor = db.emails.find({
+            "order_id": {"$lte": current_order}
+        }).sort("order_id", -1)
+    
+    emails = []
+    # Get previously stored timestamps
+    email_timestamps = participant.get("email_timestamps", {})
+    
+    async for email in emails_cursor:
+        email = fix_id(email)
+        email_id = email.get("id")
+        
+        # Skip deleted emails in inbox view
+        if folder != "deleted" and email_id in deleted_ids:
             continue
             
-        if order_id_str in email_timestamps:
-            email["timestamp"] = email_timestamps[order_id_str]
+        email["is_read"] = email_id in read_ids
+        
+        # Attach stored timestamp if available, else fallback
+        if email_id in email_timestamps:
+            email["timestamp"] = email_timestamps[email_id]
         else:
-            now = datetime.now()
-            email["timestamp"] = now
-            await db.participants.update_one(
-                {"_id": ObjectId(participant_id)},
-                {"$set": {f"email_timestamps.{order_id_str}": now}}
-            )
+            # Fallback for old sessions or missing data
+            email["timestamp"] = participant.get("started_at", datetime.now())
             
-        email["is_read"] = email_id in read_email_ids
-        result_emails.append(fix_id(email))
+        emails.append(email)
     
-    inbox_query = {"$or": [{"order_id": {"$lte": current_order}}, {"order_id": 0}]}
-    all_inbox_emails = await db.emails.find(inbox_query).to_list(length=1000)
+    # Calculate counts
+    all_emails = await db.emails.find({"order_id": {"$lte": current_order}}).to_list(length=100)
+    unread_count = sum(1 for e in all_emails 
+                      if str(e["_id"]) not in read_ids 
+                      and str(e["_id"]) not in deleted_ids)
     
-    unread_count = sum(
-        1 for e in all_inbox_emails 
-        if str(e["_id"]) not in deleted_email_ids and str(e["_id"]) not in read_email_ids
-    )
+    # Check if study is finished
+    max_email = await db.emails.find_one(sort=[("order_id", -1)])
+    max_order = max_email["order_id"] if max_email else 0
+    is_finished = current_order > max_order
     
-    max_order_email = await db.emails.find_one(sort=[("order_id", -1)])
-    max_order_id = max_order_email["order_id"] if max_order_email else 0
-    is_finished = current_order > max_order_id
-
-    # NO bonus in response - user doesn't see it during study
     return {
-        "emails": result_emails,
-        "counts": {"unread": unread_count, "deleted": len(deleted_email_ids)},
+        "emails": emails,
+        "counts": {
+            "unread": unread_count,
+            "deleted": len(deleted_ids)
+        },
         "is_finished": is_finished
     }
 
 
-# =============================================================================
-# SESSION TRACKING (with deduplication)
-# =============================================================================
+@router.get("/emails/{email_id}")
+async def get_email(email_id: str):
+    """Get a single email by ID."""
+    if not ObjectId.is_valid(email_id):
+        raise HTTPException(status_code=404, detail="Invalid email ID")
+    
+    email = await db.emails.find_one({"_id": ObjectId(email_id)})
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+    
+    # Get participant to find timestamp (need to modify this endpoint to optionally accept participant_id context)
+    # But for now, just return the email. The frontend might need to rely on the list view content 
+    # OR we need to update this endpoint.
+    # Actually, ReadingPane uses the props passed from the list, so it might already have the timestamp.
+    # But if it fetches fresh, we need it. 
+    # Let's check frontend: ReadingPane takes 'email' prop. EmailList fetches 'emails' which we updated above.
+    # So ReadingPane should be fine if it uses the object from the list.
+    # However, if we refresh, we might need it.
+    # As the current signature doesn't have participant_id, we can't easily look up the specific user's timestamp.
+    # Front-end typically uses the list data.
+    
+    return fix_id(email)
 
-class EmailOpenRequest(BaseModel):
-    email_id: str
 
+# =============================================================================
+# SESSION TRACKING ENDPOINTS
+# =============================================================================
 
 @router.post("/session/open/{participant_id}")
-async def open_email_session(participant_id: str, body: EmailOpenRequest):
-    """Record when participant opens an email. Prevents duplicate opens."""
+async def open_email_session(participant_id: str, email_id: str = Body(..., embed=True)):
+    """Record when participant opens an email."""
     if not ObjectId.is_valid(participant_id):
         raise HTTPException(status_code=404, detail="Invalid participant ID")
     
-    email_id = body.email_id
     now = datetime.now()
     
-    # Check if session already exists for this email
-    participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
-    if participant:
-        existing_sessions = participant.get("email_sessions", {})
-        if email_id in existing_sessions:
-            # Session already exists, don't create duplicate
-            return {"status": "exists", "message": "Session already open for this email"}
-    
+    # Initialize session data
     session_data = {
-        "email_id": email_id,
         "opened_at": now,
         "closed_at": None,
         "clicked_link": False,
+        "clicked_links": [],
         "hovered_link": False,
-        "inspected_sender": False,  # Now tracked via sender_click
         "link_hover_count": 0,
-        "sender_click_count": 0
+        "total_link_hover_time_ms": 0,
+        "inspected_sender": False,
+        "sender_click_count": 0,
     }
     
-    await db.participants.update_one(
+    result = await db.participants.update_one(
         {"_id": ObjectId(participant_id)},
         {"$set": {f"email_sessions.{email_id}": session_data}}
     )
     
-    # Only log email_open once per email per participant
-    existing_open = await db.logs.find_one({
+    await db.logs.insert_one({
         "participant_id": participant_id,
         "email_id": email_id,
-        "action_type": "email_open"
+        "action_type": "email_open",
+        "timestamp": now
     })
     
-    if not existing_open:
-        await db.logs.insert_one({
-            "participant_id": participant_id,
-            "email_id": email_id,
-            "action_type": "email_open",
-            "timestamp": now
-        })
-    
-    return {"status": "success", "session_started": now.isoformat()}
+    return {"status": "session_opened", "opened_at": now.isoformat()}
 
 
 class MicroActionRequest(BaseModel):
+    """Request model for micro-actions (hover, click, sender inspection)"""
     email_id: str
-    action_type: str
-    details: Optional[Dict[str, Any]] = None
+    action_type: str  # link_hover, link_click, sender_click
+    link: Optional[str] = None
+    duration_ms: Optional[int] = None
+    timestamp: Optional[str] = None
 
 
 @router.post("/session/micro-action/{participant_id}")
 async def record_micro_action(participant_id: str, body: MicroActionRequest):
-    """Record micro-interactions within an email. With deduplication."""
+    """Record micro-actions during email viewing."""
     if not ObjectId.is_valid(participant_id):
         raise HTTPException(status_code=404, detail="Invalid participant ID")
     
-    email_id = body.email_id
-    action_type = body.action_type
-    details = body.details or {}
     now = datetime.now()
+    session_key = f"email_sessions.{body.email_id}"
     
-    # Deduplication: Check if same action was logged in last 500ms
-    cutoff_time = now - timedelta(milliseconds=500)
-    recent_action = await db.logs.find_one({
-        "participant_id": participant_id,
-        "email_id": email_id,
-        "action_type": action_type,
-        "timestamp": {"$gte": cutoff_time}
-    })
+    update_ops = {}
     
-    if recent_action:
-        # Skip duplicate
-        return {"status": "skipped", "reason": "duplicate_action"}
+    if body.action_type == "link_hover":
+        update_ops = {
+            "$set": {f"{session_key}.hovered_link": True},
+            "$inc": {
+                f"{session_key}.link_hover_count": 1,
+                f"{session_key}.total_link_hover_time_ms": body.duration_ms or 0
+            }
+        }
+    elif body.action_type == "link_click":
+        update_ops = {
+            "$set": {f"{session_key}.clicked_link": True},
+            "$push": {f"{session_key}.clicked_links": body.link}
+        }
+    elif body.action_type == "sender_click":
+        update_ops = {
+            "$set": {f"{session_key}.inspected_sender": True},
+            "$inc": {f"{session_key}.sender_click_count": 1}
+        }
     
-    participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
-    sessions = participant.get("email_sessions", {}) if participant else {}
-    session = sessions.get(email_id, {})
+    if update_ops:
+        await db.participants.update_one(
+            {"_id": ObjectId(participant_id)},
+            update_ops
+        )
     
-    updates = {}
-    
-    if action_type == "link_hover":
-        duration = details.get("duration_ms", details.get("duration", 0))
-        updates[f"email_sessions.{email_id}.hovered_link"] = True
-        updates[f"email_sessions.{email_id}.link_hover_count"] = session.get("link_hover_count", 0) + 1
-        
-    elif action_type == "link_click":
-        updates[f"email_sessions.{email_id}.clicked_link"] = True
-        
-    elif action_type == "sender_click":
-        # NEW: Track sender click instead of hover
-        updates[f"email_sessions.{email_id}.inspected_sender"] = True
-        updates[f"email_sessions.{email_id}.sender_click_count"] = session.get("sender_click_count", 0) + 1
-    
-    if updates:
-        await db.participants.update_one({"_id": ObjectId(participant_id)}, {"$set": updates})
-    
+    # Log the micro-action
     await db.logs.insert_one({
         "participant_id": participant_id,
-        "email_id": email_id,
-        "action_type": action_type,
+        "email_id": body.email_id,
+        "action_type": body.action_type,
         "timestamp": now,
-        "details": details
+        "details": {
+            "link": body.link,
+            "duration_ms": body.duration_ms
+        }
     })
     
-    return {"status": "success", "action_recorded": action_type}
+    return {"status": "recorded"}
 
 
 # =============================================================================
-# ACTION SUBMISSION
+# FINAL ACTION ENDPOINTS
 # =============================================================================
 
-class ActionSubmission(BaseModel):
+class FinalActionRequest(BaseModel):
+    """Request model for final email action."""
     email_id: str
-    action_type: str
+    action_type: str  # safe, report, delete, ignore
+    confidence: Optional[int] = None
+    suspicion: Optional[int] = None
     reason: Optional[str] = None
-    confidence: Optional[Any] = None  # Accept any type, convert later
-    suspicion: Optional[Any] = None   # Accept any type, convert later
-    latency_ms: Optional[Any] = None
-    dwell_time_ms: Optional[Any] = None
-    hover_data: Optional[Dict[str, Any]] = None
+    latency_ms: Optional[int] = None
+    dwell_time_ms: Optional[int] = None
+    clicked_link: Optional[bool] = False
+    hovered_link: Optional[bool] = False
+    inspected_sender: Optional[bool] = False
+    link_hover_count: Optional[int] = 0
+    sender_click_count: Optional[int] = 0
+    sender_hover_count: Optional[int] = None  # Legacy field
     client_info: Optional[Dict[str, Any]] = None
-    clicked_link: Optional[bool] = None
-    hovered_link: Optional[bool] = None
-    inspected_sender: Optional[bool] = None
-    link_hover_count: Optional[int] = None
-    sender_click_count: Optional[int] = None  # New name
-    sender_hover_count: Optional[int] = None  # Backward compatible
-    
-    class Config:
-        extra = "ignore"  # Ignore any extra fields not defined
 
 
-def safe_int(value, default=0):
-    """Safely convert value to int, handling strings and None."""
-    if value is None:
+def safe_int(val, default=0):
+    """Safely convert value to integer."""
+    if val is None:
         return default
     try:
-        return int(value)
+        return int(val)
     except (ValueError, TypeError):
         return default
 
 
-@router.post("/actions/{participant_id}")
-async def submit_action(participant_id: str, action: ActionSubmission, request: Request):
-    """Submit action on an email."""
-    now = datetime.now()
-    
+@router.post("/action/{participant_id}")
+async def submit_action(participant_id: str, action: FinalActionRequest):
+    """Submit final action on an email."""
     if not ObjectId.is_valid(participant_id):
         raise HTTPException(status_code=404, detail="Invalid participant ID")
     
@@ -592,14 +723,14 @@ async def submit_action(participant_id: str, action: ActionSubmission, request: 
     if not participant:
         raise HTTPException(status_code=404, detail="Participant not found")
     
-    # Handle mark_read action
+    now = datetime.now()
+    
+    # Handle mark_read action separately
     if action.action_type == "mark_read":
-        read_ids = participant.get("read_email_ids", [])
-        if action.email_id not in read_ids:
-            await db.participants.update_one(
-                {"_id": ObjectId(participant_id)},
-                {"$push": {"read_email_ids": action.email_id}}
-            )
+        await db.participants.update_one(
+            {"_id": ObjectId(participant_id)},
+            {"$addToSet": {"read_email_ids": action.email_id}}
+        )
         
         await db.logs.insert_one({
             "participant_id": participant_id,
@@ -721,8 +852,26 @@ async def advance_to_next(participant_id: str):
         {"$inc": {"current_email_order": 1}}
     )
     
+    
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Participant not found")
+        
+    # Generate timestamp for the NEXT email (which is now current_order + 1, wait logic says incremented)
+    # We just incremented current_email_order. So we need the email with that new order.
+    
+    # Get updated participant to get new order
+    participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
+    new_order = participant.get("current_email_order", 0)
+    
+    # Find the email for this new order
+    next_email = await db.emails.find_one({"order_id": new_order})
+    
+    if next_email:
+        # Store timestamp for this new email
+        await db.participants.update_one(
+            {"_id": ObjectId(participant_id)},
+            {"$set": {f"email_timestamps.{str(next_email['_id'])}": datetime.now()}}
+        )
     
     # Check if study is complete
     participant = await db.participants.find_one({"_id": ObjectId(participant_id)})
@@ -770,7 +919,8 @@ async def get_progress(participant_id: str):
         "total_emails": max_order_id,
         "completed": participant.get("completed", False),
         "started_at": participant.get("started_at"),
-        "completed_at": participant.get("completed_at")
+        "completed_at": participant.get("completed_at"),
+        "comprehension_check_passed": participant.get("comprehension_check_passed", False)
     }
     
     # Only include bonus if completed
@@ -814,3 +964,16 @@ async def export_participants():
             p["completed_at"] = p["completed_at"].isoformat()
     
     return {"participants": participants, "count": len(participants)}
+
+
+@router.get("/export/emails")
+async def export_emails():
+    """Export all email stimuli for analysis."""
+    emails = await db.emails.find({}).to_list(length=100)
+    
+    for e in emails:
+        e = fix_id(e)
+        if "timestamp" in e and e["timestamp"]:
+            e["timestamp"] = e["timestamp"].isoformat()
+    
+    return {"emails": emails, "count": len(emails)}

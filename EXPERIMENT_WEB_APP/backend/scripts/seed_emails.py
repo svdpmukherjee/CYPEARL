@@ -1,936 +1,962 @@
-"""
-CYPEARL Experiment - Email Seeding Script (UPDATED v3 - FIXED FACTORIAL DESIGN)
-
-FIXES IN THIS VERSION:
-1. Corrected factorial design - emails 5-8 now use unknown_external senders
-2. All 16 combinations of 2×2×2×2 factorial design are now covered
-3. No duplicate combinations
-4. All institution names are fictional (no real organizations)
-5. Fixed button styling for readability
-
-FACTORIAL DESIGN (2×2×2×2 = 16 combinations):
-- Type: Phishing vs Legitimate
-- Sender: Known vs Unknown
-- Urgency: High vs Low
-- Framing: Threat vs Reward
-
-FICTIONAL COMPANY ECOSYSTEM:
-- Participant's Employer: Lux Consultancy
-- Cloud Provider: NexusCloud
-- Professional Network: ProLink
-- Security Software: SecureShield
-- File Storage: CloudVault
-- Productivity Suite: OfficeSuite Pro
-- Domain Registrar: DomainHost
-- Research Platform: ResearchConnect
-- Tax Services: SuperFinance Tax Services (external)
-- Business Network: LuxBusiness Network (external)
-- Security Newsletter: Cybersecurity Today (external)
-
-Design: 16 experimental emails + 1 welcome email
-- 8 phishing, 8 legitimate
-- Balanced across urgency (high/low), framing (threat/reward), familiarity (known/unknown)
-"""
-
 import asyncio
 import os
 from dotenv import load_dotenv
-from datetime import datetime
 
 load_dotenv()
 from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import datetime
 import certifi
 
-
+# MongoDB connection
 MONGO_URL = os.getenv("MONGO_URL")
-DB_NAME = os.getenv("DB_NAME", "bizmail_db")
+DB_NAME = os.getenv("DB_NAME")
 
-
-def get_seed_emails():
-    """
-    Return list of email documents for seeding.
-    All company names are FICTIONAL to avoid trademark issues.
-    Bodies have proper paragraph spacing for realistic email appearance.
-    
-    FACTORIAL DESIGN MAPPING:
-    #1:  Phishing  | Known Internal   | High | Threat
-    #2:  Legit     | Known Internal   | High | Threat
-    #3:  Phishing  | Known Internal   | High | Reward
-    #4:  Legit     | Known Internal   | High | Reward
-    #5:  Phishing  | Unknown External | High | Threat  ← FIXED (was known_external)
-    #6:  Legit     | Unknown External | High | Threat  ← FIXED (was known_external)
-    #7:  Phishing  | Unknown External | High | Reward  ← FIXED (was known_external)
-    #8:  Legit     | Unknown External | High | Reward  ← FIXED (was known_external)
-    #9:  Phishing  | Known Internal   | Low  | Threat
-    #10: Legit     | Known Internal   | Low  | Threat
-    #11: Phishing  | Unknown External | Low  | Threat
-    #12: Phishing  | Unknown External | Low  | Reward
-    #13: Legit     | Known Internal   | Low  | Reward
-    #14: Legit     | Unknown External | Low  | Threat
-    #15: Legit     | Unknown External | Low  | Reward
-    #16: Phishing  | Known Internal   | Low  | Reward
-    """
-    
-    emails = [
-        # EMAIL 0: WELCOME EMAIL
-        {
-            "sender_name": "University of Luxembourg IRiSC Research",
-            "sender_email": "irisc@uni.lu",
-            "subject": "Welcome to the Study: Email Decision Making",
-            
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
-
-            <!-- Greeting -->
-            <div style="margin-bottom: 16px;">
-                <p>Dear Participant,</p>
-                <p>Thank you for taking part in our research study on workplace email decision-making.</p>
-            </div>
-
-            <!-- Your Role -->
-            <div style="background: #f8f9ff; padding: 12px 16px; border-left: 4px solid #4f46e5; border-radius: 4px; margin-bottom: 16px;">
-                <p style="margin: 0 0 8px 0;"><strong>Your Role</strong></p>
-                <p style="margin: 0;">
-                    For the purpose of this study, you will briefly <strong>role-play</strong> as an employee at
-                    <strong>Lux Consultancy</strong>, a mid-sized consultancy firm. Lux Consultancy works with clients across
-                    multiple sectors, including software and SaaS, finance, healthcare, environmental services, human resources,
-                    retail, manufacturing, and education.
-                </p>
-            </div>
-
-            <!-- Company Services -->
-            <div style="background: #f4f8fb; padding: 12px 16px; border-left: 4px solid #0ea5e9; border-radius: 4px; margin-bottom: 16px;">
-                <p style="margin: 0 0 8px 0;"><strong>Tools and Services You Use</strong></p>
-                <p style="margin: 0 0 8px 0;">Your company uses the following internal services:</p>
-                <ul style="margin: 0 0 0 20px; padding: 0; list-style-type: disc;">
-                    <li style="margin: 2px 0;"><strong>NexusCloud</strong>: Cloud infrastructure</li>
-                    <li style="margin: 2px 0;"><strong>ProLink</strong>: Professional networking</li>
-                    <li style="margin: 2px 0;"><strong>SecureShield</strong>: Security software</li>
-                    <li style="margin: 2px 0;"><strong>CloudVault</strong>: File storage and sharing</li>
-                    <li style="margin: 2px 0;"><strong>OfficeSuite Pro</strong>: Productivity and collaboration tools</li>
-                </ul>
-                <p style="margin: 12px 0 8px 0;">You may also receive emails from external services such as:</p>
-                <ul style="margin: 0 0 0 20px; padding: 0; list-style-type: disc;">
-                    <li style="margin: 2px 0;"><strong>SuperFinance Tax Services</strong>: Corporate tax preparation</li>
-                    <li style="margin: 2px 0;"><strong>LuxBusiness Network</strong>: Business events and networking</li>
-                    <li style="margin: 2px 0;"><strong>Cybersecurity Today</strong>: Industry newsletter</li>
-                </ul>
-            </div>
-
-            <!-- Task / Actions -->
-            <div style="background: #f9fafb; padding: 12px 16px; border-left: 4px solid #059669; border-radius: 4px; margin-bottom: 16px;">
-                <p style="margin: 0 0 8px 0;"><strong>What You Will Do</strong></p>
-                <p style="margin: 0 0 8px 0;">
-                    You will review <strong>16 workplace emails</strong> and decide how to respond to each one. For every email, you can:
-                </p>
-                <ul style="margin: 0 0 0 20px; padding: 0; list-style-type: disc;">
-                    <li style="margin: 2px 0;">Mark it as <strong>Safe</strong>: if you believe it is legitimate</li>
-                    <li style="margin: 2px 0;"><strong>Report</strong> it: if you suspect it is a phishing attempt</li>
-                    <li style="margin: 2px 0;"><strong>Delete</strong> it: if you want to remove it from your inbox</li>
-                    <li style="margin: 2px 0;"><strong>Ignore</strong> it: if you are unsure or do not wish to act</li>
-                </ul>
-            </div>
-
-            <!-- Bonus Points Block (Intro + Rules) -->
-            <div style="background: #f0f7ff; padding: 12px 16px; border-left: 4px solid #f97316; border-radius: 4px; margin-bottom: 16px;">
-
-                <!-- Bonus Points Intro -->
-                <p style="margin: 0; margin-bottom: 16px;">
-                    💰 You can earn <strong style="color: #d97706;">BONUS POINTS</strong> during this study that will be converted into a
-                    <strong>monetary bonus</strong> in addition to your base compensation.
-                </p>
-
-                <!-- Bonus Points Rules -->
-                <p style="margin: 0 0 12px 0;"><strong>👍🏻 Clicking links in LEGITIMATE emails</strong> earns bonus points.</p>
-                <p style="margin: 0 0 12px 0;"><strong>👎🏻 Clicking links in PHISHING emails</strong> loses bonus points.</p>
-                <p style="margin: 0; background: #fff3cd; padding: 10px; border-radius: 4px; color: #856404;">
-                    <strong>⚠️ Important: </strong> You must use your own judgment to decide which links are safe to click. 
-                    Your bonus total will be <strong>revealed only at the end</strong> of the study.
-                </p>
-            </div>
-
-            <!-- Timing / Closing -->
-            <div style="margin-bottom: 16px;">
-                <p style="margin: 0 0 8px 0;">Please take your time with each message. There is <strong>no time limit</strong> for your decisions.</p>
-            </div>
-
-            <div>
-                <p style="margin: 0 0 4px 0;">Best regards,</p>
-                <p style="margin: 0;">
-                    Principal Investigator<br>
-                    IRiSC Research Team<br>
-                    University of Luxembourg
-                </p>
-            </div>
-
-        </div>""",
-
-            "is_phishing": False,
-            "order_id": 0,
-            "experimental": False,
-            "email_type": "welcome",
-            "sender_familiarity": "known_external",
-            "urgency_level": "low",
-            "framing_type": "neutral",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "welcome", "sender": "external", "urgency": "low", "framing": "neutral"},
-            "aggression_level": "none",
-            "tactics": [],
-        },
-
-        # EMAIL 1: PHISHING | Known Internal | High Urgency | Threat
-        {
-            "sender_name": "James Anderson (CEO)",
-            "sender_email": "j.anderson@luxconsultancy-executive.com",
-            "subject": "URGENT: Critical Vendor Payment - Board Meeting in Progress",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Hi,</p>
-                
-                <p>I'm in an emergency board meeting and can't access my regular email.</p>
-                
-                <p><strong>We need to process a vendor payment of $48,000 TODAY</strong> or we risk losing our biggest contract renewal.</p>
-                
-                <p>Please process the wire transfer immediately:</p>
-                
-                <p><a href="http://secure-payment-gateway.net/urgent-transfer" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Process Emergency Payment</a></p>
-                
-                <p>This is time-sensitive. I'll be unavailable for 3 hours.</p>
-                
-                <p>Thanks,</p>
-                <p>James</p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 1,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "high",
-            "framing_type": "threat",
-            "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "known_internal", "urgency": "high", "framing": "threat"},
-            "aggression_level": "very_high",
-            "tactics": ["authority_pressure", "time_urgency", "financial_threat"],
-        },
-
-        # EMAIL 2: LEGITIMATE | Known Internal | High Urgency | Threat
-        {
-            "sender_name": "Jennifer Wu (CFO)",
-            "sender_email": "j.wu@luxconsultancy.com",
-            "subject": "URGENT: Q4 Budget Submission Due TODAY at 5 PM",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Dear All Department Heads,</p>
-                
-                <p>This is your final reminder that <strong>Q4 budget submissions are due TODAY by 5:00 PM</strong>.</p>
-                
-                <p>Late submissions will result in your department being allocated last year's budget with no adjustments.</p>
-                
-                <p>Submit your budget here:</p>
-                
-                <p><a href="https://budget.luxconsultancy.com/q4-submissions" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Q4 Budget Portal</a></p>
-                
-                <p>Best regards,</p>
-                <p>Jennifer Wu<br>Chief Financial Officer<br>Lux Consultancy</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 2,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "high",
-            "framing_type": "threat",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "known_internal", "urgency": "high", "framing": "threat"},
-            "aggression_level": "high",
-            "tactics": ["real_deadline", "legitimate_consequences"],
-        },
-
-        # EMAIL 3: PHISHING | Known Internal | High Urgency | Reward
-        {
-            "sender_name": "Sarah Martinez (HR)",
-            "sender_email": "smartinez@luxconsultancy-hr.com",
-            "subject": "Surprise Employee Appreciation Award - Claim by 6 PM Today!",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Great news!</p>
-                
-                <p>You've been selected for an <strong>Employee Excellence Spot Bonus</strong> of $750!</p>
-                
-                <p>To claim your award, verify your direct deposit information before 6 PM:</p>
-                
-                <p><a href="http://hr-rewards-luxconsultancy.com/claim/employee-bonus" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Claim Your Bonus Now</a></p>
-                
-                <p><em>Unclaimed bonuses will be reallocated. Don't miss out!</em></p>
-                
-                <p>Best regards,</p>
-                <p>Sarah Martinez<br>Human Resources</p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 3,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "high",
-            "framing_type": "reward",
-            "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "known_internal", "urgency": "high", "framing": "reward"},
-            "aggression_level": "high",
-            "tactics": ["reward_greed", "false_urgency", "scarcity", "impersonation"],
-        },
-
-        # EMAIL 4: LEGITIMATE | Known Internal | High Urgency | Reward
-        {
-            "sender_name": "David Chen (IT Director)",
-            "sender_email": "d.chen@luxconsultancy.com",
-            "subject": "Complete Security Training by Friday → Get Extra PTO Day!",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Hi Team,</p>
-                
-                <p>Great news! As part of Cybersecurity Awareness Month, anyone who completes the mandatory security training by <strong>this Friday at 5 PM</strong> will receive an extra PTO day.</p>
-                
-                <p>The training takes about 30 minutes and covers:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Recognizing phishing attempts</li>
-                    <li>Password best practices</li>
-                    <li>Data handling procedures</li>
-                </ul>
-                
-                <p>Start your training here:</p>
-                
-                <p><a href="https://training.luxconsultancy.com/security-awareness-2024" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Begin Security Training</a></p>
-                
-                <p>Best,</p>
-                <p>David Chen<br>IT Director<br>Lux Consultancy</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 4,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "high",
-            "framing_type": "reward",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "known_internal", "urgency": "high", "framing": "reward"},
-            "aggression_level": "low",
-            "tactics": ["real_incentive", "legitimate_deadline"],
-        },
-
-        # EMAIL 5: PHISHING | Unknown External | High Urgency | Threat
-        # FIXED: Changed from known_external (NexusCloud) to unknown_external
-        {
-            "sender_name": "DomainGuard Services",
-            "sender_email": "urgent@domaineguard-alerts.com",
-            "subject": "⚠️ URGENT: Your Domain luxconsultancy.com Expires in 24 Hours!",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <div style="background: #d32f2f; color: white; padding: 12px; margin-bottom: 20px;">
-                    <strong>⚠️ DOMAIN EXPIRATION ALERT</strong>
-                </div>
-                
-                <p>Dear Domain Owner,</p>
-                
-                <p>Our records indicate that your domain <strong>luxconsultancy.com</strong> is scheduled to expire in <strong>24 hours</strong>.</p>
-                
-                <p>If the domain expires:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Your website will go offline</li>
-                    <li>Email services will stop working</li>
-                    <li>The domain may be purchased by someone else</li>
-                </ul>
-                
-                <p><strong>Renew immediately to prevent service interruption:</strong></p>
-                
-                <p><a href="http://domaineguard-alerts.com/renew/luxconsultancy" style="color: #0066cc; background-color: #e6f3ff; padding: 8px 16px; border-radius: 4px; text-decoration: underline; font-weight: bold;">Renew Domain Now - $14.99/year</a></p>
-                
-                <p style="color: #d32f2f;"><strong>Act now to avoid losing your domain permanently.</strong></p>
-                
-                <p>DomainGuard Services<br>Customer Support Team</p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 5,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "high",
-            "framing_type": "threat",
-            "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "unknown_external", "urgency": "high", "framing": "threat"},
-            "aggression_level": "very_high",
-            "tactics": ["fake_service", "domain_scam", "time_pressure", "fear_inducing"],
-        },
-
-        # EMAIL 6: LEGITIMATE | Unknown External | High Urgency | Threat
-        # FIXED: Changed from known_external (NexusCloud) to unknown_external
-        # Using fictional tax/finance service name
-        {
-            "sender_name": "SuperFinance Tax Services",
-            "sender_email": "notifications@superfinance-tax.eu",
-            "subject": "Action Required: Annual Tax Declaration Due January 31st",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Dear Client,</p>
-                
-                <p>This is a reminder from SuperFinance Tax Services that your <strong>annual tax declaration for fiscal year 2024</strong> must be submitted by <strong>January 31, 2025</strong>.</p>
-                
-                <p>As your registered tax preparation service, we want to ensure you meet all deadlines. Failure to submit on time may result in:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Late filing penalties</li>
-                    <li>Interest charges on unpaid taxes</li>
-                    <li>Estimated assessment by the tax office</li>
-                </ul>
-                
-                <p>Access your tax documents through our client portal:</p>
-                
-                <p><a href="https://portal.superfinance-tax.eu/declarations" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Access Tax Portal</a></p>
-                
-                <p>If you have already submitted your declaration, please disregard this notice.</p>
-                
-                <p>For assistance, contact our support team at support@superfinance-tax.eu or call +352 247-5000.</p>
-                
-                <p>SuperFinance Tax Services<br>Your Trusted Tax Partner</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 6,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "high",
-            "framing_type": "threat",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "unknown_external", "urgency": "high", "framing": "threat"},
-            "aggression_level": "medium",
-            "tactics": ["official_notice", "compliance_deadline"],
-        },
-
-        # EMAIL 7: PHISHING | Unknown External | High Urgency | Reward
-        # FIXED: Changed from known_external (ProLink) to unknown_external
-        # Using fictional business awards name
-        {
-            "sender_name": "GlobalBiz Excellence Awards",
-            "sender_email": "awards@globalbiz-excellence.com",
-            "subject": "🏆 Congratulations! Lux Consultancy Nominated for Excellence Award",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <div style="background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #333; padding: 20px; text-align: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">🏆 GlobalBiz Excellence Awards 2025</h2>
-                </div>
-                
-                <p>Dear Executive,</p>
-                
-                <p>We are delighted to inform you that <strong>Lux Consultancy</strong> has been nominated for the <strong>GlobalBiz Excellence Award 2025</strong> in the category of "Outstanding Consultancy Services"!</p>
-                
-                <p>Benefits of winning include:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Featured in our Business Excellence Special Edition</li>
-                    <li>Exclusive networking at the Awards Gala in Brussels</li>
-                    <li>Official winner badge for marketing materials</li>
-                    <li>€10,000 marketing grant</li>
-                </ul>
-                
-                <p><strong>Accept your nomination within 48 hours to secure your spot:</strong></p>
-                
-                <p><a href="http://globalbiz-excellence.com/accept-nomination" style="color: #0066cc; background-color: #fff3cd; padding: 8px 16px; border-radius: 4px; text-decoration: underline; font-weight: bold;">Accept Nomination Now</a></p>
-                
-                <p style="font-size: 13px; color: #666;"><em>A small processing fee of €299 applies to confirm participation.</em></p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 7,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "high",
-            "framing_type": "reward",
-            "phishing_quality": "high",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "unknown_external", "urgency": "high", "framing": "reward"},
-            "aggression_level": "medium",
-            "tactics": ["fake_award", "vanity_appeal", "hidden_fees", "time_pressure"],
-        },
-
-        # EMAIL 8: LEGITIMATE | Unknown External | High Urgency | Reward
-        # FIXED: Changed from known_external (TechConf) to unknown_external
-        # Using fictional business network name
-        {
-            "sender_name": "LuxBusiness Network",
-            "sender_email": "events@luxbusiness-network.eu",
-            "subject": "Last Chance: Free Seats at Digital Transformation Summit - Tomorrow!",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Dear Business Professional,</p>
-                
-                <p>Due to late cancellations, we have <strong>5 complimentary seats</strong> available for tomorrow's <strong>Digital Transformation Summit</strong>!</p>
-                
-                <p><strong>Event Details:</strong></p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li><strong>Date:</strong> Tomorrow, January 15, 2025</li>
-                    <li><strong>Time:</strong> 9:00 AM - 5:00 PM</li>
-                    <li><strong>Location:</strong> LuxBusiness Conference Center, Kirchberg</li>
-                    <li><strong>Value:</strong> €350 (complimentary for registered members)</li>
-                </ul>
-                
-                <p>Sessions include:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>AI Implementation Strategies for SMEs</li>
-                    <li>Cybersecurity Best Practices 2025</li>
-                    <li>Networking lunch with industry leaders</li>
-                </ul>
-                
-                <p><a href="https://luxbusiness-network.eu/events/digital-summit-2025/register" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Claim Your Free Seat</a></p>
-                
-                <p>First come, first served. Seats are limited.</p>
-                
-                <p>Best regards,<br>Events Team<br>LuxBusiness Network</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 8,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "high",
-            "framing_type": "reward",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "unknown_external", "urgency": "high", "framing": "reward"},
-            "aggression_level": "low",
-            "tactics": ["legitimate_opportunity", "real_scarcity", "professional_event"],
-        },
-
-        # EMAIL 9: PHISHING | Known Internal | Low Urgency | Threat
-        {
-            "sender_name": "IT Security",
-            "sender_email": "itsecurity@security-update-portal.com",
-            "subject": "Scheduled Password Expiration Notice",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Dear Employee,</p>
-                
-                <p>According to our records, your network password is scheduled to expire in 7 days.</p>
-                
-                <p>To maintain uninterrupted access to company systems, please update your password at your earliest convenience:</p>
-                
-                <p><a href="http://security-update-portal.com/password-reset" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Update Password</a></p>
-                
-                <p>Password requirements:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Minimum 12 characters</li>
-                    <li>At least one uppercase letter</li>
-                    <li>At least one number</li>
-                    <li>At least one special character</li>
-                </ul>
-                
-                <p>If you have any questions, contact the IT Help Desk.</p>
-                
-                <p>IT Security Team<br>Lux Consultancy</p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 9,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "low",
-            "framing_type": "threat",
-            "phishing_quality": "low",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "known_internal", "urgency": "low", "framing": "threat"},
-            "aggression_level": "low",
-            "tactics": ["routine_impersonation", "credential_harvesting"],
-        },
-
-        # EMAIL 10: LEGITIMATE | Known Internal | Low Urgency | Threat
-        {
-            "sender_name": "Facilities Management",
-            "sender_email": "facilities@luxconsultancy.com",
-            "subject": "Building Maintenance - Parking Garage Closure Next Week",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Dear Employees,</p>
-                
-                <p>Please be advised that the underground parking garage (Levels B1-B3) will be <strong>closed for maintenance</strong> next week:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li><strong>Dates:</strong> Monday, January 13 - Friday, January 17</li>
-                    <li><strong>Affected:</strong> All underground levels</li>
-                    <li><strong>Reason:</strong> Annual fire suppression system inspection</li>
-                </ul>
-                
-                <p>Alternative parking options:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Surface lot (behind Building C)</li>
-                    <li>Street parking (meters free after 6 PM)</li>
-                    <li>Public transit subsidy available through HR</li>
-                </ul>
-                
-                <p>We apologize for any inconvenience. Normal operations will resume Monday, January 20.</p>
-                
-                <p>Facilities Management<br>Lux Consultancy</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 10,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "low",
-            "framing_type": "threat",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "known_internal", "urgency": "low", "framing": "threat"},
-            "aggression_level": "low",
-            "tactics": ["informational", "advance_notice"],
-        },
-
-        # EMAIL 11: PHISHING | Unknown External | Low Urgency | Threat
-        {
-            "sender_name": "CloudVault Storage",
-            "sender_email": "support@cloudvault-secure.net",
-            "subject": "Your Storage is Almost Full - Upgrade Available",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Dear User,</p>
-                
-                <p>Your CloudVault storage is currently at <strong>94% capacity</strong>.</p>
-                
-                <p>Current plan: Basic (15 GB)<br>
-                Used: 14.1 GB<br>
-                Remaining: 0.9 GB</p>
-                
-                <p>When storage is full, you won't be able to:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Upload new files</li>
-                    <li>Receive email attachments</li>
-                    <li>Sync across devices</li>
-                </ul>
-                
-                <p>Upgrade to Premium for only $2.99/month and get 100 GB:</p>
-                
-                <p><a href="http://cloudvault-secure.net/upgrade" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Upgrade Now</a></p>
-                
-                <p>CloudVault Team</p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 11,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "low",
-            "framing_type": "threat",
-            "phishing_quality": "low",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "unknown_external", "urgency": "low", "framing": "threat"},
-            "aggression_level": "low",
-            "tactics": ["service_impersonation", "upsell_scam"],
-        },
-
-        # EMAIL 12: PHISHING | Unknown External | Low Urgency | Reward
-        {
-            "sender_name": "Professional Development",
-            "sender_email": "courses@prof-dev-courses.com",
-            "subject": "Free Certification Course - Limited Spots Available",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Hello Professional,</p>
-                
-                <p>We're offering a <strong>FREE certification course</strong> in Project Management for qualified candidates.</p>
-                
-                <p>Course details:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Duration: 6 weeks (self-paced)</li>
-                    <li>Value: $1,299 (yours FREE)</li>
-                    <li>Certificate: Industry-recognized PMP prep</li>
-                    <li>Format: Online with live Q&A sessions</li>
-                </ul>
-                
-                <p>Only 50 spots available. Secure yours now:</p>
-                
-                <p><a href="http://prof-dev-courses.com/enroll-free" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">Claim Your Free Spot</a></p>
-                
-                <p>Best regards,</p>
-                <p>Professional Development Team</p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 12,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "low",
-            "framing_type": "reward",
-            "phishing_quality": "low",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "unknown_external", "urgency": "low", "framing": "reward"},
-            "aggression_level": "low",
-            "tactics": ["too_good_to_be_true", "lead_generation_scam"],
-        },
-
-        # EMAIL 13: LEGITIMATE | Known Internal | Low Urgency | Reward
-        {
-            "sender_name": "HR Team",
-            "sender_email": "hr@luxconsultancy.com",
-            "subject": "Reminder: Company Anniversary Celebration This Friday!",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Hi Everyone!</p>
-                
-                <p>Just a friendly reminder about our <strong>15th Anniversary Celebration</strong> this Friday!</p>
-                
-                <p><strong>Details:</strong></p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li><strong>Date:</strong> Friday, January 10</li>
-                    <li><strong>Time:</strong> 3:00 PM - 6:00 PM</li>
-                    <li><strong>Location:</strong> Main Cafeteria & Outdoor Patio</li>
-                    <li><strong>Dress code:</strong> Business casual</li>
-                </ul>
-                
-                <p>What to expect:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Catered food and beverages</li>
-                    <li>Live music</li>
-                    <li>Awards ceremony for long-tenure employees</li>
-                    <li>Raffle prizes (including extra PTO days!)</li>
-                </ul>
-                
-                <p>Please RSVP if you haven't already:</p>
-                
-                <p><a href="https://employee-portal.luxconsultancy.com/events/anniversary-2025" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">RSVP Here</a></p>
-                
-                <p>Looking forward to celebrating with you!</p>
-                
-                <p>The HR Team</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 13,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "low",
-            "framing_type": "reward",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "known_internal", "urgency": "low", "framing": "reward"},
-            "aggression_level": "low",
-            "tactics": ["genuine_event", "company_culture"],
-        },
-
-        # EMAIL 14: LEGITIMATE | Unknown External | Low Urgency | Threat
-        {
-            "sender_name": "SecureShield Data Protection",
-            "sender_email": "reports@secureshield.com",
-            "subject": "Monthly Security Report - December 2024",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <p>Hello Administrator,</p>
-                
-                <p>Your monthly security report for December 2024 is ready.</p>
-                
-                <p>Overall system health: <strong style="color: green;">Good</strong></p>
-                
-                <p>Items requiring attention:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Database backup completed with 2 warnings (non-critical)</li>
-                    <li>3 files skipped due to open file locks</li>
-                    <li>Storage capacity at 78% — consider expansion within 60 days</li>
-                </ul>
-                
-                <p>View full report:</p>
-                
-                <p><a href="https://portal.secureshield.com/reports/DEC2024" style="color: #0066cc; background-color: #e6f3ff; padding: 4px 8px; border-radius: 3px; text-decoration: underline;">December 2024 Report</a></p>
-                
-                <p>No immediate action required.</p>
-                
-                <p>SecureShield Data Protection</p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 14,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "low",
-            "framing_type": "threat",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "unknown_external", "urgency": "low", "framing": "threat"},
-            "aggression_level": "low",
-            "tactics": ["routine_monitoring", "service_notification"],
-        },
-
-        # EMAIL 15: LEGITIMATE | Unknown External | Low Urgency | Reward
-        {
-            "sender_name": "Cybersecurity Today",
-            "sender_email": "newsletter@cybersecuritytoday.com",
-            "subject": "This Week in Cybersecurity: New Ransomware Trends",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <h3 style="margin-top: 0;">Top Stories This Week:</h3>
-                
-                <p><strong>Ransomware Trends:</strong> New variants targeting healthcare sector. <a href="https://cybersecuritytoday.com/articles/ransomware-2025" style="color: #0066cc; text-decoration: underline;">Read more</a></p>
-                
-                <p><strong>Best Practice Guide:</strong> Implementing zero-trust architecture. <a href="https://cybersecuritytoday.com/guides/zero-trust" style="color: #0066cc; text-decoration: underline;">Read more</a></p>
-                
-                <p><strong>Upcoming Webinar:</strong> "Phishing Defense Strategies" — Jan 25, 2 PM EST. <a href="https://cybersecuritytoday.com/webinars" style="color: #0066cc; text-decoration: underline;">Register</a></p>
-                
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-                
-                <p style="font-size: 12px; color: #666;">
-                    <a href="https://cybersecuritytoday.com/unsubscribe" style="color: #666;">Unsubscribe</a> | 
-                    <a href="https://cybersecuritytoday.com/preferences" style="color: #666;">Manage preferences</a>
-                </p>
-            </div>""",
-            "is_phishing": False,
-            "order_id": 15,
-            "experimental": True,
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown_external",
-            "urgency_level": "low",
-            "framing_type": "reward",
-            "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "factorial_category": {"type": "legitimate", "sender": "unknown_external", "urgency": "low", "framing": "reward"},
-            "aggression_level": "low",
-            "tactics": ["informational_content", "newsletter"],
-        },
-
-        # EMAIL 16: PHISHING | Known Internal | Low Urgency | Reward
-        {
-            "sender_name": "ResearchConnect Study Team",
-            "sender_email": "opportunities@researchconnect-premium-studies.com",
-            "subject": "Thank You + More High-Paying Studies Available!",
-            "body": """<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <div style="background: #6d3ef2; color: white; padding: 15px; margin-bottom: 20px;">
-                    <h2 style="margin: 0;">ResearchConnect</h2>
-                </div>
-                
-                <p>Hi there,</p>
-                
-                <p>Thank you for completing the "Email Decision Making" study! Your payment has been processed.</p>
-                
-                <div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #6d3ef2; margin: 16px 0;">
-                    <p style="margin: 0;"><strong>Good news:</strong> You've been selected for our <strong>Premium Participant Program</strong> with higher-paying studies.</p>
-                </div>
-                
-                <p>Exclusive opportunities available now:</p>
-                
-                <ul style="margin: 16px 0; padding-left: 24px;">
-                    <li>Consumer Behavior Study — £18 for 40 minutes</li>
-                    <li>Technology Survey — £15 for 30 minutes</li>
-                    <li>Workplace Decision Making Part 2 — £22 for 45 minutes</li>
-                </ul>
-                
-                <p><a href="http://researchconnect-premium-studies.com/claim" style="color: #0066cc; background-color: #e6f3ff; padding: 8px 16px; border-radius: 4px; text-decoration: underline; font-weight: bold;">View My Exclusive Studies</a></p>
-                
-                <p style="color: #d32f2f; font-size: 13px;"><em>These expire in 48 hours.</em></p>
-            </div>""",
-            "is_phishing": True,
-            "order_id": 16,
-            "experimental": True,
-            "email_type": "phishing",
-            "sender_familiarity": "known_internal",
-            "urgency_level": "low",
-            "framing_type": "reward",
-            "phishing_quality": "high",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "factorial_category": {"type": "phishing", "sender": "known_internal", "urgency": "low", "framing": "reward"},
-            "aggression_level": "medium",
-            "tactics": ["contextual_trust_exploitation", "platform_impersonation", "exclusivity_scarcity"],
-        }
-    ]
-    
-    return emails
-
+# ============================================================
+# KNOWN SENDER DOMAINS (Trusted Partners of LuxConsultancy)
+# ============================================================
+# These are the domains participants are told to recognize:
+#   1. luxconsultancy.com   - Employer (internal)
+#   2. securenebula.com     - Cloud services client
+#   3. lockgrid.com         - Security client
+#   4. superfinance.com     - Tax/accounting client
+#   5. trendyletter.com     - Newsletter service
+#   6. greenenvi.com        - Environmental client
+#   7. wattvoltbridge.com   - Energy client
+#
+# Phishing emails with "known" senders use SPOOFED versions:
+#   - TLD swaps: .net, .org instead of .com
+#   - Hyphenation: secure-nebula.com
+#   - Typosquatting: wattvoltbrdige.com (transposition)
+#
+# UNKNOWN LEGITIMATE SENDERS (Fictional - for ethical reasons):
+#   - finregauthority.eu (Fictional financial regulator)
+#   - eurofinancecouncil.eu (Fictional EU finance organization)
+#   - dataprivacyboard.eu (Fictional data protection authority)
+#   - favbizjournal.com (Fictional business media)
+#
+# NOTE: Timestamps are generated by routes.py when each participant
+# first accesses each email, then stored in participant.email_timestamps.
+# ============================================================
 
 async def seed():
-    """Seed the database with emails."""
     client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
     db = client[DB_NAME]
     
-    print("Clearing existing data...")
+    print("Clearing existing emails...")
     await db.emails.delete_many({})
     await db.participants.delete_many({})
-    await db.logs.delete_many({})
+
+    emails = [
+        # ============================================================
+        # EMAIL 0: WELCOME & INSTRUCTIONS (Non-experimental)
+        # ============================================================
+        {
+            "sender_name": "IRISC Lab - University of Luxembourg",
+            "sender_email": "irisc@uni.lu",
+            "subject": "Study Instructions: Email Decision Making Simulation",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 800px; line-height: 1.6;">
+                <p style="margin-bottom: 24px;">Dear Participant,</p>
+                
+                <p style="margin-bottom: 24px;">Thank you for participating in our research study on email decision-making. This study is conducted by the <strong>University of Luxembourg</strong>.</p>
+                
+                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">📋 Your Role</h3>
+                <p style="margin-bottom: 24px;">Think of yourself as an employee at <strong>LuxConsultancy</strong>, a consulting firm based in Paris. LuxConsultancy works with various clients across multiple industries.</p>
+            
+                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">📩 You Get Work Emails Daily</h3>
+                <p style="margin-bottom: 24px;">As a LuxConsultancy employee, you often get emails from either your company or <strong>clients</strong> with verified and trusted sources:</p>
+            
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; margin-bottom: 24px;">
+                    <tr style="background: #f0f7ff;">
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Client Name</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Relationship</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Email Domain</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>LuxConsultancy</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Your employer (internal)</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@luxconsultancy.com</code></td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>SecureNebula</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Cloud services provider</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@securenebula.com</code></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>LockGrid</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Security solutions client</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@lockgrid.com</code></td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>SuperFinance</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Tax & accounting partner</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@superfinance.com</code></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>TrendyLetter</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Newsletter service</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@trendyletter.com</code></td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>GreenEnvi</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Environmental consulting client</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@greenenvi.com</code></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>WattVoltBridge</strong></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Energy sector client</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@wattvoltbridge.com</code></td>
+                    </tr>
+                </table>
+                
+                <p style="background: #fff3cd; padding: 12px; border-left: 4px solid #ff9800; margin: 15px 0; margin-bottom: 24px;">
+                    <strong>⚠️ Important:</strong> Any domain NOT listed above is <strong>unknown</strong> to you. Unknown senders aren't necessarily unsafe, some may be legitimate new contacts, while others could be suspicious.
+                </p>
+
+                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">📧 What You Will Do</h3>
+                <p style="margin-bottom: 24px;">You will review <strong>16 workplace emails</strong> and decide how to respond to each one. For every email, you can:</p>
+                <ul style="margin: 10px 0; margin-bottom: 24px;">
+                    <li><strong>Mark Safe</strong>: You find the email legitimate, no concerns</li>
+                    <li><strong>Report</strong>: You find the email suspicious</li>
+                    <li><strong>Delete</strong>: You find the email not needed or spam</li>
+                    <li><strong>Ignore</strong>: You skip for now</li>
+                </ul>
+                
+                <p style="background: #e8f5e9; padding: 10px; border-left: 4px solid #4caf50; margin-bottom: 24px;">
+                    <strong>💡 Remember:</strong> You can return to this email anytime to check the known sender list by clicking on it in your inbox.
+                </p>
+                
+                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">💰 Bonus Points</h3>
+                <p style="margin-bottom: 24px;">During this study, you can earn <strong>BONUS AMOUNT</strong> in addition to your base compensation (hidden until the end):</p>
+                <ul style="margin: 10px 0; margin-bottom: 24px;">
+                    <li><strong style="color: #2e7d32;">+5 Cents</strong> for clicking links in safe emails</li>
+                    <li><strong style="color: #d32f2f;">-5 Cents</strong> for clicking links in suspicious emails</li>
+                </ul>
+                <p style="background: #e3f2fd; padding: 10px; border-left: 4px solid #1976d2; margin-bottom: 24px;">
+                    <strong>💡 Tip:</strong> You must use your own judgment to decide which links are safe to click.
+                </p>
+                
+                <hr style="margin: 25px 0; border: none; border-top: 1px solid #ddd; margin-bottom: 24px;">
+                
+                <p style="font-size: 13px; color: #666; margin-bottom: 24px;">
+                    All emails are simulated for research purposes. Please respond as you would in a real workplace.<br>
+                    Thank you for your participation!
+                </p>
+                
+                <p style="margin-bottom: 0;">Best regards,<br><strong>IRISC Research Team</strong><br>University of Luxembourg</p>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 0,
+            "experimental": False,
+            "comprehension_check": {
+                "enabled": True,
+                "questions": [
+                    {
+                        "id": "cc1",
+                        "question": "Which of the following is a KNOWN trusted domain for LuxConsultancy?",
+                        "options": [
+                            "lockgrid.net",
+                            "lockgrid.com",
+                            "lock-grid.com",
+                            "lockgrid.org"
+                        ],
+                        "correct_answer": 1,
+                        "explanation": "lockgrid.com is the correct trusted domain. Watch out for variations like .net, .org, or hyphens."
+                    },
+                    {
+                        "id": "cc2", 
+                        "question": "If you receive an email from 'secure-nebula.com' (with a hyphen), this sender is:",
+                        "options": [
+                            "A known trusted partner",
+                            "Unknown to LuxConsultancy",
+                            "Definitely safe",
+                            "Your employer"
+                        ],
+                        "correct_answer": 1,
+                        "explanation": "The trusted domain is 'securenebula.com' (no hyphen). 'secure-nebula.com' is NOT on the known list, so it's unknown."
+                    },
+                    {
+                        "id": "cc3",
+                        "question": "An email from an unknown sender (not in the known list) is:",
+                        "options": [
+                            "Always a phishing attempt",
+                            "Always safe to trust",
+                            "Could be legitimate or suspicious - requires careful evaluation",
+                            "Should always be ignored"
+                        ],
+                        "correct_answer": 2,
+                        "explanation": "Unknown senders aren't automatically malicious. They could be new legitimate contacts or potential threats - evaluate each carefully."
+                    }
+                ]
+            }
+        },
+
+        # ============================================================
+        # EXPERIMENTAL EMAILS (16 total - 2×2×2×2 factorial design)
+        # Type (phishing/legitimate) × Familiarity (known/unknown) × 
+        # Urgency (high/low) × Framing (threat/reward)
+        # ============================================================
+
+        # ----------------------------------------------------------
+        # 1. PHISHING | KNOWN | HIGH URGENCY | THREAT
+        # Spoofed: secure-nebula.com (hyphenated)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "SecureNebula Support",
+            "sender_email": "security-alert@secure-nebula.com",
+            "subject": "URGENT: Unauthorized Access Detected - Immediate Action Required",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #d32f2f; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">⚠️ Security Alert - SecureNebula</h2>
+                </div>
+                <div style="padding: 20px; background: #fff3cd; border: 2px solid #ff9800;">
+                    <p><strong>Critical Security Notice for LuxConsultancy</strong></p>
+                    <p>We detected unauthorized access attempts to your cloud storage:</p>
+                    <ul>
+                        <li>IP Address: 185.220.101.xx (Tor Exit Node)</li>
+                        <li>Location: Unknown</li>
+                        <li>Attempts: 47 in the last hour</li>
+                    </ul>
+                    <p style="color: #d32f2f;"><strong>Your account will be suspended in 2 hours unless you verify your identity.</strong></p>
+                </div>
+                <div style="padding: 20px;">
+                    <p>To prevent data loss and service interruption:</p>
+                    <p style="text-align: center;">
+                        <a href="http://securenebula-verify.net/emergency-auth" style="background: #d32f2f; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Identity Now</a>
+                    </p>
+                    <p style="font-size: 12px; color: #666; margin-top: 20px;">If you did not request this verification, your credentials may already be compromised. Act immediately.</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": True,
+            "order_id": 1,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "known", "urgency": "high", "framing": "threat"},
+            "email_type": "phishing",
+            "sender_familiarity": "known",
+            "urgency_level": "high",
+            "framing_type": "threat",
+            "phishing_quality": "high",
+            "has_aggressive_content": True,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": True,
+            "tactics": ["account_threat", "time_pressure", "fear_exploitation", "domain_spoofing"],
+        },
+
+        # ----------------------------------------------------------
+        # 2. LEGITIMATE | KNOWN | HIGH URGENCY | THREAT
+        # Real: lockgrid.com
+        # ----------------------------------------------------------
+        {
+            "sender_name": "Marcus Chen (LockGrid)",
+            "sender_email": "m.chen@lockgrid.com",
+            "subject": "URGENT: Security Audit Findings - Response Required by EOD",
+            "body": """
+            <p>Hi,</p>
+            <p>Following our quarterly security audit of LuxConsultancy's systems, we've identified <strong>3 critical vulnerabilities</strong> that require immediate attention:</p>
+            <ol>
+                <li>Outdated SSL certificates on 2 internal servers (expiring in 48 hours)</li>
+                <li>Unpatched RCE vulnerability in document management system</li>
+                <li>Misconfigured firewall rules allowing unauthorized outbound connections</li>
+            </ol>
+            <p><strong style="color: #d32f2f;">These issues must be addressed by end of day to maintain your compliance certification.</strong></p>
+            <p>I've prepared the remediation steps here: <a href="https://portal.lockgrid.com/clients/luxconsultancy/audit-2025-Q1" style="color: #0078d4;">View Audit Report & Remediation Guide</a></p>
+            <p>Please confirm receipt and provide an ETA for fixes. I'm available for a call if needed.</p>
+            <p>Best regards,<br>Marcus Chen<br>Senior Security Consultant<br>LockGrid Solutions<br>Direct: +352 26 48 XX XX</p>
+            """,
+            "is_phishing": False,
+            "order_id": 2,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "high", "framing": "threat"},
+            "email_type": "legitimate",
+            "sender_familiarity": "known",
+            "urgency_level": "high",
+            "framing_type": "threat",
+            "phishing_quality": None,
+            "has_aggressive_content": True,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["legitimate_urgency", "compliance_deadline", "professional_communication"],
+        },
+
+        # ----------------------------------------------------------
+        # 3. PHISHING | KNOWN | HIGH URGENCY | REWARD
+        # Spoofed: superfinance.org (TLD swap)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "SuperFinance Tax Services",
+            "sender_email": "refunds@superfinance.org",
+            "subject": "ACTION REQUIRED: €4,750 Tax Refund Ready for LuxConsultancy",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #2e7d32; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">💰 Tax Refund Notification</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Dear LuxConsultancy Finance Team,</p>
+                    <p>Great news! Following our review of your 2024 corporate tax filings, you're entitled to a refund of:</p>
+                    <div style="background: #e8f5e9; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+                        <span style="font-size: 36px; font-weight: bold; color: #2e7d32;">€4,750.00</span>
+                    </div>
+                    <p><strong>This refund must be claimed within 48 hours</strong> or it will be returned to the tax authority.</p>
+                    <p>To process your refund, please verify your company banking details:</p>
+                    <p style="text-align: center;">
+                        <a href="http://superfinance-refunds.com/claim/luxconsultancy" style="background: #2e7d32; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Claim Your Refund</a>
+                    </p>
+                    <p style="font-size: 12px; color: #666;">Reference: TXR-2024-LUX-4829</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": True,
+            "order_id": 3,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "known", "urgency": "high", "framing": "reward"},
+            "email_type": "phishing",
+            "sender_familiarity": "known",
+            "urgency_level": "high",
+            "framing_type": "reward",
+            "phishing_quality": "high",
+            "has_aggressive_content": True,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": True,
+            "tactics": ["financial_reward", "urgency", "banking_info_request", "tld_spoofing"],
+        },
+
+        # ----------------------------------------------------------
+        # 4. LEGITIMATE | KNOWN | HIGH URGENCY | REWARD
+        # Real: trendyletter.com
+        # ----------------------------------------------------------
+        {
+            "sender_name": "TrendyLetter Premium",
+            "sender_email": "vip@trendyletter.com",
+            "subject": "Last Chance: Exclusive 60% Discount Expires Tonight!",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
+                    <h1 style="margin: 0;">🎉 VIP EXCLUSIVE</h1>
+                    <p style="margin: 5px 0 0 0;">For valued LuxConsultancy subscribers</p>
+                </div>
+                <div style="padding: 25px;">
+                    <p>Hi there,</p>
+                    <p>As a long-time subscriber, we're offering you an exclusive deal on our <strong>Premium Analytics Package</strong>:</p>
+                    <div style="background: #f0f7ff; padding: 20px; margin: 20px 0; border-left: 4px solid #667eea;">
+                        <p style="margin: 0;"><strong>Regular Price:</strong> <s>€299/year</s></p>
+                        <p style="margin: 5px 0; font-size: 24px; color: #667eea;"><strong>Your Price: €119/year</strong></p>
+                        <p style="margin: 0; color: #d32f2f;"><em>Offer expires: Tonight at 11:59 PM CET</em></p>
+                    </div>
+                    <p>Premium includes: Advanced market reports, competitor tracking, and priority support.</p>
+                    <p style="text-align: center;">
+                        <a href="https://trendyletter.com/upgrade/premium?ref=luxconsultancy" style="background: #667eea; color: white; padding: 15px 35px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Upgrade Now - Save 60%</a>
+                    </p>
+                    <p style="font-size: 13px; color: #666; margin-top: 20px;">Questions? Reply to this email or call our support team.</p>
+                </div>
+                <div style="background: #f5f5f5; padding: 15px; font-size: 11px; color: #666; text-align: center;">
+                    <a href="https://trendyletter.com/unsubscribe" style="color: #666;">Unsubscribe</a> | 
+                    <a href="https://trendyletter.com/preferences" style="color: #666;">Preferences</a>
+                </div>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 4,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "high", "framing": "reward"},
+            "email_type": "legitimate",
+            "sender_familiarity": "known",
+            "urgency_level": "high",
+            "framing_type": "reward",
+            "phishing_quality": None,
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["discount_offer", "time_limited", "legitimate_upsell"],
+        },
+
+        # ----------------------------------------------------------
+        # 5. PHISHING | UNKNOWN | HIGH URGENCY | THREAT
+        # Unknown domain: eurobank-secure.net
+        # ----------------------------------------------------------
+        {
+            "sender_name": "EuroBank Security",
+            "sender_email": "security-team@eurobank-secure.net",
+            "subject": "ALERT: Suspicious Transaction on LuxConsultancy Corporate Account",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #1a237e; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">🔔 EuroBank Transaction Alert</h2>
+                </div>
+                <div style="padding: 20px; background: #ffebee; border: 2px solid #d32f2f;">
+                    <p><strong>Suspicious Activity Detected</strong></p>
+                    <p>We've flagged an unusual transaction on your corporate account:</p>
+                    <table style="width: 100%; margin: 15px 0;">
+                        <tr><td><strong>Amount:</strong></td><td>€28,500.00</td></tr>
+                        <tr><td><strong>Destination:</strong></td><td>SWIFT: COBADEFFXXX (Frankfurt)</td></tr>
+                        <tr><td><strong>Status:</strong></td><td style="color: #d32f2f;"><strong>PENDING VERIFICATION</strong></td></tr>
+                    </table>
+                </div>
+                <div style="padding: 20px;">
+                    <p>If you <strong>did not authorize</strong> this transfer, you must cancel it immediately:</p>
+                    <p style="text-align: center;">
+                        <a href="http://eurobank-verify.com/cancel-transaction/8472910" style="background: #d32f2f; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Cancel Transaction Now</a>
+                    </p>
+                    <p style="font-size: 12px; color: #666;">This transaction will auto-complete in <strong>30 minutes</strong> if not cancelled.</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": True,
+            "order_id": 5,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "high", "framing": "threat"},
+            "email_type": "phishing",
+            "sender_familiarity": "unknown",
+            "urgency_level": "high",
+            "framing_type": "threat",
+            "phishing_quality": "high",
+            "has_aggressive_content": True,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": True,
+            "tactics": ["financial_threat", "fake_transaction", "extreme_urgency", "bank_impersonation"],
+        },
+
+        # ----------------------------------------------------------
+        # 6. LEGITIMATE | UNKNOWN | HIGH URGENCY | THREAT
+        # Unknown but legitimate: finregauthority.eu (FICTIONAL regulator)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "FinReg Authority Compliance Office",
+            "sender_email": "compliance-notifications@finregauthority.eu",
+            "subject": "Regulatory Notice: Outstanding AML Documentation - Response Required",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #003366; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">Financial Regulatory Authority</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 12px;">European Financial Supervision</p>
+                </div>
+                <div style="padding: 20px;">
+                    <p><strong>Reference:</strong> FRA/AML/2025/LUX-0482</p>
+                    <p>Dear LuxConsultancy Compliance Officer,</p>
+                    <p>Our records indicate that the following documentation is outstanding for your annual AML/CFT compliance review:</p>
+                    <ul>
+                        <li>Updated beneficial ownership registry (Form BO-1)</li>
+                        <li>Client due diligence procedures manual (2025 revision)</li>
+                        <li>Suspicious activity reporting log (Q4 2024)</li>
+                    </ul>
+                    <p><strong style="color: #d32f2f;">These documents must be submitted within 5 business days to avoid regulatory penalties.</strong></p>
+                    <p>Submit via our secure portal: <a href="https://portal.finregauthority.eu/regulated-entities/document-submission" style="color: #0078d4;">Document Submission Portal</a></p>
+                    <p>For questions, contact our compliance hotline: +352 26 251-1</p>
+                    <p>Regards,<br>FinReg Authority Compliance Office<br>110, route d'Arlon<br>L-1150 Paris</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 6,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "high", "framing": "threat"},
+            "email_type": "legitimate",
+            "sender_familiarity": "unknown",
+            "urgency_level": "high",
+            "framing_type": "threat",
+            "phishing_quality": None,
+            "has_aggressive_content": True,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["regulatory_compliance", "legitimate_deadline", "official_communication"],
+        },
+
+        # ----------------------------------------------------------
+        # 7. PHISHING | UNKNOWN | HIGH URGENCY | REWARD
+        # Unknown domain: luxprizes-eu.com
+        # ----------------------------------------------------------
+        {
+            "sender_name": "Paris Business Awards",
+            "sender_email": "awards@luxprizes-eu.com",
+            "subject": "Congratulations! LuxConsultancy Nominated for Excellence Award",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #1a1a1a; padding: 20px; text-align: center;">
+                    <h1 style="margin: 0;">🏆 NOMINATION ALERT</h1>
+                </div>
+                <div style="padding: 25px;">
+                    <p>Dear LuxConsultancy Leadership Team,</p>
+                    <p>We are pleased to inform you that <strong>LuxConsultancy</strong> has been nominated for the <strong>2025 Paris Business Excellence Award</strong> in the category of:</p>
+                    <div style="background: #fff8e1; padding: 15px; text-align: center; margin: 20px 0; border: 2px solid #ffd700;">
+                        <h3 style="margin: 0; color: #ff8c00;">Best Consulting Firm - Innovation</h3>
+                    </div>
+                    <p>To confirm your nomination and secure your place at the awards ceremony, please complete your company profile:</p>
+                    <p style="text-align: center;">
+                        <a href="http://lux-business-awards.com/nominees/confirm/luxconsultancy" style="background: #ffd700; color: #1a1a1a; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Confirm Nomination</a>
+                    </p>
+                    <p style="color: #d32f2f; font-size: 14px;"><strong>Deadline: 48 hours</strong> - Unconfirmed nominations will be withdrawn.</p>
+                    <p style="font-size: 12px; color: #666;">Includes VIP tickets to the Grand Ballroom ceremony on March 15th.</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": True,
+            "order_id": 7,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "high", "framing": "reward"},
+            "email_type": "phishing",
+            "sender_familiarity": "unknown",
+            "urgency_level": "high",
+            "framing_type": "reward",
+            "phishing_quality": "high",
+            "has_aggressive_content": True,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": False,
+            "tactics": ["fake_award", "flattery", "prestige_exploitation", "false_deadline"],
+        },
+
+        # ----------------------------------------------------------
+        # 8. LEGITIMATE | UNKNOWN | HIGH URGENCY | REWARD
+        # Unknown but legitimate: eurofinancecouncil.eu (FICTIONAL EU org)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "EuroFinance Council Secretariat",
+            "sender_email": "conferences@eurofinancecouncil.eu",
+            "subject": "Final Reminder: Complimentary Registration - FinTech Innovation Summit",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 800px;">
+                <div style="background: #003399; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">EuroFinance Council</h2>
+                    <p style="margin: 5px 0 0 0;">FinTech & Innovation Summit 2025</p>
+                </div>
+                <div style="padding: 25px;">
+                    <p>Dear Industry Partner,</p>
+                    <p>As a recognized consulting firm in the Paris financial sector, LuxConsultancy is invited to attend the <strong>EuroFinance Council FinTech & Innovation Summit 2025</strong>.</p>
+                    <div style="background: #e8f4fc; padding: 15px; margin: 20px 0; border-left: 4px solid #003399;">
+                        <p style="margin: 0;"><strong>Date:</strong> February 20-21, 2025</p>
+                        <p style="margin: 5px 0;"><strong>Venue:</strong> European Convention Center, Frankfurt</p>
+                        <p style="margin: 0;"><strong>Registration:</strong> <span style="color: #2e7d32; font-weight: bold;">COMPLIMENTARY</span></p>
+                    </div>
+                    <p><strong>Featured Sessions:</strong></p>
+                    <ul>
+                        <li>Digital Currency Implementation Roadmap</li>
+                        <li>AI in Financial Supervision</li>
+                        <li>Cross-border Payment Innovations</li>
+                    </ul>
+                    <p style="color: #d32f2f;"><strong>Registration closes: Tomorrow, 6 PM CET</strong></p>
+                    <p style="text-align: center;">
+                        <a href="https://www.eurofinancecouncil.eu/events/fintech-summit-2025/registration" style="background: #003399; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Register Now</a>
+                    </p>
+                    <p style="font-size: 12px; color: #666;">Limited to 2 representatives per organization.</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 8,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "high", "framing": "reward"},
+            "email_type": "legitimate",
+            "sender_familiarity": "unknown",
+            "urgency_level": "high",
+            "framing_type": "reward",
+            "phishing_quality": None,
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["legitimate_event", "professional_opportunity", "institutional_invitation"],
+        },
+
+        # ----------------------------------------------------------
+        # 9. PHISHING | KNOWN | LOW URGENCY | THREAT
+        # Spoofed: lockgrid.net (TLD swap)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "LockGrid Customer Portal",
+            "sender_email": "notifications@lockgrid.net",
+            "subject": "Service Notice: Scheduled Security Update",
+            "body": """
+            <p>Dear LuxConsultancy,</p>
+            <p>As part of our ongoing commitment to security, we'll be performing a system-wide security update next week.</p>
+            <p><strong>What this means for you:</strong></p>
+            <ul>
+                <li>Your current access credentials will need to be re-verified</li>
+                <li>Multi-factor authentication settings will be reset</li>
+                <li>Session tokens will expire</li>
+            </ul>
+            <p>To ensure uninterrupted access to your security dashboard, please update your credentials before the maintenance window:</p>
+            <p><a href="http://lockgrid-portal.net/credential-update" style="color: #0078d4;">Update Your Credentials</a></p>
+            <p>This is a routine maintenance procedure. If you don't update by next Friday, you may experience temporary access issues.</p>
+            <p>Thank you for being a valued client.</p>
+            <p>LockGrid Customer Success Team<br>support@lockgrid.net</p>
+            """,
+            "is_phishing": True,
+            "order_id": 9,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "known", "urgency": "low", "framing": "threat"},
+            "email_type": "phishing",
+            "sender_familiarity": "known",
+            "urgency_level": "low",
+            "framing_type": "threat",
+            "phishing_quality": "medium",
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": True,
+            "tactics": ["maintenance_pretext", "credential_harvesting", "tld_spoofing"],
+        },
+
+        # ----------------------------------------------------------
+        # 10. LEGITIMATE | KNOWN | LOW URGENCY | THREAT
+        # Real: greenenvi.com
+        # ----------------------------------------------------------
+        {
+            "sender_name": "Sophie Laurent (GreenEnvi)",
+            "sender_email": "s.laurent@greenenvi.com",
+            "subject": "FYI: Updated Environmental Compliance Guidelines",
+            "body": """
+            <p>Hi team,</p>
+            <p>Hope you're doing well! Just wanted to give you a heads-up about some updates to the EU environmental reporting requirements that will affect our consulting projects.</p>
+            <p><strong>Key changes for 2025:</strong></p>
+            <ul>
+                <li>CSRD scope expansion now includes mid-size companies</li>
+                <li>New carbon footprint disclosure templates (effective Q2)</li>
+                <li>Updated Taxonomy alignment thresholds</li>
+            </ul>
+            <p>I've put together a summary document for the LuxConsultancy team: <a href="https://docs.greenenvi.com/shared/compliance-update-2025" style="color: #0078d4;">2025 Compliance Summary</a></p>
+            <p>No immediate action needed, but it would be good to review this before our next project kickoff. Happy to discuss on our monthly call.</p>
+            <p>Best,<br>Sophie Laurent<br>Sustainability Consultant<br>GreenEnvi Solutions<br>+352 621 XXX XXX</p>
+            """,
+            "is_phishing": False,
+            "order_id": 10,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "low", "framing": "threat"},
+            "email_type": "legitimate",
+            "sender_familiarity": "known",
+            "urgency_level": "low",
+            "framing_type": "threat",
+            "phishing_quality": None,
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["informational_update", "professional_networking", "regulatory_awareness"],
+        },
+
+        # ----------------------------------------------------------
+        # 11. PHISHING | KNOWN | LOW URGENCY | REWARD
+        # Spoofed: wattvoltbrdige.com (typosquatting - transposed letters)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "WattVoltBridge Partnerships",
+            "sender_email": "partnerships@wattvoltbrdige.com",
+            "subject": "New Referral Bonus Program for Consulting Partners",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #4caf50; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">Partner Rewards Program</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Dear LuxConsultancy,</p>
+                    <p>We're excited to announce our new <strong>Partner Referral Bonus Program</strong>!</p>
+                    <p>As a valued consulting partner in our energy sector projects, you're eligible for:</p>
+                    <div style="background: #e8f5e9; padding: 15px; margin: 15px 0; border-left: 4px solid #4caf50;">
+                        <p style="margin: 0;"><strong>€500 bonus</strong> for each successful client referral</p>
+                        <p style="margin: 5px 0 0 0;">Unlimited referrals • Quarterly payouts • No minimum</p>
+                    </div>
+                    <p>To activate your partner account and start earning:</p>
+                    <p><a href="http://wattvoltbridge-partners.com/activate" style="color: #4caf50; font-weight: bold;">Activate Partner Account →</a></p>
+                    <p>Simply provide your banking details to receive direct deposits.</p>
+                    <p>Looking forward to strengthening our partnership!</p>
+                    <p>WattVoltBridge Partnership Team</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": True,
+            "order_id": 11,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "known", "urgency": "low", "framing": "reward"},
+            "email_type": "phishing",
+            "sender_familiarity": "known",
+            "urgency_level": "low",
+            "framing_type": "reward",
+            "phishing_quality": "medium",
+            "has_aggressive_content": False,
+            "has_spelling_errors": True,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": True,
+            "tactics": ["referral_bonus", "banking_info_request", "typosquatting"],
+        },
+
+        # ----------------------------------------------------------
+        # 12. LEGITIMATE | KNOWN | LOW URGENCY | REWARD
+        # Real: securenebula.com
+        # ----------------------------------------------------------
+        {
+            "sender_name": "SecureNebula Customer Success",
+            "sender_email": "success@securenebula.com",
+            "subject": "Your Monthly Cloud Usage Report + Free Training Credits",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #1976d2; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">SecureNebula</h2>
+                    <p style="margin: 5px 0 0 0;">Monthly Account Summary</p>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Hi LuxConsultancy team,</p>
+                    <p>Here's your January usage summary:</p>
+                    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                        <tr style="background: #f5f5f5;">
+                            <td style="padding: 10px; border: 1px solid #ddd;">Storage Used</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">2.4 TB / 5 TB</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">API Calls</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">12,847</td>
+                        </tr>
+                        <tr style="background: #f5f5f5;">
+                            <td style="padding: 10px; border: 1px solid #ddd;">Active Users</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">34</td>
+                        </tr>
+                    </table>
+                    <div style="background: #e3f2fd; padding: 15px; margin: 15px 0; border-left: 4px solid #1976d2;">
+                        <p style="margin: 0;"><strong>🎁 Loyalty Bonus:</strong> You've earned <strong>5 free training credits</strong> for your team!</p>
+                        <p style="margin: 5px 0 0 0;"><a href="https://academy.securenebula.com/redeem?org=luxconsultancy" style="color: #1976d2;">Redeem Training Credits</a></p>
+                    </div>
+                    <p>Full report: <a href="https://dashboard.securenebula.com/reports/jan-2025" style="color: #1976d2;">View Detailed Analytics</a></p>
+                    <p>Questions? Reach out anytime.</p>
+                    <p>Best,<br>SecureNebula Customer Success</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 12,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "low", "framing": "reward"},
+            "email_type": "legitimate",
+            "sender_familiarity": "known",
+            "urgency_level": "low",
+            "framing_type": "reward",
+            "phishing_quality": None,
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["account_summary", "loyalty_reward", "routine_communication"],
+        },
+
+        # ----------------------------------------------------------
+        # 13. PHISHING | UNKNOWN | LOW URGENCY | THREAT
+        # Unknown domain: it-compliance-eu.net
+        # ----------------------------------------------------------
+        {
+            "sender_name": "EU-IT Compliance Bureau",
+            "sender_email": "audit@it-compliance-eu.net",
+            "subject": "Notice: Upcoming GDPR Compliance Audit Scheduled",
+            "body": """
+            <p><strong>EU IT Compliance Bureau</strong></p>
+            <p>Reference: GDPR-AUD-2025-8471</p>
+            <p>Dear Data Controller,</p>
+            <p>This notice confirms that LuxConsultancy has been selected for a routine GDPR compliance audit as part of our annual review program.</p>
+            <p><strong>Audit Details:</strong></p>
+            <ul>
+                <li>Type: Remote Documentation Review</li>
+                <li>Scheduled: Week of February 10-14, 2025</li>
+                <li>Scope: Data processing activities, consent management, breach notification procedures</li>
+            </ul>
+            <p>To prepare for the audit, please complete your pre-audit questionnaire:</p>
+            <p><a href="http://gdpr-audit-portal.eu/pre-assessment/luxconsultancy" style="color: #0078d4;">Complete Pre-Audit Questionnaire</a></p>
+            <p>Failure to complete this questionnaire may result in an on-site audit requirement.</p>
+            <p>For questions, contact our audit coordination team.</p>
+            <p>EU-IT Compliance Bureau<br>audit@it-compliance-eu.net</p>
+            """,
+            "is_phishing": True,
+            "order_id": 13,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "low", "framing": "threat"},
+            "email_type": "phishing",
+            "sender_familiarity": "unknown",
+            "urgency_level": "low",
+            "framing_type": "threat",
+            "phishing_quality": "medium",
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": False,
+            "tactics": ["fake_authority", "audit_pretext", "compliance_fear"],
+        },
+
+        # ----------------------------------------------------------
+        # 14. LEGITIMATE | UNKNOWN | LOW URGENCY | THREAT
+        # Unknown but legitimate: dataprivacyboard.eu (FICTIONAL authority)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "DataPrivacy Board Information Office",
+            "sender_email": "info@dataprivacyboard.eu",
+            "subject": "Newsletter: Updated Data Protection Guidelines for 2025",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #2c3e50; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">DataPrivacy Board</h2>
+                    <p style="margin: 5px 0 0 0;">European Data Protection Authority</p>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Dear Data Protection Professional,</p>
+                    <p>The DataPrivacy Board has published updated guidance documents for 2025. These updates reflect recent regulatory opinions and enforcement trends.</p>
+                    <p><strong>Key updates include:</strong></p>
+                    <ul>
+                        <li>Revised guidelines on AI-based data processing</li>
+                        <li>Updated DPIA template for high-risk activities</li>
+                        <li>New recommendations on international data transfers post-adequacy decisions</li>
+                    </ul>
+                    <p>Access the updated resources: <a href="https://dataprivacyboard.eu/professionals/guides-2025.html" style="color: #0078d4;">Guidelines Portal</a></p>
+                    <p>These guidelines are informational and do not require immediate action. We encourage all data controllers to review at their convenience.</p>
+                    <p>DataPrivacy Board<br>15, Boulevard du Jazz<br>L-4370 Belvaux</p>
+                </div>
+                <div style="background: #f5f5f5; padding: 10px; font-size: 11px; color: #666; text-align: center;">
+                    <a href="https://dataprivacyboard.eu/unsubscribe" style="color: #666;">Unsubscribe from newsletter</a>
+                </div>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 14,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "low", "framing": "threat"},
+            "email_type": "legitimate",
+            "sender_familiarity": "unknown",
+            "urgency_level": "low",
+            "framing_type": "threat",
+            "phishing_quality": None,
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["regulatory_newsletter", "informational_update", "official_guidance"],
+        },
+
+        # ----------------------------------------------------------
+        # 15. PHISHING | UNKNOWN | LOW URGENCY | REWARD
+        # Unknown domain: eu-survey-rewards.com
+        # ----------------------------------------------------------
+        {
+            "sender_name": "Business Insights EU",
+            "sender_email": "surveys@eu-survey-rewards.com",
+            "subject": "Invitation: Share Your Expertise & Earn €75 Amazon Gift Card",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #ff9800; color: white; padding: 15px; text-align: center;">
+                    <h2 style="margin: 0;">Research Participant Needed</h2>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Dear Business Professional,</p>
+                    <p>We're conducting research on consulting industry trends and would value your insights.</p>
+                    <div style="background: #fff8e1; padding: 15px; margin: 15px 0; text-align: center;">
+                        <p style="margin: 0; font-size: 18px;"><strong>Complete our 15-minute survey</strong></p>
+                        <p style="margin: 5px 0; font-size: 24px; color: #ff9800;">Receive a <strong>€75 Amazon Gift Card</strong></p>
+                    </div>
+                    <p><strong>Survey topics:</strong></p>
+                    <ul>
+                        <li>Industry challenges and opportunities</li>
+                        <li>Technology adoption trends</li>
+                        <li>Client relationship management</li>
+                    </ul>
+                    <p style="text-align: center;">
+                        <a href="http://business-research-eu.com/survey/consulting-trends-2025" style="background: #ff9800; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; display: inline-block;">Start Survey →</a>
+                    </p>
+                    <p style="font-size: 12px; color: #666;">Gift card sent via email within 48 hours of completion.</p>
+                </div>
+            </div>
+            """,
+            "is_phishing": True,
+            "order_id": 15,
+            "experimental": True,
+            "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "low", "framing": "reward"},
+            "email_type": "phishing",
+            "sender_familiarity": "unknown",
+            "urgency_level": "low",
+            "framing_type": "reward",
+            "phishing_quality": "low",
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": True,
+            "requests_sensitive_info": False,
+            "tactics": ["survey_scam", "gift_card_lure", "generic_targeting"],
+        },
+
+        # ----------------------------------------------------------
+        # 16. LEGITIMATE | UNKNOWN | LOW URGENCY | REWARD
+        # Unknown but legitimate: favbizjournal.com (FICTIONAL business media)
+        # ----------------------------------------------------------
+        {
+            "sender_name": "FavBiz Journal Club",
+            "sender_email": "club@favbizjournal.com",
+            "subject": "Exclusive Invite: CEO Networking Breakfast - Free for Members",
+            "body": """
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+                <div style="background: #e91e63; color: white; padding: 15px;">
+                    <h2 style="margin: 0;">FavBiz Journal Club</h2>
+                    <p style="margin: 5px 0 0 0;">Europe's Premier Business Network</p>
+                </div>
+                <div style="padding: 20px;">
+                    <p>Dear Business Leader,</p>
+                    <p>You're invited to our exclusive <strong>CEO Networking Breakfast</strong>:</p>
+                    <div style="background: #fce4ec; padding: 15px; margin: 15px 0; border-left: 4px solid #e91e63;">
+                        <p style="margin: 0;"><strong>Topic:</strong> "Europe as a FinTech Hub: What's Next?"</p>
+                        <p style="margin: 5px 0;"><strong>Date:</strong> February 28, 2025 | 8:00 - 10:00 AM</p>
+                        <p style="margin: 0;"><strong>Venue:</strong> Hotel Le Royal, Paris</p>
+                    </div>
+                    <p><strong>Featured speakers:</strong></p>
+                    <ul>
+                        <li>Dr. Thomas Weber, Financial Regulatory Expert</li>
+                        <li>Marie Dupont, FinTech Innovation Director</li>
+                        <li>Jean-Pierre Martin, Partner, Leading Consulting Firm</li>
+                    </ul>
+                    <p><strong>Registration is free</strong> for FavBiz Journal Club members and partner organizations.</p>
+                    <p style="text-align: center;">
+                        <a href="https://club.favbizjournal.com/events/ceo-breakfast-feb2025" style="background: #e91e63; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; display: inline-block;">Register Now</a>
+                    </p>
+                    <p style="font-size: 12px; color: #666;">Limited to 40 participants. Early registration recommended.</p>
+                </div>
+                <div style="background: #f5f5f5; padding: 10px; font-size: 11px; color: #666; text-align: center;">
+                    FavBiz Journal Club | 10 rue des Gaulois, L-1618 Paris<br>
+                    <a href="https://club.favbizjournal.com/unsubscribe" style="color: #666;">Manage preferences</a>
+                </div>
+            </div>
+            """,
+            "is_phishing": False,
+            "order_id": 16,
+            "experimental": True,
+            "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "low", "framing": "reward"},
+            "email_type": "legitimate",
+            "sender_familiarity": "unknown",
+            "urgency_level": "low",
+            "framing_type": "reward",
+            "phishing_quality": None,
+            "has_aggressive_content": False,
+            "has_spelling_errors": False,
+            "has_suspicious_url": False,
+            "requests_sensitive_info": False,
+            "tactics": ["networking_event", "professional_opportunity", "local_business_media"],
+        },
+    ]
     
-    emails = get_seed_emails()
-    
+    # Insert all emails
     result = await db.emails.insert_many(emails)
     print(f"Successfully inserted {len(result.inserted_ids)} emails")
-    
-    print("\n=== Factorial Design Summary ===")
-    print(f"{'#':<3} {'Type':<11} {'Sender':<17} {'Urgency':<7} {'Framing':<7}")
-    print("-" * 50)
-    for email in emails:
-        if email["experimental"]:
-            print(f"#{email['order_id']:<2} {email['email_type']:<11} {email['sender_familiarity']:<17} {email['urgency_level']:<7} {email['framing_type']:<7}")
-    
-    # Verify factorial completeness
-    print("\n=== Factorial Design Verification ===")
-    combinations = set()
-    for email in emails:
-        if email["experimental"]:
-            # Simplify sender to known/unknown
-            sender = "known" if "known" in email["sender_familiarity"] else "unknown"
-            combo = (email["email_type"], sender, email["urgency_level"], email["framing_type"])
-            combinations.add(combo)
-    
-    expected = 16  # 2^4
-    print(f"Unique combinations: {len(combinations)} / {expected}")
-    if len(combinations) == expected:
-        print("✅ All factorial combinations covered!")
-    else:
-        print("❌ Missing combinations!")
-
+    print("\n=== Email Design Summary ===")
+    print("Known trusted domains: luxconsultancy.com, securenebula.com, lockgrid.com,")
+    print("                       superfinance.com, trendyletter.com, greenenvi.com, wattvoltbridge.com")
+    print("\nSpoofing techniques used for phishing 'known' senders:")
+    print("  - secure-nebula.com (hyphenation)")
+    print("  - superfinance.org (TLD swap)")
+    print("  - lockgrid.net (TLD swap)")
+    print("  - wattvoltbrdige.com (typosquatting)")
+    print("\nUnknown LEGITIMATE domains (fictional):")
+    print("  - finregauthority.eu (Financial Regulatory Authority)")
+    print("  - eurofinancecouncil.eu (EuroFinance Council)")
+    print("  - dataprivacyboard.eu (DataPrivacy Board)")
+    print("  - favbizjournal.com (FavBiz Journal)")
+    print("\nTotal: 17 emails (1 welcome + 16 experimental)")
+    print("\nNote: Timestamps are generated by routes.py when participants first access each email")
 
 if __name__ == "__main__":
     asyncio.run(seed())

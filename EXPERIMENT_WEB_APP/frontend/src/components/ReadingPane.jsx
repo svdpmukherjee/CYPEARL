@@ -97,7 +97,7 @@ const SenderDetailsPanel = ({ email, isExpanded, onToggle, onSenderClick }) => {
                         <div className="flex">
                             <span className="text-[#605e5c] w-20 shrink-0">date:</span>
                             <span className="text-[#252423]">
-                                {email?.timestamp ? new Date(email.timestamp).toLocaleString() : 'Today'}
+                                {new Date(email.timestamp || new Date()).toLocaleString()}
                             </span>
                         </div>
                         <div className="flex">
@@ -459,7 +459,7 @@ const ReadingPane = ({
                     <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4">
                             <div className="w-12 h-12 rounded-full bg-[#0078d4] flex items-center justify-center text-white font-bold text-lg">
-                                R
+                                I
                             </div>
                             <div>
                                 <div className="font-semibold text-lg text-[#252423]">
@@ -472,14 +472,7 @@ const ReadingPane = ({
                         </div>
                         <div className="text-xs text-[#605e5c]">
                             <span>
-                                {new Date(email.timestamp).toLocaleString([], {
-                                    weekday: 'short',
-                                    year: 'numeric',
-                                    month: 'numeric',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                                {new Date(email.timestamp || new Date()).toLocaleString()}
                             </span>
                         </div>
                     </div>
@@ -549,14 +542,7 @@ const ReadingPane = ({
                         ) : (
                             <div className="text-xs text-[#605e5c]">
                                 <span>
-                                    {new Date(email.timestamp).toLocaleString([], {
-                                        weekday: 'short',
-                                        year: 'numeric',
-                                        month: 'numeric',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
+                                    {new Date(email.timestamp || new Date()).toLocaleString()}
                                 </span>
                             </div>
                         )}
@@ -618,8 +604,8 @@ const ReadingPane = ({
             {showClickFeedback && (
                 <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
                     <div className={`px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 ${linkClickedForEmail && clickFeedbackMessage.includes('already')
-                            ? 'bg-amber-100 border border-amber-300 text-amber-800'
-                            : 'bg-blue-100 border border-blue-300 text-blue-800'
+                        ? 'bg-amber-100 border border-amber-300 text-amber-800'
+                        : 'bg-blue-100 border border-blue-300 text-blue-800'
                         }`}>
                         {linkClickedForEmail && clickFeedbackMessage.includes('already') ? (
                             <AlertOctagon size={20} className="text-amber-600" />

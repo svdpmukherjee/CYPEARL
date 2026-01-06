@@ -56,7 +56,7 @@ const EmailList = ({ emails, selectedId, onSelect, onDone, actionsTaken }) => {
                                 .trim()
                                 .substring(0, 30)
                             }
-                            time={new Date(email.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            time={new Date(email.timestamp || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             initials={email.sender_name.charAt(0)}
                             selected={email.id === selectedId}
                             read={email.is_read}
@@ -87,10 +87,10 @@ const EmailListItem = ({
     return (
         <div
             className={`relative group px-4 py-3 cursor-pointer border-b border-gray-100 ${selected
-                    ? 'bg-[#c7e0f4] border-l-[4px] border-l-[#0078d4] pl-[12px]'
-                    : read
-                        ? 'bg-white hover:bg-[#f3f2f1] border-l-[4px] border-l-transparent pl-[12px]'
-                        : 'bg-white hover:bg-[#f3f2f1] border-l-[4px] border-l-[#0078d4] pl-[12px]'
+                ? 'bg-[#c7e0f4] border-l-[4px] border-l-[#0078d4] pl-[12px]'
+                : read
+                    ? 'bg-white hover:bg-[#f3f2f1] border-l-[4px] border-l-transparent pl-[12px]'
+                    : 'bg-white hover:bg-[#f3f2f1] border-l-[4px] border-l-[#0078d4] pl-[12px]'
                 }`}
             onClick={onClick}
         >

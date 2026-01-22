@@ -21,8 +21,11 @@ let useDirectBackend = false;
 
 /**
  * Make an API request with automatic fallback
+ * @param {string} endpoint - API endpoint
+ * @param {object} options - Fetch options
+ * @param {AbortSignal} signal - Optional AbortSignal for cancellation
  */
-async function apiRequest(endpoint, options = {}) {
+async function apiRequest(endpoint, options = {}, signal = null) {
     const url = useDirectBackend ? `${BACKEND_URL}${endpoint}` : `${API_BASE}${endpoint}`;
 
     const defaultOptions = {
@@ -40,6 +43,11 @@ async function apiRequest(endpoint, options = {}) {
         },
     };
 
+    // Add abort signal if provided
+    if (signal) {
+        mergedOptions.signal = signal;
+    }
+
     try {
         const response = await fetch(url, mergedOptions);
 
@@ -48,7 +56,7 @@ async function apiRequest(endpoint, options = {}) {
             if (response.status === 404 && !useDirectBackend) {
                 console.log('Proxy failed, trying direct backend connection...');
                 useDirectBackend = true;
-                return apiRequest(endpoint, options);
+                return apiRequest(endpoint, options, signal);
             }
 
             const errorText = await response.text();
@@ -57,11 +65,15 @@ async function apiRequest(endpoint, options = {}) {
 
         return await response.json();
     } catch (error) {
+        // Re-throw AbortError as-is
+        if (error.name === 'AbortError') {
+            throw error;
+        }
         // If fetch itself fails (network error) and we haven't tried direct backend
         if (!useDirectBackend && error.name === 'TypeError') {
             console.log('Proxy connection failed, trying direct backend...');
             useDirectBackend = true;
-            return apiRequest(endpoint, options);
+            return apiRequest(endpoint, options, signal);
         }
         throw error;
     }
@@ -99,23 +111,27 @@ export async function getEmailStats() {
 /**
  * Run clustering with specified configuration
  * @param {object} config - Clustering configuration
+ * @param {AbortSignal} signal - Optional AbortSignal for cancellation
  */
-export async function runClustering(config) {
+export async function runClustering(config, signal = null) {
+    console.log('[API] runClustering called with:', config);
     return apiRequest('/run', {
         method: 'POST',
         body: JSON.stringify(config),
-    });
+    }, signal);
 }
 
 /**
- * Optimize clustering parameters
+ * Optimize clustering parameters (K-Sweep)
  * @param {object} config - Optimization configuration
+ * @param {AbortSignal} signal - Optional AbortSignal for cancellation
  */
-export async function optimizeClustering(config) {
+export async function optimizeClustering(config, signal = null) {
+    console.log('[API] optimizeClustering called with:', config);
     return apiRequest('/optimize', {
         method: 'POST',
         body: JSON.stringify(config),
-    });
+    }, signal);
 }
 
 /**

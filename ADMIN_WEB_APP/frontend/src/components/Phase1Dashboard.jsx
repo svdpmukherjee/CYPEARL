@@ -12,7 +12,7 @@
  * 8. AI Export - Phase 2 preparation
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   RefreshCw,
   Database,
@@ -137,6 +137,10 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
   // Phase completion state
   const [isPhaseComplete, setIsPhaseComplete] = useState(false);
 
+  // Abort controller for cancelling requests
+  const abortControllerRef = useRef(null);
+  const [operationType, setOperationType] = useState(null); // 'optimize' | 'cluster' | null
+
   // ========================================================================
   // COMPUTED VALUES
   // ========================================================================
@@ -230,40 +234,51 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
   // ========================================================================
 
   const handleRunClustering = async () => {
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
-    setIsGeneratingNames(false); // Reset naming state
+    setOperationType('cluster');
+    setIsGeneratingNames(false);
+    console.log('[Clustering] Starting with config:', config);
+
     try {
       const result = await runClustering({
         ...config,
         min_cluster_size: minClusterSize,
-      });
+      }, abortControllerRef.current.signal);
 
       if (!result || !result.clusters) {
         throw new Error("Invalid clustering result received");
       }
 
+      console.log('[Clustering] Complete:', Object.keys(result.clusters).length, 'clusters');
       setClusteringResult(result);
-      setLoading(false); // Release loading before AI naming
+      setLoading(false);
+      setOperationType(null);
 
       // If AI naming is enabled, generate names after clustering
       if (useAiNaming && result.clusters) {
         setIsGeneratingNames(true);
         try {
           const clusters = Object.values(result.clusters);
-          console.log("Sending clusters for AI naming:", clusters.length);
+          console.log("[AI Naming] Generating names for", clusters.length, "clusters");
           const namesResponse = await generatePersonaNames(clusters);
-          console.log("AI naming response:", namesResponse);
+          console.log("[AI Naming] Response:", namesResponse);
 
           if (namesResponse?.status === "success" && namesResponse?.labels) {
             setPersonaLabels(namesResponse.labels);
           } else if (namesResponse?.error) {
-            console.error("AI naming error:", namesResponse.error);
+            console.error("[AI Naming] Error:", namesResponse.error);
             alert(
               `AI naming failed: ${namesResponse.error}. Clustering results are still available.`,
             );
           }
         } catch (nameError) {
-          console.error("Failed to generate persona names:", nameError);
+          console.error("[AI Naming] Failed:", nameError);
           alert(
             `Failed to generate AI names: ${nameError.message || "Unknown error"}. Clustering results are still available.`,
           );
@@ -272,16 +287,32 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
         }
       }
     } catch (error) {
-      console.error("Clustering failed:", error);
+      if (error.name === 'AbortError' || error.message === 'canceled') {
+        console.log('[Clustering] Cancelled by user');
+        return;
+      }
+      console.error("[Clustering] Failed:", error);
       alert(
         `Clustering failed: ${error.message || "Unknown error"}. Check console for details.`,
       );
+    } finally {
       setLoading(false);
+      setOperationType(null);
+      abortControllerRef.current = null;
     }
   };
 
   const handleOptimize = async () => {
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     setLoading(true);
+    setOperationType('optimize');
+    console.log('[K-Sweep] Starting optimization with config:', optConfig);
+
     try {
       const result = await optimizeClustering({
         algorithm: optConfig.algorithm,
@@ -291,13 +322,31 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
         pca_variance: optConfig.pca_variance,
         weights: normalizedWeights,
         min_cluster_size: minClusterSize,
-      });
+      }, abortControllerRef.current.signal);
+
+      console.log('[K-Sweep] Complete:', result);
       setOptimizationResult(result);
     } catch (error) {
-      console.error("Optimization failed:", error);
-      alert("Optimization failed. Check console for details.");
+      if (error.name === 'AbortError' || error.message === 'canceled') {
+        console.log('[K-Sweep] Cancelled by user');
+        return;
+      }
+      console.error("[K-Sweep] Failed:", error);
+      alert(`Optimization failed: ${error.message || "Unknown error"}. Check console for details.`);
     } finally {
       setLoading(false);
+      setOperationType(null);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleCancelOperation = () => {
+    if (abortControllerRef.current) {
+      console.log('[Cancel] Aborting current operation:', operationType);
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+      setOperationType(null);
     }
   };
 
@@ -605,6 +654,8 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
             loading={loading}
             onRunClustering={handleRunClustering}
             onOptimize={handleOptimize}
+            onCancel={handleCancelOperation}
+            operationType={operationType}
             clusteringResult={clusteringResult}
             optimizationResult={optimizationResult}
             normalizedWeights={normalizedWeights}

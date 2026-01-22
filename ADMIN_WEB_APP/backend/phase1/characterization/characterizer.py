@@ -9,8 +9,21 @@ class ClusterCharacterizer:
     
     def __init__(self, df: pd.DataFrame, feature_names: List[str]):
         self.df = df
-        self.feature_names = [f for f in feature_names if f in df.columns]
-        self.outcome_cols = [c for c in OUTCOME_FEATURES if c in df.columns]
+        # Only include numeric features that exist in the dataframe
+        self.feature_names = [
+            f for f in feature_names
+            if f in df.columns and pd.api.types.is_numeric_dtype(df[f])
+        ]
+        # Only include numeric outcome columns
+        self.outcome_cols = [
+            c for c in OUTCOME_FEATURES
+            if c in df.columns and pd.api.types.is_numeric_dtype(df[c])
+        ]
+
+        # Log any skipped columns
+        skipped_features = [f for f in feature_names if f in df.columns and f not in self.feature_names]
+        if skipped_features:
+            print(f"[CHARACTERIZER] Skipped non-numeric features: {skipped_features}")
     
     def characterize(self, labels: np.ndarray) -> Dict[int, Dict]:
         """Generate characterization for each cluster."""
@@ -30,31 +43,45 @@ class ClusterCharacterizer:
             # Trait z-scores (relative to full population)
             trait_zscores = {}
             trait_rankings = {}
-            
+
             for feat in self.feature_names:
-                cluster_mean = cluster_data[feat].mean()
-                pop_mean = df[feat].mean()
-                pop_std = df[feat].std()
-                
-                if pop_std > 0:
-                    z = (cluster_mean - pop_mean) / pop_std
-                    trait_zscores[feat] = float(z)
-                    
-                    # Percentile of cluster mean in population
-                    percentile = stats.percentileofscore(df[feat], cluster_mean)
-                    trait_rankings[feat] = float(percentile)
-                else:
-                    trait_zscores[feat] = 0.0
-                    trait_rankings[feat] = 50.0
+                # Skip non-numeric columns
+                if not pd.api.types.is_numeric_dtype(df[feat]):
+                    continue
+
+                try:
+                    cluster_mean = cluster_data[feat].mean()
+                    pop_mean = df[feat].mean()
+                    pop_std = df[feat].std()
+
+                    if pop_std > 0:
+                        z = (cluster_mean - pop_mean) / pop_std
+                        trait_zscores[feat] = float(z)
+
+                        # Percentile of cluster mean in population
+                        percentile = stats.percentileofscore(df[feat], cluster_mean)
+                        trait_rankings[feat] = float(percentile)
+                    else:
+                        trait_zscores[feat] = 0.0
+                        trait_rankings[feat] = 50.0
+                except (TypeError, ValueError) as e:
+                    # Skip columns that can't be processed numerically
+                    print(f"[CHARACTERIZER] Skipping non-numeric feature '{feat}': {e}")
+                    continue
             
             # Behavioral outcomes
             outcomes = {}
             for outcome in self.outcome_cols:
-                outcomes[outcome] = {
-                    'mean': float(cluster_data[outcome].mean()),
-                    'std': float(cluster_data[outcome].std()),
-                    'median': float(cluster_data[outcome].median())
-                }
+                # Only process numeric columns
+                if pd.api.types.is_numeric_dtype(df[outcome]):
+                    try:
+                        outcomes[outcome] = {
+                            'mean': float(cluster_data[outcome].mean()),
+                            'std': float(cluster_data[outcome].std()),
+                            'median': float(cluster_data[outcome].median())
+                        }
+                    except (TypeError, ValueError) as e:
+                        print(f"[CHARACTERIZER] Skipping outcome '{outcome}': {e}")
             
             # Risk level based on phishing click rate
             click_rate = float(cluster_data['phishing_click_rate'].mean()) if 'phishing_click_rate' in df.columns else 0.3
@@ -80,13 +107,19 @@ class ClusterCharacterizer:
             demographics = {}
             for demo in DEMOGRAPHIC_FEATURES:
                 if demo in df.columns:
-                    if df[demo].dtype == 'object':
-                        demographics[demo] = cluster_data[demo].value_counts(normalize=True).head(3).to_dict()
+                    # Use proper numeric type check
+                    if pd.api.types.is_numeric_dtype(df[demo]):
+                        try:
+                            demographics[demo] = {
+                                'mean': float(cluster_data[demo].mean()),
+                                'std': float(cluster_data[demo].std())
+                            }
+                        except (TypeError, ValueError):
+                            # Fallback to value counts if mean fails
+                            demographics[demo] = cluster_data[demo].value_counts(normalize=True).head(3).to_dict()
                     else:
-                        demographics[demo] = {
-                            'mean': float(cluster_data[demo].mean()),
-                            'std': float(cluster_data[demo].std())
-                        }
+                        # String/categorical column - use value counts
+                        demographics[demo] = cluster_data[demo].value_counts(normalize=True).head(3).to_dict()
             
             clusters[int(cluster_id)] = {
                 'cluster_id': int(cluster_id),

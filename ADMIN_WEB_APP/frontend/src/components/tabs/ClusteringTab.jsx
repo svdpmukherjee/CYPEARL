@@ -32,6 +32,7 @@ import {
   Layers,
   Brain,
   Loader2,
+  XCircle,
 } from "lucide-react";
 import {
   Card,
@@ -64,6 +65,8 @@ export const ClusteringTab = ({
   loading,
   onRunClustering,
   onOptimize,
+  onCancel,
+  operationType,
   clusteringResult,
   optimizationResult,
   normalizedWeights,
@@ -409,13 +412,95 @@ export const ClusteringTab = ({
                 disabled={loading}
                 className={`px-5 py-2 rounded-lg text-sm font-medium text-white transition-colors ${
                   loading
-                    ? "bg-gray-400 cursor-not-allowed"
+                    ? "bg-indigo-400 cursor-not-allowed"
                     : "bg-indigo-600 hover:bg-indigo-700"
                 }`}
               >
-                {loading ? "Running..." : "Run K-Sweep"}
+                {loading ? (
+                  <>
+                    <Loader2 className="inline animate-spin mr-2" size={14} />
+                    Analyzing...
+                  </>
+                ) : (
+                  "Run K-Sweep"
+                )}
               </button>
             </div>
+
+            {/* K-Sweep Loading Overlay */}
+            {loading && operationType === 'optimize' && (
+              <div className="mt-6 p-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                <div className="flex items-start gap-6">
+                  {/* Animated Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="relative w-16 h-16">
+                      <div className="absolute inset-0 border-4 border-indigo-200 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                      <TrendingUp className="absolute inset-0 m-auto text-indigo-600" size={24} />
+                    </div>
+                  </div>
+
+                  {/* Progress Info */}
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Finding Optimal Configuration...
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Testing {optConfig.algorithm === 'all' ? 'all algorithms' : ALGORITHM_NAMES[optConfig.algorithm]} across K = {optConfig.k_min} to {optConfig.k_max}
+                    </p>
+
+                    {/* Progress Steps */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
+                          <Loader2 className="text-white animate-spin" size={12} />
+                        </div>
+                        <span className="text-gray-700">Running clustering for each K value...</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-xs">2</span>
+                        </div>
+                        <span>Calculating quality metrics</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-xs">3</span>
+                        </div>
+                        <span>Computing composite scores</span>
+                      </div>
+                    </div>
+
+                    {/* Estimated Time & Cancel Button */}
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs text-indigo-600">
+                        <RefreshCw className="animate-spin" size={12} />
+                        <span>This may take 1-3 minutes on free tier servers</span>
+                      </div>
+                      {onCancel && (
+                        <button
+                          onClick={onCancel}
+                          className="px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg flex items-center gap-2 transition-colors"
+                        >
+                          <XCircle size={14} />
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Animated Progress Bar */}
+                <div className="mt-4 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600 rounded-full animate-pulse" style={{ width: '60%', animation: 'pulse 1.5s ease-in-out infinite, progressIndeterminate 2s ease-in-out infinite' }}></div>
+                </div>
+
+                {/* Console Tip */}
+                <div className="mt-3 text-xs text-gray-500 text-center">
+                  Open browser console (F12) to see detailed progress logs
+                </div>
+              </div>
+            )}
 
             <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-6 text-xs text-gray-500">
               <span className="font-medium">Current weights:</span>
@@ -750,6 +835,104 @@ export const ClusteringTab = ({
               </div>
             )}
           </Card>
+
+          {/* Clustering Loading Overlay */}
+          {loading && operationType === 'cluster' && !isGeneratingNames && (
+            <Card>
+              <div className="flex items-start gap-6 p-4">
+                {/* Animated Icon */}
+                <div className="flex-shrink-0">
+                  <div className="relative w-20 h-20">
+                    <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+                    <div className="absolute inset-2 border-4 border-purple-100 rounded-full"></div>
+                    <div className="absolute inset-2 border-4 border-purple-500 rounded-full border-b-transparent animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                    <Layers className="absolute inset-0 m-auto text-indigo-600" size={28} />
+                  </div>
+                </div>
+
+                {/* Progress Info */}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Running {ALGORITHM_NAMES[config.algorithm]} Clustering...
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Creating {config.k} clusters from your dataset
+                  </p>
+
+                  {/* Progress Steps */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+                        <Loader2 className="text-white animate-spin" size={16} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">Preprocessing Data</div>
+                        <div className="text-xs text-gray-500">Normalizing & applying PCA</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-sm text-gray-500">2</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-400">Fitting Model</div>
+                        <div className="text-xs text-gray-400">Assigning participants to clusters</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-sm text-gray-500">3</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-400">Calculating Metrics</div>
+                        <div className="text-xs text-gray-400">Silhouette, η², balance scores</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-sm text-gray-500">4</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-400">Characterizing Personas</div>
+                        <div className="text-xs text-gray-400">Extracting traits & behaviors</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar & Cancel */}
+                  <div className="mt-4">
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                        style={{
+                          width: '30%',
+                          animation: 'progressIndeterminate 2s ease-in-out infinite'
+                        }}
+                      ></div>
+                    </div>
+                    <div className="mt-2 flex justify-between items-center text-xs text-gray-500">
+                      <span>Processing... (may take 30-60s on free tier)</span>
+                      {onCancel && (
+                        <button
+                          onClick={onCancel}
+                          className="px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg flex items-center gap-2 transition-colors"
+                        >
+                          <XCircle size={14} />
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Console Tip */}
+                  <div className="mt-3 text-xs text-gray-400 text-center">
+                    Open browser console (F12) to see detailed progress logs
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* AI Name Generation Loading Overlay */}
           {isGeneratingNames && (

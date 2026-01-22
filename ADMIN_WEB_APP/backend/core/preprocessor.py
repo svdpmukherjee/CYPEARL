@@ -71,9 +71,24 @@ class DataPreprocessor:
         if features is None:
             all_features = GET_ALL_CLUSTERING_FEATURES()
             features = [f for f in all_features if f in df.columns]
-        self.feature_names = features
-        
-        X = df[features].copy()
+
+        # Filter to only numeric columns
+        numeric_features = [
+            f for f in features
+            if f in df.columns and pd.api.types.is_numeric_dtype(df[f])
+        ]
+
+        # Log any skipped non-numeric columns
+        skipped = [f for f in features if f not in numeric_features]
+        if skipped:
+            print(f"[PREPROCESSOR] Skipped non-numeric columns: {skipped}")
+
+        self.feature_names = numeric_features
+
+        if not numeric_features:
+            raise ValueError("No numeric features available for preprocessing")
+
+        X = df[numeric_features].copy()
         
         # Impute missing values
         self.imputer = SimpleImputer(strategy='median')

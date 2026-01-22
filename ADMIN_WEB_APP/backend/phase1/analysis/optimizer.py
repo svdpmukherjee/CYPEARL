@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import time
+import sys
 from typing import Dict, List, Any
 
 # Import Phase 1 specific config
@@ -49,16 +51,28 @@ class ClusteringOptimizer:
         """
         
         results = {}
-        
+        total_start = time.time()
+
         # 1. Preprocess (once)
+        print(f"[OPTIMIZER] Preprocessing {len(self.df)} samples with {len(self.feature_names)} features...")
+        sys.stdout.flush()
+
+        preprocess_start = time.time()
         # Update the preprocessor's config if it has one
         if hasattr(self.preprocessor, 'config'):
             self.preprocessor.config.use_pca = use_pca
-        
+
         X = self.preprocessor.fit_transform(self.df, self.feature_names, use_pca=use_pca)
-        
+        print(f"[OPTIMIZER] Preprocessing done in {time.time() - preprocess_start:.2f}s. Shape: {X.shape}")
+        sys.stdout.flush()
+
         # 2. Metrics Calculator
         metrics_calc = MetricsCalculator(self.df, OUTCOME_FEATURES)
+
+        total_iterations = len(algorithms) * (k_max - k_min + 1)
+        current_iteration = 0
+        print(f"[OPTIMIZER] Starting {total_iterations} iterations ({len(algorithms)} algorithms × {k_max - k_min + 1} K values)")
+        sys.stdout.flush()
         
         # Get config values with defaults
         random_state = getattr(self.config, 'random_state', 42)
@@ -72,16 +86,23 @@ class ClusteringOptimizer:
         # 3. Sweep
         for algo_name in algorithms:
             if algo_name not in ALGORITHMS:
+                print(f"[OPTIMIZER] Warning: Unknown algorithm '{algo_name}', skipping")
                 continue
-                
+
             algo = ALGORITHMS[algo_name]
             algo_results = []
-            
+            algo_start = time.time()
+            print(f"\n[OPTIMIZER] === Algorithm: {algo_name.upper()} ===")
+            sys.stdout.flush()
+
             for k in range(k_min, k_max + 1):
+                current_iteration += 1
+                iter_start = time.time()
+
                 try:
                     # Fit
                     labels = algo.fit_predict(X, k, random_state)
-                    
+
                     # Calculate Metrics
                     m = metrics_calc.calculate_all(X, labels, k)
                     
@@ -129,12 +150,25 @@ class ClusteringOptimizer:
                         'score_statistical': float(stat_score),
                     }
                     algo_results.append(result)
-                    
+
+                    iter_time = time.time() - iter_start
+                    progress_pct = (current_iteration / total_iterations) * 100
+                    print(f"[OPTIMIZER] {algo_name} K={k}: score={composite:.4f}, η²={m['eta_squared_mean']:.3f}, sil={m['silhouette']:.3f} ({iter_time:.2f}s) [{progress_pct:.0f}%]")
+                    sys.stdout.flush()
+
                 except Exception as e:
-                    print(f"Error for {algo_name} k={k}: {e}")
+                    print(f"[OPTIMIZER] ERROR for {algo_name} k={k}: {e}")
                     import traceback
                     traceback.print_exc()
-            
+
+            algo_time = time.time() - algo_start
+            print(f"[OPTIMIZER] {algo_name} completed: {len(algo_results)} results in {algo_time:.2f}s")
+            sys.stdout.flush()
+
             results[algo_name] = algo_results
-                
+
+        total_time = time.time() - total_start
+        print(f"\n[OPTIMIZER] All algorithms completed in {total_time:.2f}s")
+        sys.stdout.flush()
+
         return results

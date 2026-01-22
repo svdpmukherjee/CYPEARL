@@ -1265,37 +1265,58 @@ async def run_clustering(req: ClusteringRequest):
 @router.post("/optimize")
 async def optimize_clustering(req: OptimizationRequest):
     """Optimize clustering across K values and algorithms."""
+    import time
+    start_time = time.time()
+
+    print(f"\n{'='*60}")
+    print(f"[OPTIMIZE] Starting K-Sweep optimization")
+    print(f"[OPTIMIZE] Config: algorithm={req.algorithm}, K={req.k_min}-{req.k_max}, PCA={req.use_pca}")
+    print(f"{'='*60}")
+
     if state.participants is None:
+        print("[OPTIMIZE] ERROR: Data not loaded")
         raise HTTPException(status_code=400, detail="Data not loaded")
-    
+
+    print(f"[OPTIMIZE] Data loaded: {len(state.participants)} participants")
+
     try:
         from phase1.analysis.optimizer import ClusteringOptimizer
-        
+
         # Configure preprocessor
         state.preprocessor.config.use_pca = req.use_pca
         state.preprocessor.config.pca_variance = req.pca_variance
-        
+
         optimizer = ClusteringOptimizer(
             state.participants,
             state.preprocessor,
             state.preprocessor.feature_names or GET_ALL_CLUSTERING_FEATURES()
         )
-        
+
         # Determine algorithms
         if req.algorithm == "all":
             algos = list(ALGORITHMS.keys())
         else:
             algos = [req.algorithm]
-        
+
+        print(f"[OPTIMIZE] Running {len(algos)} algorithm(s): {algos}")
+        print(f"[OPTIMIZE] Testing K values from {req.k_min} to {req.k_max}")
+
         results = optimizer.optimize(algos, req.k_min, req.k_max, req.use_pca)
-        
+
         # Cache results
         state.optimization_cache = results
-        
+
+        elapsed = time.time() - start_time
+        print(f"\n{'='*60}")
+        print(f"[OPTIMIZE] COMPLETE in {elapsed:.2f}s")
+        print(f"[OPTIMIZE] Results: {len(results)} algorithms processed")
+        print(f"{'='*60}\n")
+
         return results
-        
+
     except Exception as e:
-        print(f"Error in optimization: {e}")
+        elapsed = time.time() - start_time
+        print(f"[OPTIMIZE] ERROR after {elapsed:.2f}s: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 

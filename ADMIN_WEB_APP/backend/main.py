@@ -87,8 +87,8 @@ app.include_router(
 # =============================================================================
 
 @app.get("/")
-def health_check():
-    """Health check endpoint."""
+def root():
+    """Root endpoint with service info."""
     return {
         "status": "healthy",
         "service": "CYPEARL Admin Portal",
@@ -100,12 +100,17 @@ def health_check():
                 "status": "active"
             },
             "phase2": {
-                "name": "AI Simulation", 
+                "name": "AI Simulation",
                 "endpoint": "/api/phase2",
                 "status": "active"
             }
         }
     }
+
+@app.get("/health")
+def health_check():
+    """Lightweight health check endpoint for uptime monitoring (e.g., UptimeRobot)."""
+    return {"status": "ok"}
 
 @app.get("/api")
 def api_info():

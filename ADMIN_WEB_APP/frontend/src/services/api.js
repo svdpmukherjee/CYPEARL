@@ -5,12 +5,16 @@
  */
 
 // Base URL for API requests
+// In production: use VITE_API_URL environment variable
 // In development with Vite proxy: use relative path '/api/phase1'
-// Without proxy: use full URL 'http://localhost:8000/api/phase1'
-const API_BASE = '/api/phase1';
+const API_BASE = import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api/phase1`
+    : '/api/phase1';
 
 // Fallback to direct backend URL if proxy doesn't work
-const BACKEND_URL = 'http://localhost:8000/api/phase1';
+const BACKEND_URL = import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api/phase1`
+    : 'http://localhost:8000/api/phase1';
 
 // Helper to determine which base URL to use
 let useDirectBackend = false;

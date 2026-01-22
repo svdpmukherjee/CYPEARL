@@ -31,3 +31,7 @@ app.include_router(router)
 @app.head("/")
 async def root():
     return {"message": "Email App Simulation API is running"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}

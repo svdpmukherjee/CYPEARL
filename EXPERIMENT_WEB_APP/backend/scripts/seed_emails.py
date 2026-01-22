@@ -30,7 +30,7 @@ DB_NAME = os.getenv("DB_NAME")
 #
 # UNKNOWN LEGITIMATE SENDERS (Fictional - for ethical reasons):
 #   - finregauthority.eu (Fictional financial regulator)
-#   - eurofinancecouncil.eu (Fictional EU finance organization)
+#   - eurofiscalsecretariat.eu (Fictional EU finance organization)
 #   - dataprivacyboard.eu (Fictional data protection authority)
 #   - favbizjournal.com (Fictional business media)
 #
@@ -51,7 +51,7 @@ async def seed():
         # EMAIL 0: WELCOME & INSTRUCTIONS (Non-experimental)
         # ============================================================
         {
-            "sender_name": "IRISC Lab - University of Luxembourg",
+            "sender_name": "IRiSC Lab - University of Luxembourg",
             "sender_email": "irisc@uni.lu",
             "subject": "Study Instructions: Email Decision Making Simulation",
             "body": """
@@ -126,15 +126,31 @@ async def seed():
                     <strong>💡 Remember:</strong> You can return to this email anytime to check the known sender list by clicking on it in your inbox.
                 </p>
                 
-                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">💰 Bonus Points</h3>
-                <p style="margin-bottom: 24px;">During this study, you can earn <strong>BONUS AMOUNT</strong> in addition to your base compensation (hidden until the end):</p>
-                <ul style="margin: 10px 0; margin-bottom: 24px;">
-                    <li><strong style="color: #2e7d32;">+5 Cents</strong> for clicking links in safe emails</li>
-                    <li><strong style="color: #d32f2f;">-5 Cents</strong> for clicking links in suspicious emails</li>
-                </ul>
-                <p style="background: #e3f2fd; padding: 10px; border-left: 4px solid #1976d2; margin-bottom: 24px;">
-                    <strong>💡 Tip:</strong> You must use your own judgment to decide which links are safe to click.
-                </p>
+                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">💰 Bonus Points & Rewards</h3>
+                <div style="background: linear-gradient(135deg, #f6f8fa 0%, #e9ecef 100%); border: 1px solid #d1d5db; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <p style="margin-top: 0; margin-bottom: 15px; font-weight: 500; color: #374151;">During this study, you can earn <strong>BONUS MONEY</strong> based on your decisions:</p>
+                    
+                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                        <div style="flex: 1; background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <div style="color: #059669; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Correct Action</div>
+                            <div style="font-size: 24px; font-weight: 800; color: #10b981; margin: 5px 0;">+ 5 Cents</div>
+                            <div style="font-size: 12px; color: #6b7280;">Clicking safe links</div>
+                        </div>
+                        
+                        <div style="flex: 1; background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #ef4444; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <div style="color: #b91c1c; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Risky Action</div>
+                            <div style="font-size: 24px; font-weight: 800; color: #ef4444; margin: 5px 0;">- 5 Cents</div>
+                            <div style="font-size: 12px; color: #6b7280;">Clicking phishing links</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #eff6ff; padding: 12px; border-radius: 6px; border: 1px solid #bfdbfe; display: flex; align-items: start;">
+                        <span style="font-size: 18px; margin-right: 10px;">💡</span>
+                        <div style="font-size: 14px; color: #1e40af;">
+                            <strong>Pro Tip:</strong> You must use your own judgment. Hover over links to preview URLs before clicking!
+                        </div>
+                    </div>
+                </div>
                 
                 <hr style="margin: 25px 0; border: none; border-top: 1px solid #ddd; margin-bottom: 24px;">
                 
@@ -143,7 +159,7 @@ async def seed():
                     Thank you for your participation!
                 </p>
                 
-                <p style="margin-bottom: 0;">Best regards,<br><strong>IRISC Research Team</strong><br>University of Luxembourg</p>
+                <p style="margin-bottom: 0;">Best regards,<br><strong>IRiSC Research Team</strong><br>University of Luxembourg</p>
             </div>
             """,
             "is_phishing": False,
@@ -215,16 +231,19 @@ async def seed():
                     <p><strong>Critical Security Notice for LuxConsultancy</strong></p>
                     <p>We detected unauthorized access attempts to your cloud storage:</p>
                     <ul>
-                        <li>IP Address: 185.220.101.xx (Tor Exit Node)</li>
+                        <li>IP Address: 185.220.101.23 (Tor Exit Node)</li>
                         <li>Location: Unknown</li>
                         <li>Attempts: 47 in the last hour</li>
                     </ul>
                     <p style="color: #d32f2f;"><strong>Your account will be suspended in 2 hours unless you verify your identity.</strong></p>
                 </div>
                 <div style="padding: 20px;">
+                    <style>
+                        .verify-btn:hover { background-color: #b71c1c !important; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p>To prevent data loss and service interruption:</p>
                     <p style="text-align: center;">
-                        <a href="http://securenebula-verify.net/emergency-auth" style="background: #d32f2f; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Verify Identity Now</a>
+                        <a href="http://securenebula-verify.net/emergency-auth" class="verify-btn" style="background: #d32f2f; color: white !important; padding: 15px 30px; text-decoration: none !important; border-radius: 4px; font-weight: bold; display: inline-block; transition: all 0.2s ease;">Verify Identity Now</a>
                     </p>
                     <p style="font-size: 12px; color: #666; margin-top: 20px;">If you did not request this verification, your credentials may already be compromised. Act immediately.</p>
                 </div>
@@ -234,16 +253,9 @@ async def seed():
             "order_id": 1,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "known", "urgency": "high", "framing": "threat"},
-            "email_type": "phishing",
-            "sender_familiarity": "known",
-            "urgency_level": "high",
-            "framing_type": "threat",
+
             "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "tactics": ["account_threat", "time_pressure", "fear_exploitation", "domain_spoofing"],
+
         },
 
         # ----------------------------------------------------------
@@ -263,24 +275,20 @@ async def seed():
                 <li>Misconfigured firewall rules allowing unauthorized outbound connections</li>
             </ol>
             <p><strong style="color: #d32f2f;">These issues must be addressed by end of day to maintain your compliance certification.</strong></p>
-            <p>I've prepared the remediation steps here: <a href="https://portal.lockgrid.com/clients/luxconsultancy/audit-2025-Q1" style="color: #0078d4;">View Audit Report & Remediation Guide</a></p>
+            <style>
+                .audit-link:hover { text-decoration: underline !important; color: #005a9e !important; }
+            </style>
+            <p>I've prepared the remediation steps here: <a href="https://portal.lockgrid.com/clients/luxconsultancy/audit-2025-Q1" class="audit-link" style="color: #0078d4; text-decoration: none; transition: color 0.2s ease;">View Audit Report & Remediation Guide</a></p>
             <p>Please confirm receipt and provide an ETA for fixes. I'm available for a call if needed.</p>
-            <p>Best regards,<br>Marcus Chen<br>Senior Security Consultant<br>LockGrid Solutions<br>Direct: +352 26 48 XX XX</p>
+            <p>Best regards,<br>Marcus Chen<br>Senior Security Consultant<br>LockGrid Solutions<br>Direct: +31 26 48 71 33</p>
             """,
             "is_phishing": False,
             "order_id": 2,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "high", "framing": "threat"},
-            "email_type": "legitimate",
-            "sender_familiarity": "known",
-            "urgency_level": "high",
-            "framing_type": "threat",
+
             "phishing_quality": None,
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["legitimate_urgency", "compliance_deadline", "professional_communication"],
+
         },
 
         # ----------------------------------------------------------
@@ -290,7 +298,7 @@ async def seed():
         {
             "sender_name": "SuperFinance Tax Services",
             "sender_email": "refunds@superfinance.org",
-            "subject": "ACTION REQUIRED: €4,750 Tax Refund Ready for LuxConsultancy",
+            "subject": "ACTION REQUIRED: Tax Refund for LuxConsultancy Employees",
             "body": """
             <div style="font-family: Arial, sans-serif; max-width: 600px;">
                 <div style="background: #2e7d32; color: white; padding: 15px;">
@@ -304,8 +312,11 @@ async def seed():
                     </div>
                     <p><strong>This refund must be claimed within 48 hours</strong> or it will be returned to the tax authority.</p>
                     <p>To process your refund, please verify your company banking details:</p>
+                    <style>
+                        .claim-btn:hover { background-color: #1b5e20 !important; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="http://superfinance-refunds.com/claim/luxconsultancy" style="background: #2e7d32; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Claim Your Refund</a>
+                        <a href="http://superfinance-refunds.com/claim/luxconsultancy" class="claim-btn" style="background: #2e7d32; color: white !important; padding: 15px 30px; text-decoration: none !important; border-radius: 4px; font-weight: bold; display: inline-block; transition: all 0.2s ease;">Claim Your Refund</a>
                     </p>
                     <p style="font-size: 12px; color: #666;">Reference: TXR-2024-LUX-4829</p>
                 </div>
@@ -315,16 +326,9 @@ async def seed():
             "order_id": 3,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "known", "urgency": "high", "framing": "reward"},
-            "email_type": "phishing",
-            "sender_familiarity": "known",
-            "urgency_level": "high",
-            "framing_type": "reward",
+
             "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "tactics": ["financial_reward", "urgency", "banking_info_request", "tld_spoofing"],
+
         },
 
         # ----------------------------------------------------------
@@ -350,14 +354,20 @@ async def seed():
                         <p style="margin: 0; color: #d32f2f;"><em>Offer expires: Tonight at 11:59 PM CET</em></p>
                     </div>
                     <p>Premium includes: Advanced market reports, competitor tracking, and priority support.</p>
+                    <style>
+                        .upgrade-btn:hover { background-color: #5a67d8 !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="https://trendyletter.com/upgrade/premium?ref=luxconsultancy" style="background: #667eea; color: white; padding: 15px 35px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Upgrade Now - Save 60%</a>
+                        <a href="https://trendyletter.com/upgrade/premium?ref=luxconsultancy" class="upgrade-btn" style="background: #667eea; color: white !important; padding: 15px 35px; text-decoration: none !important; border-radius: 4px; font-weight: bold; display: inline-block; transition: all 0.2s ease;">Upgrade Now - Save 60%</a>
                     </p>
                     <p style="font-size: 13px; color: #666; margin-top: 20px;">Questions? Reply to this email or call our support team.</p>
                 </div>
                 <div style="background: #f5f5f5; padding: 15px; font-size: 11px; color: #666; text-align: center;">
-                    <a href="https://trendyletter.com/unsubscribe" style="color: #666;">Unsubscribe</a> | 
-                    <a href="https://trendyletter.com/preferences" style="color: #666;">Preferences</a>
+                    <style>
+                        .footer-link:hover { text-decoration: underline !important; color: #333 !important; }
+                    </style>
+                    <a href="https://trendyletter.com/unsubscribe" class="footer-link" style="color: #666; text-decoration: none; transition: color 0.2s ease;">Unsubscribe</a> | 
+                    <a href="https://trendyletter.com/preferences" class="footer-link" style="color: #666; text-decoration: none; transition: color 0.2s ease;">Preferences</a>
                 </div>
             </div>
             """,
@@ -365,30 +375,23 @@ async def seed():
             "order_id": 4,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "high", "framing": "reward"},
-            "email_type": "legitimate",
-            "sender_familiarity": "known",
-            "urgency_level": "high",
-            "framing_type": "reward",
+
             "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["discount_offer", "time_limited", "legitimate_upsell"],
+
         },
 
         # ----------------------------------------------------------
         # 5. PHISHING | UNKNOWN | HIGH URGENCY | THREAT
-        # Unknown domain: eurobank-secure.net
+        # Unknown domain: euroinvestbank-secure.net
         # ----------------------------------------------------------
         {
-            "sender_name": "EuroBank Security",
-            "sender_email": "security-team@eurobank-secure.net",
+            "sender_name": "EuroInvestBank Security",
+            "sender_email": "security-team@euroinvestbank-secure.net",
             "subject": "ALERT: Suspicious Transaction on LuxConsultancy Corporate Account",
             "body": """
             <div style="font-family: Arial, sans-serif; max-width: 600px;">
                 <div style="background: #1a237e; color: white; padding: 15px;">
-                    <h2 style="margin: 0;">🔔 EuroBank Transaction Alert</h2>
+                    <h2 style="margin: 0;">🔔 EuroInvestBank Transaction Alert</h2>
                 </div>
                 <div style="padding: 20px; background: #ffebee; border: 2px solid #d32f2f;">
                     <p><strong>Suspicious Activity Detected</strong></p>
@@ -401,8 +404,11 @@ async def seed():
                 </div>
                 <div style="padding: 20px;">
                     <p>If you <strong>did not authorize</strong> this transfer, you must cancel it immediately:</p>
+                    <style>
+                        .cancel-btn:hover { background-color: #b71c1c !important; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="http://eurobank-verify.com/cancel-transaction/8472910" style="background: #d32f2f; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Cancel Transaction Now</a>
+                        <a href="http://euroinvestbank-verify.com/cancel-transaction/8472910" class="cancel-btn" style="background: #d32f2f; color: white !important; padding: 15px 30px; text-decoration: none !important; border-radius: 4px; font-weight: bold; display: inline-block; transition: all 0.2s ease;">Cancel Transaction Now</a>
                     </p>
                     <p style="font-size: 12px; color: #666;">This transaction will auto-complete in <strong>30 minutes</strong> if not cancelled.</p>
                 </div>
@@ -412,16 +418,9 @@ async def seed():
             "order_id": 5,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "high", "framing": "threat"},
-            "email_type": "phishing",
-            "sender_familiarity": "unknown",
-            "urgency_level": "high",
-            "framing_type": "threat",
+
             "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "tactics": ["financial_threat", "fake_transaction", "extreme_urgency", "bank_impersonation"],
+
         },
 
         # ----------------------------------------------------------
@@ -448,7 +447,10 @@ async def seed():
                         <li>Suspicious activity reporting log (Q4 2024)</li>
                     </ul>
                     <p><strong style="color: #d32f2f;">These documents must be submitted within 5 business days to avoid regulatory penalties.</strong></p>
-                    <p>Submit via our secure portal: <a href="https://portal.finregauthority.eu/regulated-entities/document-submission" style="color: #0078d4;">Document Submission Portal</a></p>
+                    <style>
+                        .portal-link:hover { text-decoration: underline !important; color: #005a9e !important; }
+                    </style>
+                    <p>Submit via our secure portal: <a href="https://portal.finregauthority.eu/regulated-entities/document-submission" class="portal-link" style="color: #0078d4; text-decoration: none; transition: color 0.2s ease;">Document Submission Portal</a></p>
                     <p>For questions, contact our compliance hotline: +352 26 251-1</p>
                     <p>Regards,<br>FinReg Authority Compliance Office<br>110, route d'Arlon<br>L-1150 Paris</p>
                 </div>
@@ -458,16 +460,9 @@ async def seed():
             "order_id": 6,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "high", "framing": "threat"},
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown",
-            "urgency_level": "high",
-            "framing_type": "threat",
+
             "phishing_quality": None,
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["regulatory_compliance", "legitimate_deadline", "official_communication"],
+
         },
 
         # ----------------------------------------------------------
@@ -490,8 +485,11 @@ async def seed():
                         <h3 style="margin: 0; color: #ff8c00;">Best Consulting Firm - Innovation</h3>
                     </div>
                     <p>To confirm your nomination and secure your place at the awards ceremony, please complete your company profile:</p>
+                    <style>
+                        .confirm-btn:hover { background-color: #ffd700 !important; filter: brightness(0.95); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="http://lux-business-awards.com/nominees/confirm/luxconsultancy" style="background: #ffd700; color: #1a1a1a; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Confirm Nomination</a>
+                        <a href="http://lux-business-awards.com/nominees/confirm/luxconsultancy" class="confirm-btn" style="background: #ffd700; color: #1a1a1a !important; padding: 15px 30px; text-decoration: none !important; border-radius: 4px; font-weight: bold; display: inline-block; transition: all 0.2s ease;">Confirm Nomination</a>
                     </p>
                     <p style="color: #d32f2f; font-size: 14px;"><strong>Deadline: 48 hours</strong> - Unconfirmed nominations will be withdrawn.</p>
                     <p style="font-size: 12px; color: #666;">Includes VIP tickets to the Grand Ballroom ceremony on March 15th.</p>
@@ -502,35 +500,28 @@ async def seed():
             "order_id": 7,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "high", "framing": "reward"},
-            "email_type": "phishing",
-            "sender_familiarity": "unknown",
-            "urgency_level": "high",
-            "framing_type": "reward",
+
             "phishing_quality": "high",
-            "has_aggressive_content": True,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": False,
-            "tactics": ["fake_award", "flattery", "prestige_exploitation", "false_deadline"],
+
         },
 
         # ----------------------------------------------------------
         # 8. LEGITIMATE | UNKNOWN | HIGH URGENCY | REWARD
-        # Unknown but legitimate: eurofinancecouncil.eu (FICTIONAL EU org)
+        # Unknown but legitimate: eurofiscalsecretariat.eu (FICTIONAL EU org)
         # ----------------------------------------------------------
         {
-            "sender_name": "EuroFinance Council Secretariat",
-            "sender_email": "conferences@eurofinancecouncil.eu",
+            "sender_name": "European Fiscal Affairs Secretariat",
+            "sender_email": "conferences@eurofiscalsecretariat.eu",
             "subject": "Final Reminder: Complimentary Registration - FinTech Innovation Summit",
             "body": """
             <div style="font-family: Arial, sans-serif; max-width: 800px;">
                 <div style="background: #003399; color: white; padding: 15px;">
-                    <h2 style="margin: 0;">EuroFinance Council</h2>
+                    <h2 style="margin: 0;">European Fiscal Affairs Secretariat</h2>
                     <p style="margin: 5px 0 0 0;">FinTech & Innovation Summit 2025</p>
                 </div>
                 <div style="padding: 25px;">
                     <p>Dear Industry Partner,</p>
-                    <p>As a recognized consulting firm in the Paris financial sector, LuxConsultancy is invited to attend the <strong>EuroFinance Council FinTech & Innovation Summit 2025</strong>.</p>
+                    <p>As a recognized consulting firm in the Paris financial sector, LuxConsultancy is invited to attend the <strong>European Fiscal Affairs Secretariat FinTech & Innovation Summit 2025</strong>.</p>
                     <div style="background: #e8f4fc; padding: 15px; margin: 20px 0; border-left: 4px solid #003399;">
                         <p style="margin: 0;"><strong>Date:</strong> February 20-21, 2025</p>
                         <p style="margin: 5px 0;"><strong>Venue:</strong> European Convention Center, Frankfurt</p>
@@ -543,8 +534,11 @@ async def seed():
                         <li>Cross-border Payment Innovations</li>
                     </ul>
                     <p style="color: #d32f2f;"><strong>Registration closes: Tomorrow, 6 PM CET</strong></p>
+                    <style>
+                        .register-btn:hover { background-color: #002266 !important; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="https://www.eurofinancecouncil.eu/events/fintech-summit-2025/registration" style="background: #003399; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Register Now</a>
+                        <a href="https://www.eurofiscalsecretariat.eu/events/fintech-summit-2025/registration" class="register-btn" style="background: #003399; color: white !important; padding: 15px 30px; text-decoration: none !important; border-radius: 4px; font-weight: bold; display: inline-block; transition: all 0.2s ease;">Register Now</a>
                     </p>
                     <p style="font-size: 12px; color: #666;">Limited to 2 representatives per organization.</p>
                 </div>
@@ -554,16 +548,9 @@ async def seed():
             "order_id": 8,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "high", "framing": "reward"},
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown",
-            "urgency_level": "high",
-            "framing_type": "reward",
+
             "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["legitimate_event", "professional_opportunity", "institutional_invitation"],
+
         },
 
         # ----------------------------------------------------------
@@ -584,7 +571,10 @@ async def seed():
                 <li>Session tokens will expire</li>
             </ul>
             <p>To ensure uninterrupted access to your security dashboard, please update your credentials before the maintenance window:</p>
-            <p><a href="http://lockgrid-portal.net/credential-update" style="color: #0078d4;">Update Your Credentials</a></p>
+            <style>
+                .update-cred-link:hover { color: #003a70 !important; text-decoration-thickness: 2px !important; }
+            </style>
+            <p><a href="http://lockgrid-portal.net/credential-update" class="update-cred-link" style="color: #0078d4 !important; text-decoration: underline !important; transition: all 0.2s ease;">Update Your Credentials</a></p>
             <p>This is a routine maintenance procedure. If you don't update by next Friday, you may experience temporary access issues.</p>
             <p>Thank you for being a valued client.</p>
             <p>LockGrid Customer Success Team<br>support@lockgrid.net</p>
@@ -593,16 +583,9 @@ async def seed():
             "order_id": 9,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "known", "urgency": "low", "framing": "threat"},
-            "email_type": "phishing",
-            "sender_familiarity": "known",
-            "urgency_level": "low",
-            "framing_type": "threat",
+
             "phishing_quality": "medium",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "tactics": ["maintenance_pretext", "credential_harvesting", "tld_spoofing"],
+
         },
 
         # ----------------------------------------------------------
@@ -622,24 +605,20 @@ async def seed():
                 <li>New carbon footprint disclosure templates (effective Q2)</li>
                 <li>Updated Taxonomy alignment thresholds</li>
             </ul>
-            <p>I've put together a summary document for the LuxConsultancy team: <a href="https://docs.greenenvi.com/shared/compliance-update-2025" style="color: #0078d4;">2025 Compliance Summary</a></p>
+            <style>
+                .doc-link:hover { text-decoration: underline !important; color: #005a9e !important; }
+            </style>
+            <p>I've put together a summary document for the LuxConsultancy team: <a href="https://docs.greenenvi.com/shared/compliance-update-2025" class="doc-link" style="color: #0078d4; text-decoration: none; transition: color 0.2s ease;">2025 Compliance Summary</a></p>
             <p>No immediate action needed, but it would be good to review this before our next project kickoff. Happy to discuss on our monthly call.</p>
-            <p>Best,<br>Sophie Laurent<br>Sustainability Consultant<br>GreenEnvi Solutions<br>+352 621 XXX XXX</p>
+            <p>Best,<br>Sophie Laurent<br>Sustainability Consultant<br>GreenEnvi Solutions<br>+31 621 319 888</p>
             """,
             "is_phishing": False,
             "order_id": 10,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "low", "framing": "threat"},
-            "email_type": "legitimate",
-            "sender_familiarity": "known",
-            "urgency_level": "low",
-            "framing_type": "threat",
+
             "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["informational_update", "professional_networking", "regulatory_awareness"],
+
         },
 
         # ----------------------------------------------------------
@@ -664,7 +643,10 @@ async def seed():
                         <p style="margin: 5px 0 0 0;">Unlimited referrals • Quarterly payouts • No minimum</p>
                     </div>
                     <p>To activate your partner account and start earning:</p>
-                    <p><a href="http://wattvoltbridge-partners.com/activate" style="color: #4caf50; font-weight: bold;">Activate Partner Account →</a></p>
+                    <style>
+                        .activate-link:hover { color: #2e7d32 !important; text-decoration: underline !important; }
+                    </style>
+                    <p><a href="http://wattvoltbridge-partners.com/activate" class="activate-link" style="color: #4caf50 !important; font-weight: bold; text-decoration: underline !important; transition: color 0.2s ease;">Activate Partner Account →</a></p>
                     <p>Simply provide your banking details to receive direct deposits.</p>
                     <p>Looking forward to strengthening our partnership!</p>
                     <p>WattVoltBridge Partnership Team</p>
@@ -675,16 +657,9 @@ async def seed():
             "order_id": 11,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "known", "urgency": "low", "framing": "reward"},
-            "email_type": "phishing",
-            "sender_familiarity": "known",
-            "urgency_level": "low",
-            "framing_type": "reward",
+
             "phishing_quality": "medium",
-            "has_aggressive_content": False,
-            "has_spelling_errors": True,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": True,
-            "tactics": ["referral_bonus", "banking_info_request", "typosquatting"],
+
         },
 
         # ----------------------------------------------------------
@@ -720,9 +695,12 @@ async def seed():
                     </table>
                     <div style="background: #e3f2fd; padding: 15px; margin: 15px 0; border-left: 4px solid #1976d2;">
                         <p style="margin: 0;"><strong>🎁 Loyalty Bonus:</strong> You've earned <strong>5 free training credits</strong> for your team!</p>
-                        <p style="margin: 5px 0 0 0;"><a href="https://academy.securenebula.com/redeem?org=luxconsultancy" style="color: #1976d2;">Redeem Training Credits</a></p>
+                        <style>
+                            .link-blue:hover { text-decoration: underline !important; color: #0d47a1 !important; }
+                        </style>
+                        <p style="margin: 5px 0 0 0;"><a href="https://academy.securenebula.com/redeem?org=luxconsultancy" class="link-blue" style="color: #1976d2; text-decoration: none; transition: color 0.2s ease;">Redeem Training Credits</a></p>
                     </div>
-                    <p>Full report: <a href="https://dashboard.securenebula.com/reports/jan-2025" style="color: #1976d2;">View Detailed Analytics</a></p>
+                    <p>Full report: <a href="https://dashboard.securenebula.com/reports/jan-2025" class="link-blue" style="color: #1976d2; text-decoration: none; transition: color 0.2s ease;">View Detailed Analytics</a></p>
                     <p>Questions? Reach out anytime.</p>
                     <p>Best,<br>SecureNebula Customer Success</p>
                 </div>
@@ -732,16 +710,9 @@ async def seed():
             "order_id": 12,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "known", "urgency": "low", "framing": "reward"},
-            "email_type": "legitimate",
-            "sender_familiarity": "known",
-            "urgency_level": "low",
-            "framing_type": "reward",
+
             "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["account_summary", "loyalty_reward", "routine_communication"],
+
         },
 
         # ----------------------------------------------------------
@@ -764,7 +735,10 @@ async def seed():
                 <li>Scope: Data processing activities, consent management, breach notification procedures</li>
             </ul>
             <p>To prepare for the audit, please complete your pre-audit questionnaire:</p>
-            <p><a href="http://gdpr-audit-portal.eu/pre-assessment/luxconsultancy" style="color: #0078d4;">Complete Pre-Audit Questionnaire</a></p>
+            <style>
+                .audit-q-link:hover { text-decoration: underline !important; color: #005a9e !important; }
+            </style>
+            <p><a href="http://gdpr-audit-portal.eu/pre-assessment/luxconsultancy" class="audit-q-link" style="color: #0078d4; text-decoration: none; transition: color 0.2s ease;">Complete Pre-Audit Questionnaire</a></p>
             <p>Failure to complete this questionnaire may result in an on-site audit requirement.</p>
             <p>For questions, contact our audit coordination team.</p>
             <p>EU-IT Compliance Bureau<br>audit@it-compliance-eu.net</p>
@@ -773,16 +747,9 @@ async def seed():
             "order_id": 13,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "low", "framing": "threat"},
-            "email_type": "phishing",
-            "sender_familiarity": "unknown",
-            "urgency_level": "low",
-            "framing_type": "threat",
+
             "phishing_quality": "medium",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": False,
-            "tactics": ["fake_authority", "audit_pretext", "compliance_fear"],
+
         },
 
         # ----------------------------------------------------------
@@ -808,12 +775,18 @@ async def seed():
                         <li>Updated DPIA template for high-risk activities</li>
                         <li>New recommendations on international data transfers post-adequacy decisions</li>
                     </ul>
-                    <p>Access the updated resources: <a href="https://dataprivacyboard.eu/professionals/guides-2025.html" style="color: #0078d4;">Guidelines Portal</a></p>
+                    <style>
+                        .guide-link:hover { text-decoration: underline !important; color: #005a9e !important; }
+                    </style>
+                    <p>Access the updated resources: <a href="https://dataprivacyboard.eu/professionals/guides-2025.html" class="guide-link" style="color: #0078d4; text-decoration: none; transition: color 0.2s ease;">Guidelines Portal</a></p>
                     <p>These guidelines are informational and do not require immediate action. We encourage all data controllers to review at their convenience.</p>
                     <p>DataPrivacy Board<br>15, Boulevard du Jazz<br>L-4370 Belvaux</p>
                 </div>
                 <div style="background: #f5f5f5; padding: 10px; font-size: 11px; color: #666; text-align: center;">
-                    <a href="https://dataprivacyboard.eu/unsubscribe" style="color: #666;">Unsubscribe from newsletter</a>
+                    <style>
+                        .footer-link-14:hover { text-decoration: underline !important; color: #333 !important; }
+                    </style>
+                    <a href="https://dataprivacyboard.eu/unsubscribe" class="footer-link-14" style="color: #666; text-decoration: none; transition: color 0.2s ease;">Unsubscribe from newsletter</a>
                 </div>
             </div>
             """,
@@ -821,16 +794,9 @@ async def seed():
             "order_id": 14,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "low", "framing": "threat"},
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown",
-            "urgency_level": "low",
-            "framing_type": "threat",
+
             "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["regulatory_newsletter", "informational_update", "official_guidance"],
+
         },
 
         # ----------------------------------------------------------
@@ -859,8 +825,11 @@ async def seed():
                         <li>Technology adoption trends</li>
                         <li>Client relationship management</li>
                     </ul>
+                    <style>
+                        .survey-btn:hover { background-color: #f57c00 !important; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="http://business-research-eu.com/survey/consulting-trends-2025" style="background: #ff9800; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; display: inline-block;">Start Survey →</a>
+                        <a href="http://business-research-eu.com/survey/consulting-trends-2025" class="survey-btn" style="background: #ff9800; color: white !important; padding: 12px 25px; text-decoration: none !important; border-radius: 4px; display: inline-block; transition: all 0.2s ease;">Start Survey →</a>
                     </p>
                     <p style="font-size: 12px; color: #666;">Gift card sent via email within 48 hours of completion.</p>
                 </div>
@@ -870,16 +839,9 @@ async def seed():
             "order_id": 15,
             "experimental": True,
             "factorial_category": {"type": "phishing", "sender": "unknown", "urgency": "low", "framing": "reward"},
-            "email_type": "phishing",
-            "sender_familiarity": "unknown",
-            "urgency_level": "low",
-            "framing_type": "reward",
+
             "phishing_quality": "low",
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": True,
-            "requests_sensitive_info": False,
-            "tactics": ["survey_scam", "gift_card_lure", "generic_targeting"],
+
         },
 
         # ----------------------------------------------------------
@@ -901,7 +863,7 @@ async def seed():
                     <p>You're invited to our exclusive <strong>CEO Networking Breakfast</strong>:</p>
                     <div style="background: #fce4ec; padding: 15px; margin: 15px 0; border-left: 4px solid #e91e63;">
                         <p style="margin: 0;"><strong>Topic:</strong> "Europe as a FinTech Hub: What's Next?"</p>
-                        <p style="margin: 5px 0;"><strong>Date:</strong> February 28, 2025 | 8:00 - 10:00 AM</p>
+                        <p style="margin: 5px 0;"><strong>Date:</strong> October 28, 2026 | 8:00 - 10:00 AM</p>
                         <p style="margin: 0;"><strong>Venue:</strong> Hotel Le Royal, Paris</p>
                     </div>
                     <p><strong>Featured speakers:</strong></p>
@@ -911,14 +873,20 @@ async def seed():
                         <li>Jean-Pierre Martin, Partner, Leading Consulting Firm</li>
                     </ul>
                     <p><strong>Registration is free</strong> for FavBiz Journal Club members and partner organizations.</p>
+                    <style>
+                        .register-event-btn:hover { background-color: #c2185b !important; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+                    </style>
                     <p style="text-align: center;">
-                        <a href="https://club.favbizjournal.com/events/ceo-breakfast-feb2025" style="background: #e91e63; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; display: inline-block;">Register Now</a>
+                        <a href="https://club.favbizjournal.com/events/ceo-breakfast-feb2025" class="register-event-btn" style="background: #e91e63; color: white !important; padding: 12px 25px; text-decoration: none !important; border-radius: 4px; display: inline-block; transition: all 0.2s ease;">Register Now</a>
                     </p>
                     <p style="font-size: 12px; color: #666;">Limited to 40 participants. Early registration recommended.</p>
                 </div>
                 <div style="background: #f5f5f5; padding: 10px; font-size: 11px; color: #666; text-align: center;">
                     FavBiz Journal Club | 10 rue des Gaulois, L-1618 Paris<br>
-                    <a href="https://club.favbizjournal.com/unsubscribe" style="color: #666;">Manage preferences</a>
+                    <style>
+                        .footer-link-16:hover { text-decoration: underline !important; color: #333 !important; }
+                    </style>
+                    <a href="https://club.favbizjournal.com/unsubscribe" class="footer-link-16" style="color: #666; text-decoration: none; transition: color 0.2s ease;">Manage preferences</a>
                 </div>
             </div>
             """,
@@ -926,16 +894,9 @@ async def seed():
             "order_id": 16,
             "experimental": True,
             "factorial_category": {"type": "legitimate", "sender": "unknown", "urgency": "low", "framing": "reward"},
-            "email_type": "legitimate",
-            "sender_familiarity": "unknown",
-            "urgency_level": "low",
-            "framing_type": "reward",
+
             "phishing_quality": None,
-            "has_aggressive_content": False,
-            "has_spelling_errors": False,
-            "has_suspicious_url": False,
-            "requests_sensitive_info": False,
-            "tactics": ["networking_event", "professional_opportunity", "local_business_media"],
+
         },
     ]
     
@@ -952,7 +913,7 @@ async def seed():
     print("  - wattvoltbrdige.com (typosquatting)")
     print("\nUnknown LEGITIMATE domains (fictional):")
     print("  - finregauthority.eu (Financial Regulatory Authority)")
-    print("  - eurofinancecouncil.eu (EuroFinance Council)")
+    print("  - eurofiscalsecretariat.eu (European Fiscal Affairs Secretariat)")
     print("  - dataprivacyboard.eu (DataPrivacy Board)")
     print("  - favbizjournal.com (FavBiz Journal)")
     print("\nTotal: 17 emails (1 welcome + 16 experimental)")

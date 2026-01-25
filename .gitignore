@@ -209,5 +209,7 @@ __marimo__/
 .DS_Store
 
 Screenshots/
+data_collection_instruments/
+ADMIN_WEB_APP/data
 ADMIN_WEB_APP/backend/data
 ADMIN_WEB_APP/backend/outputs

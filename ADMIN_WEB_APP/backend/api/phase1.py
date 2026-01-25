@@ -33,6 +33,7 @@ load_dotenv()
 # Core logic imports
 from core.data_loader import DataLoader
 from core.preprocessor import DataPreprocessor
+from core.s3_loader import s3_loader
 from phase1.algorithms.clustering import ALGORITHMS
 from phase1.metrics.calculator import MetricsCalculator
 from phase1.characterization.characterizer import ClusterCharacterizer
@@ -62,11 +63,10 @@ class AppState:
 
 state = AppState()
 
-# Data paths - update these for your environment
+# Data paths - local fallback for development
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 PARTICIPANTS_PATH = DATA_DIR / "phishing_study_participants.csv"
-# Use updated responses CSV with qualitative fields (details_noticed, steps_taken, etc.)
-RESPONSES_PATH = DATA_DIR / "phishing_study_responses_updated.csv"
+RESPONSES_PATH = DATA_DIR / "phishing_study_responses.csv"
 EMAIL_STIMULI_PATH = DATA_DIR / "email_stimuli.csv"
 
 # =============================================================================
@@ -75,40 +75,41 @@ EMAIL_STIMULI_PATH = DATA_DIR / "email_stimuli.csv"
 
 @router.on_event("startup")
 async def startup_event():
-    """Load data on startup."""
+    """Load data on startup from S3 or local files."""
     try:
-        loader = DataLoader(str(PARTICIPANTS_PATH), str(RESPONSES_PATH))
-        state.participants, state.responses = loader.load()
+        # Try S3 first, fallback to local files
+        # S3 loader automatically handles fallback
+        state.participants, state.responses = s3_loader.load_study_data()
+        state.email_stimuli = s3_loader.load_email_stimuli()
         state.preprocessor = DataPreprocessor()
-        
-        if EMAIL_STIMULI_PATH.exists():
-            state.email_stimuli = pd.read_csv(EMAIL_STIMULI_PATH)
-            
-            # Merge email attributes into responses if both exist
-            # Only merge if responses doesn't already have these columns
-            if state.responses is not None and state.email_stimuli is not None:
-                # Check which columns from email_stimuli are missing in responses
-                email_cols_to_merge = []
-                base_cols = ['email_type', 'sender_familiarity', 'urgency_level', 
-                             'framing_type', 'content_domain', 'has_aggressive_content', 
-                             'has_spelling_errors', 'has_suspicious_url', 'requests_sensitive_info', 
-                             'ground_truth', 'phishing_quality', 'subject_line']
-                
-                for col in base_cols:
-                    if col not in state.responses.columns and col in state.email_stimuli.columns:
-                        email_cols_to_merge.append(col)
-                
-                if email_cols_to_merge:
-                    # Only merge the missing columns
-                    merge_cols = ['email_id'] + email_cols_to_merge
-                    email_attrs = state.email_stimuli[merge_cols].drop_duplicates('email_id')
-                    state.responses = state.responses.merge(email_attrs, on='email_id', how='left')
-                    print(f"✓ Merged {len(email_cols_to_merge)} email attributes: {', '.join(email_cols_to_merge)}")
-                else:
-                    print(f"✓ Email attributes already present in responses, skipping merge")
 
-        
-        print(f"✓ Loaded {len(state.participants)} participants")
+        # If S3 failed and local DataLoader is needed
+        if state.participants is None or len(state.participants) == 0:
+            print("Trying local DataLoader as fallback...")
+            loader = DataLoader(str(PARTICIPANTS_PATH), str(RESPONSES_PATH))
+            state.participants, state.responses = loader.load()
+
+        # Merge email attributes into responses if both exist
+        if state.responses is not None and state.email_stimuli is not None and len(state.email_stimuli) > 0:
+            # Check which columns from email_stimuli are missing in responses
+            email_cols_to_merge = []
+            base_cols = ['email_type', 'sender_familiarity', 'urgency_level',
+                         'framing_type', 'ground_truth', 'phishing_quality', 'subject_line']
+
+            for col in base_cols:
+                if col not in state.responses.columns and col in state.email_stimuli.columns:
+                    email_cols_to_merge.append(col)
+
+            if email_cols_to_merge:
+                merge_cols = ['email_id'] + email_cols_to_merge
+                email_attrs = state.email_stimuli[merge_cols].drop_duplicates('email_id')
+                state.responses = state.responses.merge(email_attrs, on='email_id', how='left')
+                print(f"✓ Merged {len(email_cols_to_merge)} email attributes: {', '.join(email_cols_to_merge)}")
+            else:
+                print(f"✓ Email attributes already present in responses")
+
+        print(f"✓ Data source: {s3_loader.get_data_source()}")
+        print(f"✓ Loaded {len(state.participants) if state.participants is not None else 0} participants")
         if state.responses is not None:
             print(f"✓ Loaded {len(state.responses)} responses")
         if state.email_stimuli is not None:
@@ -116,6 +117,61 @@ async def startup_event():
     except Exception as e:
         print(f"⚠ Warning: Could not load default data on startup: {e}")
         traceback.print_exc()
+
+# =============================================================================
+# DATA REFRESH ENDPOINT
+# =============================================================================
+
+@router.post("/refresh-data")
+async def refresh_data():
+    """
+    Refresh data from S3 (or local fallback).
+    Call this after new participants complete the experiment to reload latest data.
+    """
+    try:
+        state.participants, state.responses = s3_loader.refresh()
+        state.email_stimuli = s3_loader.load_email_stimuli()
+
+        # Re-merge email attributes if needed
+        if state.responses is not None and state.email_stimuli is not None and len(state.email_stimuli) > 0:
+            base_cols = ['email_type', 'sender_familiarity', 'urgency_level',
+                         'framing_type', 'ground_truth', 'phishing_quality', 'subject_line']
+            email_cols_to_merge = [col for col in base_cols
+                                   if col not in state.responses.columns
+                                   and col in state.email_stimuli.columns]
+            if email_cols_to_merge:
+                merge_cols = ['email_id'] + email_cols_to_merge
+                email_attrs = state.email_stimuli[merge_cols].drop_duplicates('email_id')
+                state.responses = state.responses.merge(email_attrs, on='email_id', how='left')
+
+        return {
+            "status": "success",
+            "data_source": s3_loader.get_data_source(),
+            "participants": len(state.participants) if state.participants is not None else 0,
+            "responses": len(state.responses) if state.responses is not None else 0,
+            "email_stimuli": len(state.email_stimuli) if state.email_stimuli is not None else 0
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@router.get("/data-source")
+async def get_data_source():
+    """
+    Get detailed information about the current data source (S3 or local).
+    Useful for debugging and verifying S3 connectivity.
+    """
+    loader_status = s3_loader.get_status()
+
+    return {
+        **loader_status,
+        "data_loaded": {
+            "participants": len(state.participants) if state.participants is not None else 0,
+            "responses": len(state.responses) if state.responses is not None else 0,
+            "email_stimuli": len(state.email_stimuli) if state.email_stimuli is not None else 0
+        }
+    }
+
 
 # =============================================================================
 # REQUEST/RESPONSE MODELS - Extended
@@ -503,63 +559,66 @@ async def get_aggressive_content_analysis():
     if state.responses is None:
         raise HTTPException(status_code=400, detail="Responses data not loaded")
     
-    if 'has_aggressive_content' not in state.responses.columns:
-        return {"error": "has_aggressive_content column not found"}
-    
+    # Use framing_type (threat/reward) from factorial design instead of separate has_aggressive_content
+    if 'framing_type' not in state.responses.columns:
+        return {"error": "framing_type column not found - required for emotional susceptibility analysis"}
+
     labels = state.last_run_result.get('_labels')
     participants = state.participants.copy()
     participants['cluster'] = labels
-    
+
     responses = state.responses.merge(
         participants[['participant_id', 'cluster']],
         on='participant_id',
         how='inner'
     )
-    
+
     # Filter to phishing only
     if 'email_type' in responses.columns:
         phishing = responses[responses['email_type'] == 'phishing']
     else:
         phishing = responses
-    
+
     n_clusters = len(np.unique(labels))
-    
-    # Compare aggressive vs non-aggressive
+
+    # Compare threat-framed (emotional manipulation) vs reward-framed emails
     analysis = {}
     for cluster_id in range(n_clusters):
         cluster_data = phishing[phishing['cluster'] == cluster_id]
-        
-        aggressive = cluster_data[cluster_data['has_aggressive_content'] == True]
-        non_aggressive = cluster_data[cluster_data['has_aggressive_content'] == False]
-        
-        agg_click_rate = aggressive['clicked'].mean() if len(aggressive) > 0 else 0
-        non_agg_click_rate = non_aggressive['clicked'].mean() if len(non_aggressive) > 0 else 0
-        
-        effect = agg_click_rate - non_agg_click_rate
-        
+
+        # Threat framing = emotional manipulation tactic
+        threat_framed = cluster_data[cluster_data['framing_type'] == 'threat']
+        reward_framed = cluster_data[cluster_data['framing_type'] == 'reward']
+
+        threat_click_rate = threat_framed['clicked'].mean() if len(threat_framed) > 0 else 0
+        reward_click_rate = reward_framed['clicked'].mean() if len(reward_framed) > 0 else 0
+
+        # Effect = difference in susceptibility (threat vs reward framing)
+        effect = threat_click_rate - reward_click_rate
+
         analysis[cluster_id] = {
-            "n_aggressive": len(aggressive),
-            "n_non_aggressive": len(non_aggressive),
-            "aggressive_click_rate": float(agg_click_rate),
-            "non_aggressive_click_rate": float(non_agg_click_rate),
-            "effect_size": float(effect),
+            "n_threat_framed": len(threat_framed),
+            "n_reward_framed": len(reward_framed),
+            "threat_click_rate": float(threat_click_rate),
+            "reward_click_rate": float(reward_click_rate),
+            "framing_effect_size": float(effect),
             "susceptibility": "high" if effect > 0.1 else "moderate" if effect > 0.05 else "low"
         }
-    
-    # Identify most susceptible clusters
+
+    # Identify clusters most susceptible to threat framing
     most_susceptible = sorted(
-        analysis.items(), 
-        key=lambda x: x[1]['effect_size'], 
+        analysis.items(),
+        key=lambda x: x[1]['framing_effect_size'],
         reverse=True
     )[:3]
-    
+
     return {
         "by_cluster": analysis,
-        "most_susceptible_to_aggressive": [
-            {"cluster": c, "effect": a['effect_size']} 
+        "most_susceptible_to_threat_framing": [
+            {"cluster": c, "effect": a['framing_effect_size']}
             for c, a in most_susceptible
         ],
-        "boundary_condition_note": "Clusters highly susceptible to emotional manipulation may be difficult for AI to simulate"
+        "boundary_condition_note": "Clusters highly susceptible to threat framing (emotional manipulation) may be difficult for AI to simulate"
     }
 
 # =============================================================================
@@ -721,6 +780,112 @@ async def get_all_persona_labels():
         "labels": state.persona_labels,
         "n_labeled": len(state.persona_labels)
     }
+
+
+# =============================================================================
+# NEW ENDPOINT: HIERARCHICAL PERSONA TAXONOMY
+# =============================================================================
+
+from phase1.analysis.hierarchical_taxonomy import HierarchicalPersonaTaxonomy
+from phase1.analysis.systematic_naming import merge_with_llm_names, generate_systematic_names
+
+@router.get("/taxonomy")
+async def get_persona_taxonomy():
+    """
+    Build and return hierarchical taxonomy of discovered personas.
+
+    The taxonomy organizes personas into:
+    - Level 1: Meta-types (Analytical vs Intuitive vs Balanced cognitive styles)
+    - Level 2: Risk profiles within each meta-type (Critical/High/Medium/Low)
+    - Level 3: Individual personas
+
+    This helps business managers:
+    1. See the "big picture" of the persona landscape
+    2. Make strategic decisions at different granularities
+    3. Target interventions at the right level of abstraction
+    4. Communicate findings more effectively to stakeholders
+    """
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    clusters = state.last_run_result.get('clusters', {})
+    if not clusters:
+        raise HTTPException(status_code=400, detail="No clusters found in clustering result")
+
+    try:
+        taxonomy_builder = HierarchicalPersonaTaxonomy()
+        taxonomy_builder.build_taxonomy(clusters, state.persona_labels)
+
+        return {
+            "status": "success",
+            **taxonomy_builder.to_dict()
+        }
+    except Exception as e:
+        print(f"[Taxonomy] Error building taxonomy: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/taxonomy/flat")
+async def get_flat_taxonomy():
+    """
+    Get flattened taxonomy for tree visualization in UI.
+
+    Returns a flat list with depth and parent_id for each node,
+    making it easy to render as an expandable tree in the frontend.
+    """
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    clusters = state.last_run_result.get('clusters', {})
+    if not clusters:
+        raise HTTPException(status_code=400, detail="No clusters found in clustering result")
+
+    try:
+        taxonomy_builder = HierarchicalPersonaTaxonomy()
+        taxonomy_builder.build_taxonomy(clusters, state.persona_labels)
+
+        return {
+            "status": "success",
+            "nodes": taxonomy_builder.get_flat_tree(),
+            "summary": taxonomy_builder.get_summary()
+        }
+    except Exception as e:
+        print(f"[Taxonomy] Error building flat taxonomy: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/taxonomy/summary")
+async def get_taxonomy_summary():
+    """
+    Get summary of persona taxonomy for quick overview.
+
+    Includes:
+    - Distribution by cognitive style (meta-type)
+    - Distribution by risk level
+    - Top 3 highest risk personas
+    - Recommended intervention priorities
+    """
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    clusters = state.last_run_result.get('clusters', {})
+    if not clusters:
+        raise HTTPException(status_code=400, detail="No clusters found in clustering result")
+
+    try:
+        taxonomy_builder = HierarchicalPersonaTaxonomy()
+        taxonomy_builder.build_taxonomy(clusters, state.persona_labels)
+
+        return {
+            "status": "success",
+            **taxonomy_builder.get_summary()
+        }
+    except Exception as e:
+        print(f"[Taxonomy] Error getting taxonomy summary: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================
@@ -923,24 +1088,63 @@ Generate names for all {len(request.clusters)} clusters (cluster_id 0 to {len(re
                     detail=f"Failed to parse AI response as JSON: {content[:500]}"
                 )
 
-            # Update state.persona_labels with the generated names
-            print(f"[AI Naming] Successfully generated {len(generated_names)} persona names")
+            # Step 1: Store raw LLM names temporarily
+            print(f"[AI Naming] Successfully generated {len(generated_names)} LLM persona names")
+            llm_labels = {}
             for persona in generated_names:
                 cluster_id = persona.get('cluster_id', 0)
-                state.persona_labels[cluster_id] = {
+                llm_labels[cluster_id] = {
                     "name": persona.get('name', f'Persona {cluster_id + 1}'),
                     "archetype": persona.get('archetype', ''),
-                    "description": persona.get('archetype', ''),  # Use archetype as description too
-                    "ai_generated": True,
-                    "updated_at": datetime.now().isoformat()
                 }
-                print(f"[AI Naming] Cluster {cluster_id}: {persona.get('name')}")
+                print(f"[AI Naming] LLM name for Cluster {cluster_id}: {persona.get('name')}")
+
+            # Step 2: Merge with systematic codes to create hybrid names
+            # Format: "CR-INT-IMP-CLK: Impulsive Phish Prone"
+            clusters = state.last_run_result.get('clusters', {})
+            if clusters:
+                print(f"[AI Naming] Merging with systematic codes for {len(clusters)} clusters...")
+                hybrid_labels = merge_with_llm_names(clusters, llm_labels)
+
+                # Update state.persona_labels with hybrid names
+                for cluster_id, label_data in hybrid_labels.items():
+                    state.persona_labels[cluster_id] = {
+                        "name": label_data['name'],  # "CR-INT-IMP-CLK: Creative Name"
+                        "archetype": label_data['archetype'],  # "CR-INT-IMP-CLK"
+                        "readable_code": label_data.get('readable_code', ''),
+                        "llm_name": label_data.get('llm_name', ''),
+                        "description": label_data['description'],
+                        "components": label_data.get('components', {}),
+                        "ai_generated": True,
+                        "updated_at": datetime.now().isoformat()
+                    }
+                    print(f"[AI Naming] Hybrid name for Cluster {cluster_id}: {label_data['name']}")
+
+                # Update generated_names to include hybrid format
+                for persona in generated_names:
+                    cid = persona.get('cluster_id', 0)
+                    if cid in hybrid_labels:
+                        persona['hybrid_name'] = hybrid_labels[cid]['name']
+                        persona['systematic_code'] = hybrid_labels[cid]['archetype']
+            else:
+                # Fallback: No cluster data, use LLM names only
+                print(f"[AI Naming] No cluster data available, using LLM names only")
+                for persona in generated_names:
+                    cluster_id = persona.get('cluster_id', 0)
+                    state.persona_labels[cluster_id] = {
+                        "name": persona.get('name', f'Persona {cluster_id + 1}'),
+                        "archetype": persona.get('archetype', ''),
+                        "description": persona.get('archetype', ''),
+                        "ai_generated": True,
+                        "updated_at": datetime.now().isoformat()
+                    }
 
             return {
                 "status": "success",
                 "generated_names": generated_names,
                 "labels": state.persona_labels,
-                "model_used": "anthropic/claude-3.5-sonnet"
+                "model_used": "meta-llama/llama-3.3-70b-instruct",
+                "naming_mode": "hybrid"
             }
 
     except HTTPException:
@@ -1355,12 +1559,24 @@ async def analyze_interactions():
             phishing = responses[responses['email_type'] == 'phishing'].copy()
         else:
             phishing = responses.copy()
-        
+
         if len(phishing) == 0:
             return {"error": "No phishing emails found"}
-        
+
         if 'clicked' not in phishing.columns:
             return {"error": "No 'clicked' column found"}
+
+        # Normalize sender_familiarity values (known/unknown -> familiar/unfamiliar)
+        if 'sender_familiarity' in phishing.columns:
+            familiarity_map = {'known': 'familiar', 'unknown': 'unfamiliar'}
+            phishing['sender_familiarity'] = phishing['sender_familiarity'].map(
+                lambda x: familiarity_map.get(x, x)
+            )
+        if 'sender_familiarity' in responses.columns:
+            familiarity_map = {'known': 'familiar', 'unknown': 'unfamiliar'}
+            responses['sender_familiarity'] = responses['sender_familiarity'].map(
+                lambda x: familiarity_map.get(x, x)
+            )
         
         results = {
             'by_urgency': {},
@@ -1389,7 +1605,7 @@ async def analyze_interactions():
         results['by_urgency'] = safe_pivot_to_dict(phishing, 'urgency_level')
         results['by_familiarity'] = safe_pivot_to_dict(phishing, 'sender_familiarity')
         results['by_framing'] = safe_pivot_to_dict(phishing, 'framing_type')
-        results['by_aggressive'] = safe_pivot_to_dict(phishing, 'has_aggressive_content')
+        # Note: by_aggressive removed - use by_framing (threat vs reward) for emotional manipulation analysis
         results['by_email_type'] = safe_pivot_to_dict(responses, 'email_type')
         
         # Calculate interaction effects
@@ -1506,7 +1722,508 @@ async def export_assignments():
         "persona_labels": state.persona_labels
     }
 
+# =============================================================================
+# SCIENTIFIC VALIDATION ENDPOINTS
+# =============================================================================
+
+# Import validation modules
+from phase1.validation import (
+    ClusteringValidator,
+    GapStatisticAnalyzer,
+    FeatureImportanceAnalyzer,
+    ClusteringCrossValidator,
+    PredictionErrorAnalyzer,
+    ConsensusClusteringAnalyzer,
+    AlgorithmComparisonAnalyzer,
+    SoftAssignmentAnalyzer
+)
+from phase1.validation.cluster_visualization import ClusterVisualizationGenerator
+
+class ValidationRequest(BaseModel):
+    level: str = "standard"  # 'basic', 'standard', 'comprehensive'
+    use_current_clustering: bool = True  # Use last run result
+    k: Optional[int] = None  # Override K if not using current
+    algorithm: Optional[str] = None
+
+class GapStatisticRequest(BaseModel):
+    k_min: int = 2
+    k_max: int = 15
+
+class FeatureImportanceRequest(BaseModel):
+    k: Optional[int] = None
+
+class CrossValidationRequest(BaseModel):
+    k: Optional[int] = None
+    n_folds: int = 5
+    algorithm: str = "kmeans"
+
+class AlgorithmComparisonRequest(BaseModel):
+    k: Optional[int] = None
+    algorithms: List[str] = ["kmeans", "gmm", "hierarchical"]
+    metric: str = "composite"
+
+class ClusterVisualizationRequest(BaseModel):
+    method: str = "pca"  # 'pca' or 'tsne'
+    perplexity: int = 30  # t-SNE perplexity
+
+
 @router.post("/validate")
-async def run_validation():
-    """Placeholder for validation endpoint."""
-    return {"message": "Validation endpoint - implement as needed"}
+async def run_validation(request: ValidationRequest):
+    """
+    Run comprehensive clustering validation.
+
+    Validates clustering quality with scientific rigor before
+    proceeding to LLM persona conditioning.
+
+    Levels:
+    - basic: Gap statistic + cross-validation (fast)
+    - standard: Basic + feature importance + prediction error (recommended)
+    - comprehensive: Standard + consensus + algorithm comparison (thorough)
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    # Get clustering result
+    if request.use_current_clustering and state.last_run_result is not None:
+        labels = np.array(state.last_run_result.get('_labels', []))
+        k = state.last_run_result.get('k')
+        feature_names = state.last_run_result.get('features_used', GET_ALL_CLUSTERING_FEATURES())
+    else:
+        raise HTTPException(status_code=400, detail="Run clustering first or set use_current_clustering=False")
+
+    if len(labels) == 0:
+        raise HTTPException(status_code=400, detail="No clustering labels found")
+
+    # Prepare data
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+    outcome_data = state.participants[OUTCOME_FEATURES].copy() if all(
+        c in state.participants.columns for c in OUTCOME_FEATURES
+    ) else None
+
+    # Run validation
+    try:
+        validator = ClusteringValidator(
+            n_bootstrap=50,
+            n_cv_folds=5,
+            n_consensus_iterations=30,
+            random_state=42
+        )
+
+        report = validator.validate(
+            X=X,
+            labels=labels,
+            k=k,
+            feature_names=feature_names,
+            outcome_data=outcome_data,
+            outcome_cols=OUTCOME_FEATURES if outcome_data is not None else None,
+            level=request.level
+        )
+
+        return report.to_dict()
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Validation error: {str(e)}")
+
+
+@router.post("/validate/quick")
+async def quick_validation():
+    """
+    Quick validation check (minimal analysis).
+
+    Returns essential metrics without full analysis.
+    Use for rapid iteration during development.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    labels = np.array(state.last_run_result.get('_labels', []))
+    k = state.last_run_result.get('k')
+    feature_names = state.last_run_result.get('features_used', GET_ALL_CLUSTERING_FEATURES())
+
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+    outcome_data = state.participants[OUTCOME_FEATURES].copy() if all(
+        c in state.participants.columns for c in OUTCOME_FEATURES
+    ) else None
+
+    validator = ClusteringValidator()
+    return validator.quick_validate(
+        X=X,
+        labels=labels,
+        k=k,
+        outcome_data=outcome_data,
+        outcome_cols=OUTCOME_FEATURES if outcome_data is not None else None
+    )
+
+
+@router.post("/validate/llm-readiness")
+async def llm_readiness_validation():
+    """
+    Check if clustering is ready for LLM persona conditioning.
+
+    Specialized validation focusing on metrics most relevant
+    to whether clusters will produce effective persona prompts.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    labels = np.array(state.last_run_result.get('_labels', []))
+    k = state.last_run_result.get('k')
+    feature_names = state.last_run_result.get('features_used', GET_ALL_CLUSTERING_FEATURES())
+
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    # Outcome data is required for LLM readiness check
+    if not all(c in state.participants.columns for c in OUTCOME_FEATURES):
+        raise HTTPException(status_code=400, detail="Outcome data required for LLM readiness check")
+
+    outcome_data = state.participants[OUTCOME_FEATURES].copy()
+
+    validator = ClusteringValidator()
+    return validator.validate_for_llm_readiness(
+        X=X,
+        labels=labels,
+        k=k,
+        feature_names=feature_names,
+        outcome_data=outcome_data,
+        outcome_cols=OUTCOME_FEATURES
+    )
+
+
+@router.post("/validate/gap-statistic")
+async def gap_statistic_analysis(request: GapStatisticRequest):
+    """
+    Run Gap Statistic analysis for optimal K selection.
+
+    Provides data-driven recommendation for number of clusters.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    feature_names = GET_ALL_CLUSTERING_FEATURES()
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    analyzer = GapStatisticAnalyzer(n_references=20, random_state=42)
+    results = analyzer.analyze(X, k_min=request.k_min, k_max=request.k_max)
+
+    # Add elbow comparison
+    results['elbow_comparison'] = analyzer.compare_to_elbow(X, request.k_min, request.k_max)
+
+    return results
+
+
+@router.post("/validate/feature-importance")
+async def feature_importance_analysis(request: FeatureImportanceRequest):
+    """
+    Analyze which features drive cluster separation.
+
+    Identifies important vs. noise features for potential simplification.
+    Note: PCA is disabled for this analysis to evaluate original features.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    feature_names = GET_ALL_CLUSTERING_FEATURES()
+
+    # IMPORTANT: Disable PCA to analyze original features, not PCA components
+    X = state.preprocessor.fit_transform(state.participants, feature_names, use_pca=False)
+
+    # Get K from request or last run
+    k = request.k
+    if k is None:
+        if state.last_run_result is not None:
+            k = state.last_run_result.get('k', 6)
+        else:
+            k = 6
+
+    outcome_data = state.participants[OUTCOME_FEATURES].copy() if all(
+        c in state.participants.columns for c in OUTCOME_FEATURES
+    ) else None
+
+    analyzer = FeatureImportanceAnalyzer(n_permutations=20, random_state=42)
+    return analyzer.analyze(
+        X=X,
+        feature_names=feature_names,
+        outcome_data=outcome_data,
+        outcome_cols=OUTCOME_FEATURES if outcome_data is not None else None,
+        k=k
+    )
+
+
+@router.post("/validate/cross-validation")
+async def cross_validation_analysis(request: CrossValidationRequest):
+    """
+    Run cross-validation to assess generalization.
+
+    Validates that clustering quality holds on unseen data.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    feature_names = GET_ALL_CLUSTERING_FEATURES()
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    k = request.k
+    if k is None:
+        if state.last_run_result is not None:
+            k = state.last_run_result.get('k', 6)
+        else:
+            k = 6
+
+    outcome_data = state.participants[OUTCOME_FEATURES].copy() if all(
+        c in state.participants.columns for c in OUTCOME_FEATURES
+    ) else None
+
+    analyzer = ClusteringCrossValidator(n_folds=request.n_folds, random_state=42)
+    return analyzer.cross_validate(
+        X=X,
+        outcome_data=outcome_data,
+        outcome_cols=OUTCOME_FEATURES if outcome_data is not None else None,
+        k=k,
+        algorithm=request.algorithm
+    )
+
+
+@router.post("/validate/prediction-error")
+async def prediction_error_analysis():
+    """
+    Analyze predictive power of clusters.
+
+    Measures whether cluster membership actually predicts behavior.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    labels = np.array(state.last_run_result.get('_labels', []))
+    feature_names = state.last_run_result.get('features_used', GET_ALL_CLUSTERING_FEATURES())
+
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    if not all(c in state.participants.columns for c in OUTCOME_FEATURES):
+        raise HTTPException(status_code=400, detail="Outcome data required")
+
+    outcome_data = state.participants[OUTCOME_FEATURES].copy()
+
+    analyzer = PredictionErrorAnalyzer(random_state=42)
+    return analyzer.analyze(
+        X=X,
+        labels=labels,
+        outcome_data=outcome_data,
+        outcome_cols=OUTCOME_FEATURES
+    )
+
+
+@router.post("/validate/consensus")
+async def consensus_clustering_analysis():
+    """
+    Run consensus clustering for robust cluster discovery.
+
+    Identifies core members vs. boundary cases across multiple runs.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    k = state.last_run_result.get('k', 6) if state.last_run_result else 6
+    feature_names = GET_ALL_CLUSTERING_FEATURES()
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    analyzer = ConsensusClusteringAnalyzer(n_iterations=50, random_state=42)
+    return analyzer.analyze(X, k, algorithms=['kmeans', 'gmm'])
+
+
+@router.post("/validate/algorithm-comparison")
+async def algorithm_comparison_analysis(request: AlgorithmComparisonRequest):
+    """
+    Statistically compare clustering algorithms.
+
+    Determines if differences between algorithms are significant.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    k = request.k
+    if k is None:
+        if state.last_run_result is not None:
+            k = state.last_run_result.get('k', 6)
+        else:
+            k = 6
+
+    feature_names = GET_ALL_CLUSTERING_FEATURES()
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    outcome_data = state.participants[OUTCOME_FEATURES].copy() if all(
+        c in state.participants.columns for c in OUTCOME_FEATURES
+    ) else None
+
+    analyzer = AlgorithmComparisonAnalyzer(n_bootstrap=50, random_state=42)
+    return analyzer.compare(
+        X=X,
+        algorithms=request.algorithms,
+        k=k,
+        outcome_data=outcome_data,
+        outcome_cols=OUTCOME_FEATURES if outcome_data is not None else None,
+        metric=request.metric
+    )
+
+
+@router.post("/validate/soft-assignments")
+async def soft_assignments_analysis():
+    """
+    Get probabilistic cluster assignments.
+
+    Provides uncertainty quantification for cluster membership.
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    k = state.last_run_result.get('k', 6) if state.last_run_result else 6
+    feature_names = GET_ALL_CLUSTERING_FEATURES()
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    analyzer = SoftAssignmentAnalyzer(random_state=42)
+    results = analyzer.analyze(X, k, algorithm='gmm')
+
+    # Remove full assignment matrix to reduce response size
+    results.pop('soft_assignments', None)
+    results.pop('soft_probability_matrix', None)
+
+    return results
+
+
+@router.post("/validate/cluster-visualization")
+async def cluster_visualization(request: ClusterVisualizationRequest):
+    """
+    Generate 2D visualization of cluster assignments.
+
+    Projects high-dimensional clustering results to 2D for visualization.
+    Includes:
+    - Data points colored by cluster
+    - Cluster centroids
+    - Cluster statistics (compactness, size)
+    - Axis interpretation (for PCA)
+
+    Methods:
+    - pca: Fast, preserves global structure (recommended)
+    - tsne: Non-linear, preserves local structure (slower)
+    """
+    if state.participants is None:
+        raise HTTPException(status_code=400, detail="Load data first")
+
+    if state.last_run_result is None:
+        raise HTTPException(status_code=400, detail="Run clustering first")
+
+    labels = np.array(state.last_run_result.get('_labels', []))
+    if len(labels) == 0:
+        raise HTTPException(status_code=400, detail="No clustering labels found")
+
+    feature_names = state.last_run_result.get('features_used', GET_ALL_CLUSTERING_FEATURES())
+    X = state.preprocessor.fit_transform(state.participants, feature_names)
+
+    try:
+        generator = ClusterVisualizationGenerator(random_state=42)
+
+        # Generate visualization with feature information
+        result = generator.generate_with_features(
+            X=X,
+            labels=labels,
+            feature_names=feature_names,
+            method=request.method
+        )
+
+        # Add persona labels if available
+        result['persona_labels'] = {}
+        for cluster_id in range(result['k']):
+            if cluster_id in state.persona_labels:
+                result['persona_labels'][cluster_id] = state.persona_labels[cluster_id].get('name', f'Cluster {cluster_id}')
+            else:
+                result['persona_labels'][cluster_id] = f'Cluster {cluster_id}'
+
+        return result
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Visualization error: {str(e)}")
+
+
+@router.get("/validate/summary")
+async def get_validation_summary():
+    """
+    Get summary of all available validation methods.
+    """
+    return {
+        "available_endpoints": [
+            {
+                "endpoint": "/validate",
+                "method": "POST",
+                "description": "Run comprehensive validation (basic/standard/comprehensive)",
+                "params": {"level": "standard"}
+            },
+            {
+                "endpoint": "/validate/quick",
+                "method": "POST",
+                "description": "Quick validation check for rapid iteration"
+            },
+            {
+                "endpoint": "/validate/llm-readiness",
+                "method": "POST",
+                "description": "Check readiness for LLM persona conditioning"
+            },
+            {
+                "endpoint": "/validate/gap-statistic",
+                "method": "POST",
+                "description": "Gap statistic for optimal K selection",
+                "params": {"k_min": 2, "k_max": 15}
+            },
+            {
+                "endpoint": "/validate/feature-importance",
+                "method": "POST",
+                "description": "Identify important vs. noise features"
+            },
+            {
+                "endpoint": "/validate/cross-validation",
+                "method": "POST",
+                "description": "Cross-validation for generalization assessment"
+            },
+            {
+                "endpoint": "/validate/prediction-error",
+                "method": "POST",
+                "description": "Measure predictive power of clusters"
+            },
+            {
+                "endpoint": "/validate/consensus",
+                "method": "POST",
+                "description": "Consensus clustering for robustness"
+            },
+            {
+                "endpoint": "/validate/algorithm-comparison",
+                "method": "POST",
+                "description": "Statistical comparison of algorithms"
+            },
+            {
+                "endpoint": "/validate/soft-assignments",
+                "method": "POST",
+                "description": "Probabilistic cluster assignments"
+            }
+        ],
+        "recommended_workflow": [
+            "1. Run /validate/quick to get baseline metrics",
+            "2. Run /validate/gap-statistic to confirm optimal K",
+            "3. Run /validate with level='standard' for full validation",
+            "4. Run /validate/llm-readiness before Phase 2"
+        ],
+        "thresholds": {
+            "min_cv_test_silhouette": 0.1,
+            "max_generalization_gap": 0.15,
+            "min_prediction_r2": 0.05,
+            "max_boundary_case_pct": 0.30
+        }
+    }

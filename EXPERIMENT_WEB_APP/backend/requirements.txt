@@ -5,3 +5,5 @@ python-dotenv
 pydantic
 certifi
 pymongo
+boto3
+pandas

@@ -30,7 +30,6 @@ from phase2.providers import get_router, LLMRequest
 from phase2.simulation import ExecutionEngine, PromptBuilder
 from phase2.analysis import FidelityAnalyzer
 from phase2.calibration.calibration_logger import create_calibration_log
-from phase2.simulation.experiment_logger import create_experiment_log
 
 router = APIRouter()
 
@@ -44,14 +43,11 @@ class Phase2State:
     emails: Dict[str, EmailStimulus] = {}
     experiments: Dict[str, ExperimentConfig] = {}
     results: Dict[str, List[SimulationTrial]] = {}
-
+    
     # Running experiments
     running_experiment_id: Optional[str] = None
     experiment_progress: Dict = {}
-
-    # Experiment logs (experiment_id -> log_file_path)
-    experiment_logs: Dict[str, str] = {}
-
+    
     # Engine instance
     engine: Optional[ExecutionEngine] = None
 
@@ -82,14 +78,8 @@ def load_default_emails():
                 sender_familiarity=email_dict.get('sender_familiarity', 'unfamiliar'),
                 urgency_level=email_dict.get('urgency_level', 'low'),
                 framing_type=email_dict.get('framing_type', 'neutral'),
-                content_domain=email_dict.get('content_domain', 'general'),
-                has_aggressive_content=email_dict.get('has_aggressive_content', False),
-                has_spelling_errors=email_dict.get('has_spelling_errors', False),
-                has_suspicious_url=email_dict.get('has_suspicious_url', False),
-                requests_sensitive_info=email_dict.get('requests_sensitive_info', False),
                 phishing_quality=email_dict.get('phishing_quality'),
                 ground_truth=email_dict.get('ground_truth', 1),
-                aggression_level=email_dict.get('aggression_level'),
                 subject_line=email_dict.get('subject_line'),
                 sender_display=email_dict.get('sender_display'),
                 sender_email=email_dict.get('sender_email'),
@@ -104,6 +94,32 @@ def load_default_emails():
         print(f"Loaded {len(state.emails)} default emails from {DEFAULT_EMAILS_PATH}")
     except Exception as e:
         print(f"Error loading default emails: {e}")
+
+
+# =============================================================================
+# ENVIRONMENT CONFIG ENDPOINTS
+# =============================================================================
+
+@router.get("/env-config")
+async def get_env_config():
+    """
+    Get environment configuration including pre-configured API keys.
+    Used by frontend to auto-populate provider setup forms.
+
+    Returns available environment variables for LLM providers.
+    """
+    import os
+
+    # Check which API keys are configured in environment
+    config = {
+        "openrouter_configured": bool(os.environ.get("OPENROUTER_API_KEY")),
+        "openai_configured": bool(os.environ.get("OPENAI_API_KEY")),
+        "anthropic_configured": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "aws_configured": bool(os.environ.get("AWS_ACCESS_KEY_ID") and os.environ.get("AWS_SECRET_ACCESS_KEY")),
+        "together_configured": bool(os.environ.get("TOGETHER_API_KEY")),
+    }
+
+    return config
 
 
 # =============================================================================
@@ -482,11 +498,6 @@ async def import_emails(emails_data: List[Dict[str, Any]]):
             sender_familiarity=email_dict.get('sender_familiarity', 'unfamiliar'),
             urgency_level=email_dict.get('urgency_level', 'low'),
             framing_type=email_dict.get('framing_type', 'neutral'),
-            content_domain=email_dict.get('content_domain', 'general'),
-            has_aggressive_content=email_dict.get('has_aggressive_content', False),
-            has_spelling_errors=email_dict.get('has_spelling_errors', False),
-            has_suspicious_url=email_dict.get('has_suspicious_url', False),
-            requests_sensitive_info=email_dict.get('requests_sensitive_info', False),
             phishing_quality=email_dict.get('phishing_quality'),
             ground_truth=email_dict.get('ground_truth', 1),
             # Content fields
@@ -524,16 +535,15 @@ async def list_emails():
                 "sender_familiarity": e.sender_familiarity,
                 "urgency_level": e.urgency_level,
                 "framing_type": e.framing_type,
-                "has_aggressive_content": e.has_aggressive_content,
+                "phishing_quality": e.phishing_quality,
                 "ground_truth": e.ground_truth,
-                # FIX Issue #5: Include full email content for display
+                # Email content for display
                 "subject_line": e.subject_line,
                 "sender_display": e.sender_display,
                 "sender_email": e.sender_email,
                 "body_text": e.body_text,
                 "link_url": e.link_url,
                 "link_display_text": e.link_display_text,
-                "content_domain": e.content_domain,
                 # Legacy field names for compatibility
                 "subject": e.subject_line,
                 "sender": e.sender_display or e.sender,
@@ -709,20 +719,7 @@ async def execute_experiment(experiment_id: str):
         state.results[experiment_id] = results
         experiment.status = ExperimentStatus.COMPLETED
         experiment.completed_at = datetime.now()
-
-        # Generate experiment log
-        try:
-            log_path = create_experiment_log(
-                experiment=experiment,
-                trials=results,
-                personas=state.personas,
-                emails=state.emails
-            )
-            state.experiment_logs[experiment_id] = log_path
-            print(f"[EXPERIMENT] Log saved to: {log_path}")
-        except Exception as log_error:
-            print(f"[EXPERIMENT] Warning: Failed to create log: {log_error}")
-
+        
     except Exception as e:
         print(f"[EXPERIMENT] ERROR: {str(e)}")
         traceback.print_exc()
@@ -752,94 +749,6 @@ async def stop_experiment(experiment_id: str):
         state.engine.stop()
         return {"status": "stopping"}
     return {"status": "not_running"}
-
-
-# =============================================================================
-# EXPERIMENT LOGS ENDPOINTS
-# =============================================================================
-
-@router.get("/experiments/{experiment_id}/logs")
-async def get_experiment_logs(experiment_id: str):
-    """Get log file path and content for an experiment."""
-    if experiment_id not in state.experiment_logs:
-        # Try to find log from results if available
-        if experiment_id in state.results:
-            experiment = state.experiments.get(experiment_id)
-            if experiment:
-                try:
-                    log_path = create_experiment_log(
-                        experiment=experiment,
-                        trials=state.results[experiment_id],
-                        personas=state.personas,
-                        emails=state.emails
-                    )
-                    state.experiment_logs[experiment_id] = log_path
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail=f"Failed to create log: {str(e)}")
-            else:
-                raise HTTPException(status_code=404, detail="Experiment not found")
-        else:
-            raise HTTPException(status_code=404, detail="No logs available for this experiment")
-
-    log_path = state.experiment_logs[experiment_id]
-
-    # Read log content
-    try:
-        with open(log_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read log: {str(e)}")
-
-    return {
-        "experiment_id": experiment_id,
-        "log_path": log_path,
-        "log_content": content,
-        "file_name": Path(log_path).name
-    }
-
-
-@router.get("/experiments/logs/list")
-async def list_experiment_logs():
-    """List all available experiment logs."""
-    logs = []
-    for exp_id, log_path in state.experiment_logs.items():
-        experiment = state.experiments.get(exp_id)
-        logs.append({
-            "experiment_id": exp_id,
-            "experiment_name": experiment.name if experiment else "Unknown",
-            "log_path": log_path,
-            "file_name": Path(log_path).name
-        })
-
-    return {"logs": logs}
-
-
-@router.post("/experiments/{experiment_id}/logs/generate")
-async def generate_experiment_log(experiment_id: str):
-    """Manually generate a log for an experiment with results."""
-    if experiment_id not in state.results:
-        raise HTTPException(status_code=404, detail="No results found for this experiment")
-
-    experiment = state.experiments.get(experiment_id)
-    if not experiment:
-        raise HTTPException(status_code=404, detail="Experiment not found")
-
-    try:
-        log_path = create_experiment_log(
-            experiment=experiment,
-            trials=state.results[experiment_id],
-            personas=state.personas,
-            emails=state.emails
-        )
-        state.experiment_logs[experiment_id] = log_path
-
-        return {
-            "status": "success",
-            "log_path": log_path,
-            "file_name": Path(log_path).name
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create log: {str(e)}")
 
 
 # =============================================================================
@@ -905,11 +814,6 @@ async def analyze_fidelity(experiment_id: str):
             condition_trials, persona, model_id, prompt_config
         )
         
-        # Calculate cost and latency for this condition
-        condition_cost = sum(t.cost_usd for t in condition_trials)
-        condition_latencies = [t.model_latency_ms for t in condition_trials if t.model_latency_ms > 0]
-        avg_latency = sum(condition_latencies) / len(condition_latencies) if condition_latencies else 0
-
         # Convert all values to Python native types
         result = {
             "persona_id": persona_id,
@@ -929,12 +833,7 @@ async def analyze_fidelity(experiment_id: str):
             "ci_lower": float(metrics.ci_lower),
             "ci_upper": float(metrics.ci_upper),
             "meets_threshold": bool(metrics.meets_threshold),
-            "threshold_used": float(metrics.threshold_used),
-            # Cost and latency fields
-            "cost": float(condition_cost),
-            "cost_per_trial": float(condition_cost / len(condition_trials)) if condition_trials else 0.0,
-            "latency_ms": float(avg_latency),
-            "trial_count": len(condition_trials)
+            "threshold_used": float(metrics.threshold_used)
         }
         
         fidelity_results.append(result)
@@ -946,9 +845,7 @@ async def analyze_fidelity(experiment_id: str):
     n_conditions = len(fidelity_results)
     mean_accuracy = total_accuracy / n_conditions if n_conditions > 0 else 0.0
     pass_rate = passing_count / n_conditions if n_conditions > 0 else 0.0
-    total_cost = sum(t.cost_usd for t in trials)
-    total_trials = len(trials)
-
+    
     return {
         "experiment_id": experiment_id,
         "fidelity_results": fidelity_results,
@@ -963,147 +860,6 @@ async def analyze_fidelity(experiment_id: str):
             "passing_conditions": passing_count,
             "pass_rate": float(pass_rate),
             "mean_normalized_accuracy": float(mean_accuracy)
-        },
-        "total_cost": float(total_cost),
-        "total_trials": total_trials
-    }
-
-
-@router.get("/analysis/{experiment_id}/detailed-combinations")
-async def analyze_detailed_combinations(experiment_id: str):
-    """
-    Full 4-dimensional analysis: LLM × Persona × Email × Prompt
-    Returns all combinations with fidelity and cost metrics for business comparison.
-    """
-    if experiment_id not in state.results:
-        raise HTTPException(status_code=404, detail="Results not found")
-
-    trials = state.results[experiment_id]
-
-    from collections import defaultdict
-
-    # Group by full 4-dimensional condition: persona × model × prompt × email
-    grouped_4d = defaultdict(list)
-    for trial in trials:
-        key = (trial.persona_id, trial.model_id, trial.prompt_config, trial.email_id)
-        grouped_4d[key].append(trial)
-
-    # Also group by 3D for aggregations
-    grouped_3d_no_email = defaultdict(list)  # persona × model × prompt
-    for trial in trials:
-        key = (trial.persona_id, trial.model_id, trial.prompt_config)
-        grouped_3d_no_email[key].append(trial)
-
-    detailed_results = []
-
-    for (persona_id, model_id, prompt_config, email_id), condition_trials in grouped_4d.items():
-        persona = state.personas.get(persona_id)
-        email = state.emails.get(email_id)
-
-        if not persona:
-            continue
-
-        # Calculate metrics for this specific combination
-        n_trials = len(condition_trials)
-        n_clicked = sum(1 for t in condition_trials if t.action.value == "click")
-        n_reported = sum(1 for t in condition_trials if t.action.value == "report")
-        n_ignored = sum(1 for t in condition_trials if t.action.value == "ignore")
-
-        ai_click_rate = n_clicked / n_trials if n_trials > 0 else 0
-        ai_report_rate = n_reported / n_trials if n_trials > 0 else 0
-
-        # Get human baseline from persona's behavioral statistics
-        # Note: Using overall persona rates as approximation since we don't have per-email data
-        human_click_rate = persona.behavioral_statistics.phishing_click_rate if persona.behavioral_statistics else 0.0
-        human_report_rate = persona.behavioral_statistics.report_rate if persona.behavioral_statistics else 0.0
-
-        # Calculate fidelity (1 - |ai_click_rate - human_click_rate|)
-        click_deviation = abs(ai_click_rate - human_click_rate)
-        fidelity = 1.0 - click_deviation
-
-        # Cost and latency
-        condition_cost = sum(t.cost_usd for t in condition_trials)
-        condition_latencies = [t.model_latency_ms for t in condition_trials if t.model_latency_ms > 0]
-        avg_latency = sum(condition_latencies) / len(condition_latencies) if condition_latencies else 0
-
-        # Email metadata - use actual EmailStimulus attributes
-        email_metadata = {}
-        if email:
-            email_metadata = {
-                "email_subject": getattr(email, 'subject_line', '') or '',
-                "email_type": getattr(email, 'email_type', 'unknown'),  # phishing/legitimate
-                "email_is_phishing": getattr(email, 'email_type', '') == 'phishing' or getattr(email, 'ground_truth', 0) == 1,
-                "sender_familiarity": getattr(email, 'sender_familiarity', 'unknown'),  # familiar/unfamiliar
-                "urgency_level": getattr(email, 'urgency_level', 'unknown'),  # high/medium/low
-                "framing_type": getattr(email, 'framing_type', 'unknown'),  # threat/reward/neutral
-                "has_aggressive_content": getattr(email, 'has_aggressive_content', False),
-                "aggression_level": getattr(email, 'aggression_level', 'unknown') if hasattr(email, 'aggression_level') else 'unknown',
-            }
-
-        result = {
-            "persona_id": persona_id,
-            "persona_name": persona.name,
-            "model_id": model_id,
-            "prompt_config": prompt_config.value if hasattr(prompt_config, 'value') else str(prompt_config),
-            "email_id": email_id,
-            **email_metadata,
-            "n_trials": n_trials,
-            "ai_click_rate": float(ai_click_rate),
-            "ai_report_rate": float(ai_report_rate),
-            "human_click_rate": float(human_click_rate),
-            "human_report_rate": float(human_report_rate),
-            "fidelity": float(fidelity),
-            "click_deviation": float(click_deviation),
-            "cost": float(condition_cost),
-            "cost_per_trial": float(condition_cost / n_trials) if n_trials > 0 else 0.0,
-            "latency_ms": float(avg_latency),
-            "meets_threshold": fidelity >= 0.85
-        }
-        detailed_results.append(result)
-
-    # Sort by fidelity descending
-    detailed_results.sort(key=lambda x: x['fidelity'], reverse=True)
-
-    # Calculate aggregations for filters
-    unique_personas = list(set(r['persona_name'] for r in detailed_results))
-    unique_models = list(set(r['model_id'] for r in detailed_results))
-    unique_prompts = list(set(r['prompt_config'] for r in detailed_results))
-    unique_emails = list(set(r['email_id'] for r in detailed_results))
-
-    # Email attribute dimensions for filtering
-    unique_email_types = list(set(r.get('email_type', 'unknown') for r in detailed_results if r.get('email_type')))
-    unique_sender_familiarities = list(set(r.get('sender_familiarity', 'unknown') for r in detailed_results if r.get('sender_familiarity')))
-    unique_urgency_levels = list(set(r.get('urgency_level', 'unknown') for r in detailed_results if r.get('urgency_level')))
-    unique_framing_types = list(set(r.get('framing_type', 'unknown') for r in detailed_results if r.get('framing_type')))
-    unique_aggression_levels = list(set(r.get('aggression_level', 'unknown') for r in detailed_results if r.get('aggression_level') and r.get('aggression_level') != 'unknown'))
-
-    # Summary stats
-    total_cost = sum(t.cost_usd for t in trials)
-    avg_fidelity = sum(r['fidelity'] for r in detailed_results) / len(detailed_results) if detailed_results else 0
-    passing_count = sum(1 for r in detailed_results if r['meets_threshold'])
-
-    return {
-        "experiment_id": experiment_id,
-        "detailed_results": detailed_results,
-        "dimensions": {
-            "personas": unique_personas,
-            "models": unique_models,
-            "prompts": unique_prompts,
-            "emails": unique_emails,
-            # Email attribute dimensions for business filtering
-            "email_types": sorted(unique_email_types),  # phishing, legitimate
-            "sender_familiarities": sorted(unique_sender_familiarities),  # familiar, unfamiliar
-            "urgency_levels": sorted(unique_urgency_levels),  # high, medium, low
-            "framing_types": sorted(unique_framing_types),  # threat, reward, neutral
-            "aggression_levels": sorted(unique_aggression_levels),  # very_high, high, medium, low
-        },
-        "summary": {
-            "total_combinations": len(detailed_results),
-            "passing_combinations": passing_count,
-            "pass_rate": passing_count / len(detailed_results) if detailed_results else 0,
-            "average_fidelity": float(avg_fidelity),
-            "total_cost": float(total_cost),
-            "total_trials": len(trials)
         }
     }
 
@@ -1368,7 +1124,6 @@ class ApplySuggestionsRequest(BaseModel):
     suggestion_indices: List[int] = []  # Which suggestions to apply (empty = all)
     auto_rerun: bool = True  # Automatically rerun calibration after applying
     max_iterations: int = 3  # Maximum auto-rerun iterations
-    test_sample_size: Optional[int] = None  # Quick test sample size (None = use all)
 
 
 @router.post("/calibration/split")
@@ -1552,7 +1307,6 @@ async def run_calibration(request: CalibrationRequest):
         import random
         sampled_test_trials = random.sample(split_result.test_trials, test_sample_size)
         # Create a modified split result (without modifying the original)
-        # Note: n_train and n_test are properties computed from train_trials/test_trials length
         from phase2.calibration.data_splitter import SplitResult
         split_result = SplitResult(
             persona_id=split_result.persona_id,
@@ -1561,6 +1315,8 @@ async def run_calibration(request: CalibrationRequest):
             random_seed=split_result.random_seed,
             train_trials=split_result.train_trials,
             test_trials=sampled_test_trials,
+            n_train=split_result.n_train,
+            n_test=len(sampled_test_trials),
             train_statistics=split_result.train_statistics,
             test_statistics=split_result.test_statistics
         )
@@ -1874,8 +1630,7 @@ async def apply_suggestions_and_rerun(request: ApplySuggestionsRequest):
                 model_id=cal_result.model_id,
                 prompt_config=cal_result.prompt_config,
                 split_ratio=calibration_state.split_results.get(cal_result.persona_id).split_ratio if cal_result.persona_id in calibration_state.split_results else 0.8,
-                use_icl=True,  # Keep ICL enabled
-                test_sample_size=request.test_sample_size  # Pass quick test sample size
+                use_icl=True  # Keep ICL enabled
             )
             
             try:
@@ -2018,21 +1773,12 @@ async def get_calibration_result(calibration_key: str):
 
 
 @router.post("/calibration/compare-configs")
-async def compare_prompt_configs(
-    persona_id: str, 
-    model_id: str, 
-    use_icl: bool = True, 
-    force_rerun: bool = False,
-    test_sample_size: Optional[int] = None
-):
+async def compare_prompt_configs(persona_id: str, model_id: str, use_icl: bool = True, force_rerun: bool = False):
     """
     Compare all three prompt configurations for a persona.
 
     Runs calibration for baseline, stats, and cot and compares results.
     All configs use the same ICL setting for fair comparison.
-    
-    If test_sample_size is provided, all configs use the SAME sampled test data
-    for fair comparison (quick test mode).
 
     Uses cached results when available to avoid duplicate API costs.
     Set force_rerun=True to ignore cache and run fresh calibrations.
@@ -2040,14 +1786,6 @@ async def compare_prompt_configs(
     results = {}
     cached_count = 0
     fresh_count = 0
-    
-    # When using quick test mode, we need to ensure all configs use the same test sample
-    # So we need to force fresh runs with the same sample size
-    is_quick_test = test_sample_size is not None
-    if is_quick_test:
-        print(f"\n⚡ Quick Test Mode: All configs will use {test_sample_size} test trials")
-        # Force rerun to ensure all configs use the same sample size
-        force_rerun = True
 
     for config in ["baseline", "stats", "cot"]:
         cal_key = f"{persona_id}_{model_id}_{config}"
@@ -2082,12 +1820,10 @@ async def compare_prompt_configs(
                 persona_id=persona_id,
                 model_id=model_id,
                 prompt_config=config,
-                use_icl=use_icl,
-                test_sample_size=test_sample_size  # Pass quick test sample size
+                use_icl=use_icl
             )
             result = await run_calibration(request)
             result["from_cache"] = False
-            result["is_quick_test"] = is_quick_test
             results[config] = result
             fresh_count += 1
 
@@ -2278,4 +2014,674 @@ async def debug_state():
             "count": len(state.experiments),
             "ids": list(state.experiments.keys())
         }
+    }
+
+
+# =============================================================================
+# PROMPT ABLATION STUDY ENDPOINTS
+# =============================================================================
+
+from phase2.calibration.prompt_ablation import (
+    PromptAblationStudy, ComponentConfig, AblationStudyResult
+)
+
+
+class AblationStudyRequest(BaseModel):
+    """Request for ablation study."""
+    persona_id: str
+    model_id: str
+    include_icl: bool = True
+    test_sample_size: Optional[int] = None  # Limit test trials for quick testing
+
+
+# Store ablation results
+class AblationState:
+    results: Dict[str, AblationStudyResult] = {}
+    running: bool = False
+    progress: Dict[str, Any] = {}
+
+ablation_state = AblationState()
+
+
+@router.post("/ablation/run")
+async def run_ablation_study(request: AblationStudyRequest):
+    """
+    Run factorial prompt ablation study.
+
+    Tests all 8 combinations of prompt components (Traits, Stats, CoT)
+    to determine which components actually improve fidelity.
+
+    This provides scientific ablation analysis showing component importance.
+    """
+    persona_id = request.persona_id
+    model_id = request.model_id
+
+    print("\n" + "="*70)
+    print("🔬 FACTORIAL ABLATION STUDY")
+    print("="*70)
+    print(f"   Persona: {persona_id}")
+    print(f"   Model: {model_id}")
+    print(f"   Testing 8 prompt configurations")
+
+    if persona_id not in state.personas:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    persona = state.personas[persona_id]
+
+    # Check if we have split data
+    if persona_id not in calibration_state.split_results:
+        await split_persona_data(persona_id, 0.8)
+
+    split_result = calibration_state.split_results[persona_id]
+
+    # Apply sample size limit if specified
+    test_trials = split_result.test_trials
+    if request.test_sample_size and request.test_sample_size < len(test_trials):
+        import random
+        test_trials = random.sample(test_trials, request.test_sample_size)
+        print(f"   Using {request.test_sample_size} of {split_result.n_test} test trials (quick mode)")
+
+    # Get training data for ICL
+    splitter = DataSplitter()
+    training_trials = splitter.trials_to_dicts(split_result.train_trials)
+    emails_dict = {e.email_id: e.model_dump() for e in state.emails.values()}
+
+    # Create and run ablation study
+    router_instance = await get_router()
+    prompt_builder = PromptBuilder()
+
+    ablation_study = PromptAblationStudy(router_instance, prompt_builder)
+
+    ablation_state.running = True
+    ablation_state.progress = {"status": "running", "configs_completed": 0, "total_configs": 8}
+
+    def update_progress(completed, total):
+        ablation_state.progress = {
+            "status": "running",
+            "trials_completed": completed,
+            "total_trials": total
+        }
+
+    try:
+        result = await ablation_study.run_ablation_study(
+            persona=persona,
+            test_trials=test_trials,
+            model_id=model_id,
+            training_trials=training_trials,
+            emails_dict=emails_dict,
+            include_icl=request.include_icl,
+            progress_callback=update_progress
+        )
+
+        # Store result
+        key = f"{persona_id}_{model_id}"
+        ablation_state.results[key] = result
+
+        # Print summary
+        print(ablation_study.get_study_summary(result))
+
+        # Return summary
+        return {
+            "ablation_key": key,
+            "persona_id": persona_id,
+            "persona_name": result.persona_name,
+            "model_id": model_id,
+            "best_config": result.best_config,
+            "best_accuracy": float(result.best_accuracy),
+            "component_importance": {k: float(v) for k, v in result.component_importance.items()},
+            "statistical_tests": result.statistical_tests,
+            "recommended_config": result.recommended_config,
+            "recommendation_reason": result.recommendation_reason,
+            "config_results": {
+                name: {
+                    "accuracy": float(cr.accuracy),
+                    "n_trials": cr.n_trials,
+                    "click_rate_error": float(cr.click_rate_error),
+                    "config": cr.config.to_dict()
+                }
+                for name, cr in result.config_results.items()
+            },
+            "total_trials": result.total_trials
+        }
+
+    finally:
+        ablation_state.running = False
+        ablation_state.progress = {"status": "completed"}
+
+
+@router.get("/ablation/results")
+async def list_ablation_results():
+    """List all ablation study results."""
+    results = []
+    for key, result in ablation_state.results.items():
+        results.append({
+            "ablation_key": key,
+            "persona_id": result.persona_id,
+            "persona_name": result.persona_name,
+            "model_id": result.model_id,
+            "best_config": result.best_config,
+            "best_accuracy": float(result.best_accuracy),
+            "recommended_config": result.recommended_config
+        })
+    return {"ablation_results": results}
+
+
+@router.get("/ablation/{ablation_key}")
+async def get_ablation_result(ablation_key: str):
+    """Get detailed ablation study result."""
+    if ablation_key not in ablation_state.results:
+        raise HTTPException(status_code=404, detail="Ablation result not found")
+
+    result = ablation_state.results[ablation_key]
+
+    return {
+        "ablation_key": ablation_key,
+        "persona_id": result.persona_id,
+        "persona_name": result.persona_name,
+        "model_id": result.model_id,
+        "best_config": result.best_config,
+        "best_accuracy": float(result.best_accuracy),
+        "component_importance": {k: float(v) for k, v in result.component_importance.items()},
+        "statistical_tests": result.statistical_tests,
+        "recommended_config": result.recommended_config,
+        "recommendation_reason": result.recommendation_reason,
+        "config_results": {
+            name: {
+                "accuracy": float(cr.accuracy),
+                "n_trials": cr.n_trials,
+                "n_correct": cr.n_correct,
+                "click_rate_error": float(cr.click_rate_error),
+                "phishing_accuracy": float(cr.phishing_accuracy),
+                "legitimate_accuracy": float(cr.legitimate_accuracy),
+                "config": cr.config.to_dict()
+            }
+            for name, cr in result.config_results.items()
+        },
+        "total_trials": result.total_trials,
+        "total_cost": float(result.total_cost_usd)
+    }
+
+
+# =============================================================================
+# UNCERTAINTY QUANTIFICATION ENDPOINTS
+# =============================================================================
+
+from phase2.analysis.uncertainty_quantification import (
+    LLMUncertaintyQuantifier, UncertaintyAwarePredictor,
+    UncertaintyAnalysisResult
+)
+
+
+class UncertaintyRequest(BaseModel):
+    """Request for uncertainty analysis."""
+    persona_id: str
+    model_id: str
+    prompt_config: str = "cot"
+    n_samples: int = 10  # Samples per trial for uncertainty estimation
+    test_sample_size: Optional[int] = None
+
+
+# Store uncertainty results
+class UncertaintyState:
+    results: Dict[str, UncertaintyAnalysisResult] = {}
+    running: bool = False
+
+uncertainty_state = UncertaintyState()
+
+
+@router.post("/uncertainty/analyze")
+async def run_uncertainty_analysis(request: UncertaintyRequest):
+    """
+    Run uncertainty analysis on LLM persona simulation.
+
+    Instead of single predictions, runs multiple samples per trial
+    to estimate how confident the LLM is in its predictions.
+
+    Returns:
+    - Action distributions (entropy, margin)
+    - Confidence calibration
+    - Accuracy by confidence level
+    """
+    persona_id = request.persona_id
+    model_id = request.model_id
+
+    print("\n" + "="*70)
+    print("📊 UNCERTAINTY QUANTIFICATION ANALYSIS")
+    print("="*70)
+    print(f"   Persona: {persona_id}")
+    print(f"   Model: {model_id}")
+    print(f"   Samples per trial: {request.n_samples}")
+
+    if persona_id not in state.personas:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    persona = state.personas[persona_id]
+
+    # Check if we have split data
+    if persona_id not in calibration_state.split_results:
+        await split_persona_data(persona_id, 0.8)
+
+    split_result = calibration_state.split_results[persona_id]
+
+    # Apply sample size limit
+    test_trials = split_result.test_trials
+    if request.test_sample_size and request.test_sample_size < len(test_trials):
+        import random
+        test_trials = random.sample(test_trials, request.test_sample_size)
+
+    # Get training data for ICL
+    splitter = DataSplitter()
+    training_trials = splitter.trials_to_dicts(split_result.train_trials)
+    emails_dict = {e.email_id: e.model_dump() for e in state.emails.values()}
+
+    # Create uncertainty quantifier
+    router_instance = await get_router()
+    prompt_builder = PromptBuilder()
+
+    quantifier = LLMUncertaintyQuantifier(
+        router=router_instance,
+        prompt_builder=prompt_builder,
+        n_samples=request.n_samples
+    )
+
+    uncertainty_state.running = True
+
+    try:
+        result = await quantifier.run_uncertainty_analysis(
+            persona=persona,
+            test_trials=test_trials,
+            model_id=model_id,
+            prompt_config=PromptConfiguration(request.prompt_config),
+            training_trials=training_trials,
+            emails_dict=emails_dict
+        )
+
+        # Store result
+        key = f"{persona_id}_{model_id}_{request.prompt_config}"
+        uncertainty_state.results[key] = result
+
+        # Print summary
+        print(quantifier.get_analysis_summary(result))
+
+        return {
+            "uncertainty_key": key,
+            **result.to_dict()
+        }
+
+    finally:
+        uncertainty_state.running = False
+
+
+@router.get("/uncertainty/results")
+async def list_uncertainty_results():
+    """List all uncertainty analysis results."""
+    results = []
+    for key, result in uncertainty_state.results.items():
+        results.append({
+            "uncertainty_key": key,
+            "persona_id": result.persona_id,
+            "persona_name": result.persona_name,
+            "model_id": result.model_id,
+            "mean_entropy": float(result.mean_entropy),
+            "majority_vote_accuracy": float(result.majority_vote_accuracy),
+            "calibration_error": float(result.calibration_error)
+        })
+    return {"uncertainty_results": results}
+
+
+@router.get("/uncertainty/{uncertainty_key}")
+async def get_uncertainty_result(uncertainty_key: str):
+    """Get detailed uncertainty analysis result."""
+    if uncertainty_key not in uncertainty_state.results:
+        raise HTTPException(status_code=404, detail="Uncertainty result not found")
+
+    result = uncertainty_state.results[uncertainty_key]
+    return {
+        "uncertainty_key": uncertainty_key,
+        **result.to_dict(),
+        "trial_details": [e.to_dict() for e in result.estimates[:20]]  # First 20 trials
+    }
+
+
+# =============================================================================
+# BEHAVIORAL SIGNATURE MATCHING ENDPOINTS
+# =============================================================================
+
+from phase2.analysis.behavioral_signature import (
+    BehavioralSignatureExtractor, BehavioralSignatureMatcher,
+    SignatureMatchingResult
+)
+
+
+class SignatureMatchingRequest(BaseModel):
+    """Request for behavioral signature matching."""
+    persona_id: str
+    model_id: str
+    prompt_config: str = "cot"
+
+
+# Store signature matching results
+class SignatureState:
+    results: Dict[str, SignatureMatchingResult] = {}
+    extractor: BehavioralSignatureExtractor = BehavioralSignatureExtractor()
+    matcher: BehavioralSignatureMatcher = None
+
+signature_state = SignatureState()
+signature_state.matcher = BehavioralSignatureMatcher(signature_state.extractor)
+
+
+@router.post("/signatures/analyze")
+async def run_signature_matching(request: SignatureMatchingRequest):
+    """
+    Run behavioral signature matching analysis.
+
+    Goes beyond action matching to compare:
+    - Confidence levels
+    - Response time patterns
+    - Reasoning depth
+    - Attention patterns
+    - Influence factors (urgency, familiarity)
+
+    These are the CAUSAL FACTORS behind click/report/ignore decisions.
+    """
+    persona_id = request.persona_id
+    model_id = request.model_id
+
+    print("\n" + "="*70)
+    print("🧬 BEHAVIORAL SIGNATURE MATCHING")
+    print("="*70)
+    print(f"   Persona: {persona_id}")
+    print(f"   Model: {model_id}")
+
+    if persona_id not in state.personas:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    persona = state.personas[persona_id]
+
+    # Check if we have calibration results for this persona
+    cal_key = f"{persona_id}_{model_id}_{request.prompt_config}"
+    if cal_key not in calibration_state.calibration_results:
+        raise HTTPException(
+            status_code=400,
+            detail="Run calibration first to get AI responses for signature extraction"
+        )
+
+    cal_result = calibration_state.calibration_results[cal_key]
+
+    # Extract AI responses from calibration trials
+    ai_responses = []
+    human_responses = []
+
+    for trial in cal_result.trials:
+        ai_responses.append({
+            'action': trial.llm_action,
+            'confidence': trial.llm_confidence,
+            'reasoning': trial.llm_reasoning,
+            'response_time_ms': None  # We don't track this currently
+        })
+        human_responses.append({
+            'action': trial.human_action,
+            'confidence': trial.human_confidence,
+            'reasoning': None,  # Human reasoning from qualitative data
+            'email_type': trial.email_type,
+            'urgency_level': trial.urgency_level,
+            'sender_familiarity': trial.sender_familiarity
+        })
+
+    # Run signature matching
+    result = await signature_state.matcher.run_signature_matching(
+        persona=persona,
+        ai_responses=ai_responses,
+        human_responses=human_responses,
+        model_id=model_id
+    )
+
+    # Store result
+    key = f"{persona_id}_{model_id}_{request.prompt_config}"
+    signature_state.results[key] = result
+
+    # Print summary
+    print(signature_state.matcher.get_matching_summary(result))
+
+    return {
+        "signature_key": key,
+        **result.to_dict()
+    }
+
+
+@router.get("/signatures/results")
+async def list_signature_results():
+    """List all signature matching results."""
+    results = []
+    for key, result in signature_state.results.items():
+        results.append({
+            "signature_key": key,
+            "persona_id": result.persona_id,
+            "persona_name": result.persona_name,
+            "model_id": result.model_id,
+            "mean_overall_similarity": float(result.mean_overall_similarity),
+            "action_accuracy": float(result.action_accuracy),
+            "systematic_biases": result.systematic_biases
+        })
+    return {"signature_results": results}
+
+
+@router.get("/signatures/{signature_key}")
+async def get_signature_result(signature_key: str):
+    """Get detailed signature matching result."""
+    if signature_key not in signature_state.results:
+        raise HTTPException(status_code=404, detail="Signature result not found")
+
+    result = signature_state.results[signature_key]
+    return {
+        "signature_key": signature_key,
+        **result.to_dict(),
+        "comparison_details": [c.to_dict() for c in result.comparisons[:20]]
+    }
+
+
+# =============================================================================
+# PERSONA EMBEDDINGS ENDPOINTS
+# =============================================================================
+
+from phase2.embeddings import (
+    PersonaEmbedding, PersonaEncoderNumpy, PersonaEmbeddingSpace,
+    EmbeddingToPromptGenerator, get_persona_encoder
+)
+
+
+class EmbeddingTrainRequest(BaseModel):
+    """Request to train persona encoder."""
+    embedding_dim: int = 64
+    n_iterations: int = 1000
+
+
+class InterpolateRequest(BaseModel):
+    """Request to create interpolated persona."""
+    persona_a_id: str
+    persona_b_id: str
+    alpha: float = 0.5  # 0 = A, 1 = B, 0.5 = midpoint
+    name: str = "Interpolated Persona"
+
+
+# Store embedding state
+class EmbeddingState:
+    encoder: PersonaEncoderNumpy = None
+    embedding_space: PersonaEmbeddingSpace = None
+    is_trained: bool = False
+
+embedding_state = EmbeddingState()
+
+
+@router.post("/embeddings/train")
+async def train_persona_encoder(request: EmbeddingTrainRequest):
+    """
+    Train persona encoder on available personas.
+
+    Creates a continuous embedding space where:
+    - Each persona is a point in embedding space
+    - Interpolation between personas is possible
+    - Smooth transitions instead of hard cluster boundaries
+    """
+    if not state.personas:
+        raise HTTPException(status_code=400, detail="No personas loaded. Import personas first.")
+
+    print("\n" + "="*70)
+    print("🧠 TRAINING PERSONA ENCODER")
+    print("="*70)
+    print(f"   Personas: {len(state.personas)}")
+    print(f"   Embedding dimension: {request.embedding_dim}")
+    print(f"   Training iterations: {request.n_iterations}")
+
+    # Create encoder
+    embedding_state.encoder = get_persona_encoder(
+        embedding_dim=request.embedding_dim,
+        use_torch=False  # Use numpy for broader compatibility
+    )
+
+    # Train on personas
+    personas_list = list(state.personas.values())
+    embedding_state.encoder.fit(
+        personas_list,
+        n_iterations=request.n_iterations
+    )
+
+    # Create embedding space and add all personas
+    embedding_state.embedding_space = PersonaEmbeddingSpace()
+    embedding_state.embedding_space.encoder = embedding_state.encoder
+
+    for persona in personas_list:
+        embedding_state.embedding_space.add_persona(persona)
+
+    embedding_state.is_trained = True
+
+    # Get 2D coordinates for visualization
+    coords_2d = embedding_state.embedding_space.get_2d_coordinates()
+
+    print(f"\n✅ Encoder trained successfully")
+    print(f"   Embedded {len(personas_list)} personas")
+    print("="*70 + "\n")
+
+    return {
+        "status": "trained",
+        "n_personas": len(personas_list),
+        "embedding_dim": request.embedding_dim,
+        "personas": [
+            {
+                "persona_id": pid,
+                "name": state.personas[pid].name,
+                "x": float(coords_2d[pid][0]),
+                "y": float(coords_2d[pid][1])
+            }
+            for pid in coords_2d
+        ]
+    }
+
+
+@router.get("/embeddings/space")
+async def get_embedding_space():
+    """Get the persona embedding space visualization data."""
+    if not embedding_state.is_trained:
+        raise HTTPException(status_code=400, detail="Encoder not trained. Call /embeddings/train first.")
+
+    coords_2d = embedding_state.embedding_space.get_2d_coordinates()
+
+    personas_data = []
+    for pid, (x, y) in coords_2d.items():
+        persona = state.personas.get(pid)
+        emb = embedding_state.embedding_space.get_embedding(pid)
+
+        personas_data.append({
+            "persona_id": pid,
+            "name": persona.name if persona else "Unknown",
+            "risk_level": persona.risk_level.value if persona else "unknown",
+            "x": float(x),
+            "y": float(y),
+            "embedding_preview": emb.embedding[:5].tolist() if emb else []
+        })
+
+    return {
+        "n_personas": len(personas_data),
+        "embedding_dim": embedding_state.encoder.embedding_dim if embedding_state.encoder else 0,
+        "personas": personas_data
+    }
+
+
+@router.post("/embeddings/interpolate")
+async def create_interpolated_persona(request: InterpolateRequest):
+    """
+    Create an interpolated persona between two existing personas.
+
+    This creates a "blended" persona that combines traits from both
+    source personas based on the alpha weight.
+
+    alpha=0 → 100% persona A
+    alpha=0.5 → 50% each (midpoint)
+    alpha=1 → 100% persona B
+    """
+    if not embedding_state.is_trained:
+        raise HTTPException(status_code=400, detail="Encoder not trained. Call /embeddings/train first.")
+
+    if request.persona_a_id not in state.personas:
+        raise HTTPException(status_code=404, detail=f"Persona A not found: {request.persona_a_id}")
+    if request.persona_b_id not in state.personas:
+        raise HTTPException(status_code=404, detail=f"Persona B not found: {request.persona_b_id}")
+
+    persona_a = state.personas[request.persona_a_id]
+    persona_b = state.personas[request.persona_b_id]
+
+    # Create interpolated embedding
+    interpolated = embedding_state.encoder.interpolate(
+        persona_a, persona_b, request.alpha
+    )
+
+    # Decode back to traits
+    decoded_traits = embedding_state.encoder.decode(interpolated)
+
+    # Generate prompt content
+    prompt_generator = EmbeddingToPromptGenerator(embedding_state.encoder)
+    prompt_content = prompt_generator.generate_interpolated_prompt(
+        persona_a, persona_b, request.alpha, request.name
+    )
+
+    return {
+        "name": request.name,
+        "alpha": request.alpha,
+        "source_personas": {
+            "a": {"id": persona_a.persona_id, "name": persona_a.name, "weight": 1 - request.alpha},
+            "b": {"id": persona_b.persona_id, "name": persona_b.name, "weight": request.alpha}
+        },
+        "interpolated_traits": {k: round(v, 3) for k, v in decoded_traits.items()},
+        "embedding": interpolated.embedding.tolist(),
+        "prompt_content": prompt_content
+    }
+
+
+@router.get("/embeddings/{persona_id}/nearest")
+async def find_nearest_personas(persona_id: str, k: int = 5):
+    """Find k nearest personas to the given persona in embedding space."""
+    if not embedding_state.is_trained:
+        raise HTTPException(status_code=400, detail="Encoder not trained.")
+
+    if persona_id not in state.personas:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    target_emb = embedding_state.embedding_space.get_embedding(persona_id)
+    if not target_emb:
+        raise HTTPException(status_code=404, detail="Embedding not found for persona")
+
+    nearest = embedding_state.embedding_space.find_nearest(target_emb, k=k, exclude_self=True)
+
+    return {
+        "persona_id": persona_id,
+        "persona_name": state.personas[persona_id].name,
+        "nearest_neighbors": [
+            {
+                "persona_id": pid,
+                "name": state.personas[pid].name if pid in state.personas else "Unknown",
+                "distance": float(dist),
+                "similarity": float(1 / (1 + dist))  # Convert distance to similarity
+            }
+            for pid, dist in nearest
+        ]
     }

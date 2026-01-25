@@ -3,6 +3,21 @@
   min-height: 100vh;
 }
 
+/* Global cursor styles for clickable elements */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.cursor-pointer {
+  cursor: pointer;
+}
+
+button:disabled,
+[disabled] {
+  cursor: not-allowed;
+}
+
 /* Remove any overlay or greyish layers */
 .logo {
   height: 6em;

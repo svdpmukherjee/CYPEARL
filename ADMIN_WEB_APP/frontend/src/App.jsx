@@ -1,10 +1,10 @@
 /**
  * CYPEARL Application - Main App Component
- * 
+ *
  * Two User Paths:
  * 1. ADMIN PATH (Research): Phase 1 → Phase 2 → Phase 3 → Phase 4
  * 2. CISO PATH (Enterprise): Upload → Match → Select → Test → Report
- * 
+ *
  * Features:
  * - Landing page with path selection (Admin vs CISO)
  * - Admin: Full research pipeline with phase progression
@@ -12,17 +12,35 @@
  * - State persistence across sessions
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Users, Brain, ArrowRight, CheckCircle, AlertCircle,
-  Database, Cpu, BarChart3, Sparkles, Shield, Target,
-  ChevronLeft, Info, Building, FlaskConical, Lock,
-  Upload, Mail, Play, FileText, Settings, Beaker
-} from 'lucide-react';
-import Phase1Dashboard from './components/Phase1Dashboard';
-import Phase2Dashboard from './components/Phase2Dashboard';
-import CISODashboard from './components/CISODashboard';
-import './App.css';
+  Users,
+  Brain,
+  ArrowRight,
+  CheckCircle,
+  AlertCircle,
+  Database,
+  Cpu,
+  BarChart3,
+  Sparkles,
+  Shield,
+  Target,
+  ChevronLeft,
+  Info,
+  Building,
+  FlaskConical,
+  Lock,
+  Upload,
+  Mail,
+  Play,
+  FileText,
+  Settings,
+  Beaker,
+} from "lucide-react";
+import Phase1Dashboard from "./components/Phase1Dashboard";
+import Phase2Dashboard from "./components/Phase2Dashboard";
+import CISODashboard from "./components/CISODashboard";
+import "./App.css";
 
 // ============================================================================
 // LANDING PAGE COMPONENT
@@ -33,7 +51,7 @@ const LandingPage = ({
   onSelectPhase,
   phase1Complete,
   phase2Complete,
-  exportedPersonas
+  exportedPersonas,
 }) => {
   const [selectedPath, setSelectedPath] = useState(null); // 'admin' or 'ciso'
 
@@ -41,73 +59,82 @@ const LandingPage = ({
   const adminPhases = [
     {
       id: 1,
-      title: 'Phase 1: Persona Discovery',
-      description: 'Discover and validate behavioral personas from phishing study data through clustering analysis and expert validation.',
+      title: "Phase 1: Persona Discovery",
+      description:
+        "Discover and validate behavioral personas from phishing study data through clustering analysis and expert validation.",
       icon: Users,
-      color: 'indigo',
+      color: "indigo",
       features: [
-        'Dataset exploration & quality analysis',
-        'Multi-algorithm clustering optimization',
-        'Persona characterization & naming',
-        'Statistical validation (η² analysis)',
-        'Expert Delphi validation',
-        'AI-ready persona export'
+        "Dataset exploration & quality analysis",
+        "Multi-algorithm clustering optimization",
+        "Persona characterization & naming",
+        "Statistical validation (η² analysis)",
+        "Expert Delphi validation",
+        "AI-ready persona export",
       ],
-      status: phase1Complete ? 'complete' : 'available',
-      cta: phase1Complete ? 'Review Phase 1' : 'Start Phase 1'
+      status: phase1Complete ? "complete" : "available",
+      cta: phase1Complete ? "Review Phase 1" : "Start Phase 1",
     },
     {
       id: 2,
-      title: 'Phase 2: LLM Calibration',
-      description: 'Test all LLM × Prompt × Email combinations to find optimal configurations for each persona.',
+      title: "Phase 2: LLM Calibration",
+      description:
+        "Test all LLM × Prompt × Email combinations to find optimal configurations for each persona.",
       icon: Brain,
-      color: 'purple',
+      color: "purple",
       features: [
-        'Multi-provider LLM testing',
-        'Prompt configuration optimization',
-        'Fidelity analysis & scoring',
-        'Cost-performance curves',
-        'Configuration validation',
-        'Publish best configs'
+        "Multi-provider LLM testing",
+        "Prompt configuration optimization",
+        "Fidelity analysis & scoring",
+        "Cost-performance curves",
+        "Configuration validation",
+        "Publish best configs",
       ],
-      status: phase2Complete ? 'complete' : (exportedPersonas?.personas?.length > 0 ? 'ready' : 'available'),
-      cta: phase2Complete ? 'Review Phase 2' : 'Start Phase 2',
-      note: !phase1Complete && !exportedPersonas?.personas?.length
-        ? 'Complete Phase 1 first to transfer personas.'
-        : null
+      status: phase2Complete
+        ? "complete"
+        : exportedPersonas?.personas?.length > 0
+          ? "ready"
+          : "available",
+      cta: phase2Complete ? "Review Phase 2" : "Start Phase 2",
+      note:
+        !phase1Complete && !exportedPersonas?.personas?.length
+          ? "Complete Phase 1 first to transfer personas."
+          : null,
     },
     {
       id: 3,
-      title: 'Phase 3: Validation',
-      description: 'Validate AI persona fidelity against new human participant data.',
+      title: "Phase 3: Validation",
+      description:
+        "Validate AI persona fidelity against new human participant data.",
       icon: BarChart3,
-      color: 'green',
+      color: "green",
       features: [
-        'New data collection',
-        'Independent sample testing',
-        'Fidelity confirmation',
-        'Boundary condition mapping'
+        "New data collection",
+        "Independent sample testing",
+        "Fidelity confirmation",
+        "Boundary condition mapping",
       ],
-      status: 'coming_soon',
-      cta: 'Coming Soon',
-      disabled: true
+      status: "coming_soon",
+      cta: "Coming Soon",
+      disabled: true,
     },
     {
       id: 4,
-      title: 'Phase 4: Deployment',
-      description: 'Deploy validated personas and configurations to production.',
+      title: "Phase 4: Deployment",
+      description:
+        "Deploy validated personas and configurations to production.",
       icon: Cpu,
-      color: 'blue',
+      color: "blue",
       features: [
-        'Configuration publishing',
-        'API deployment',
-        'Continuous monitoring',
-        'Version management'
+        "Configuration publishing",
+        "API deployment",
+        "Continuous monitoring",
+        "Version management",
       ],
-      status: 'coming_soon',
-      cta: 'Coming Soon',
-      disabled: true
-    }
+      status: "coming_soon",
+      cta: "Coming Soon",
+      disabled: true,
+    },
   ];
 
   // If no path selected, show path selection
@@ -124,7 +151,9 @@ const LandingPage = ({
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">CYPEARL</h1>
-                  <p className="text-xs text-gray-500">Cyber Personas for AI Research Lab</p>
+                  <p className="text-xs text-gray-500">
+                    Cyber Personas for AI Research Lab
+                  </p>
                 </div>
               </div>
             </div>
@@ -138,7 +167,8 @@ const LandingPage = ({
               Welcome to CYPEARL
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              AI-powered behavioral persona platform for phishing susceptibility research and enterprise security testing.
+              AI-powered behavioral persona platform for phishing susceptibility
+              research and enterprise security testing.
             </p>
           </div>
 
@@ -146,7 +176,7 @@ const LandingPage = ({
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Admin Path */}
             <div
-              onClick={() => setSelectedPath('admin')}
+              onClick={() => setSelectedPath("admin")}
               className="relative bg-white rounded-2xl border-2 border-gray-200 p-8 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-indigo-300"
             >
               <div className="absolute -top-3 left-6">
@@ -160,10 +190,12 @@ const LandingPage = ({
                   <FlaskConical className="text-indigo-600" size={32} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Admin Dashboard</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    Admin Dashboard
+                  </h3>
                   <p className="text-gray-600">
-                    Full research pipeline for discovering personas, calibrating LLMs,
-                    and validating AI fidelity.
+                    Full research pipeline for discovering personas, calibrating
+                    LLMs, and validating AI fidelity.
                   </p>
                 </div>
               </div>
@@ -190,7 +222,8 @@ const LandingPage = ({
               </div>
 
               <div className="p-3 bg-indigo-50 rounded-lg text-sm text-indigo-700 mb-6">
-                <strong>For researchers:</strong> Run ~150,000 API calls to find optimal persona configurations
+                <strong>For researchers:</strong> Run ~150,000 API calls to find
+                optimal persona configurations
               </div>
 
               <button className="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
@@ -201,7 +234,7 @@ const LandingPage = ({
 
             {/* CISO Path */}
             <div
-              onClick={() => onSelectPath('ciso')}
+              onClick={() => onSelectPath("ciso")}
               className="relative bg-white rounded-2xl border-2 border-gray-200 p-8 cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-green-300"
             >
               <div className="absolute -top-3 left-6">
@@ -215,10 +248,12 @@ const LandingPage = ({
                   <Building className="text-green-600" size={32} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">CISO Dashboard</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    CISO Dashboard
+                  </h3>
                   <p className="text-gray-600">
-                    Simplified workflow for enterprise security teams to test phishing
-                    susceptibility using validated AI personas.
+                    Simplified workflow for enterprise security teams to test
+                    phishing susceptibility using validated AI personas.
                   </p>
                 </div>
               </div>
@@ -251,7 +286,8 @@ const LandingPage = ({
               </div>
 
               <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700 mb-6">
-                <strong>For CISOs:</strong> Use pre-validated configs with ~200 API calls per test
+                <strong>For CISOs:</strong> Use pre-validated configs with ~200
+                API calls per test
               </div>
 
               <button className="w-full py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
@@ -275,23 +311,33 @@ const LandingPage = ({
                 </h4>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">1</div>
+                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">
+                      1
+                    </div>
                     <span>Collect human participant phishing data</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">2</div>
+                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">
+                      2
+                    </div>
                     <span>Cluster into behavioral personas</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">3</div>
+                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">
+                      3
+                    </div>
                     <span>Test ALL LLM × Prompt combinations</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">4</div>
+                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">
+                      4
+                    </div>
                     <span>Find best config for each persona</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">5</div>
+                    <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600">
+                      5
+                    </div>
                     <span>Publish validated configurations</span>
                   </div>
                 </div>
@@ -305,23 +351,33 @@ const LandingPage = ({
                 </h4>
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">1</div>
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">
+                      1
+                    </div>
                     <span>Upload employee assessment data</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">2</div>
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">
+                      2
+                    </div>
                     <span>Auto-match to existing personas</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">3</div>
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">
+                      3
+                    </div>
                     <span>Accept recommended LLM configs</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">4</div>
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">
+                      4
+                    </div>
                     <span>Create/upload test emails</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">5</div>
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-600">
+                      5
+                    </div>
                     <span>Get predictions & recommendations</span>
                   </div>
                 </div>
@@ -361,13 +417,17 @@ const LandingPage = ({
                 <Shield className="text-white" size={24} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">CYPEARL Admin</h1>
+                <h1 className="text-xl font-bold text-gray-900">
+                  CYPEARL Admin
+                </h1>
                 <p className="text-xs text-gray-500">Research Dashboard</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <FlaskConical className="text-indigo-600" size={18} />
-              <span className="text-sm text-indigo-600 font-medium">Research Mode</span>
+              <span className="text-sm text-indigo-600 font-medium">
+                Research Mode
+              </span>
             </div>
           </div>
         </div>
@@ -389,8 +449,8 @@ const LandingPage = ({
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {adminPhases.map((phase) => {
             const Icon = phase.icon;
-            const isComplete = phase.status === 'complete';
-            const isReady = phase.status === 'ready';
+            const isComplete = phase.status === "complete";
+            const isReady = phase.status === "ready";
             const isDisabled = phase.disabled;
 
             return (
@@ -398,16 +458,18 @@ const LandingPage = ({
                 key={phase.id}
                 className={`
                                     relative bg-white rounded-2xl border-2 transition-all duration-300
-                                    ${isDisabled
-                    ? 'opacity-60 cursor-not-allowed border-gray-200'
-                    : 'hover:shadow-xl hover:scale-[1.01] cursor-pointer'
-                  }
-                                    ${isComplete
-                    ? 'border-green-300'
-                    : isReady
-                      ? 'border-indigo-300'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }
+                                    ${
+                                      isDisabled
+                                        ? "opacity-60 cursor-not-allowed border-gray-200"
+                                        : "hover:shadow-xl hover:scale-[1.01] cursor-pointer"
+                                    }
+                                    ${
+                                      isComplete
+                                        ? "border-green-300"
+                                        : isReady
+                                          ? "border-indigo-300"
+                                          : "border-gray-200 hover:border-gray-300"
+                                    }
                                 `}
                 onClick={() => !isDisabled && onSelectPhase(phase.id)}
               >
@@ -424,7 +486,7 @@ const LandingPage = ({
                     Ready
                   </div>
                 )}
-                {phase.status === 'coming_soon' && (
+                {phase.status === "coming_soon" && (
                   <div className="absolute -top-3 -right-3 bg-gray-400 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
                     <Lock size={14} />
                     Coming Soon
@@ -434,15 +496,18 @@ const LandingPage = ({
                 <div className="p-6">
                   {/* Header */}
                   <div className="flex items-start gap-4 mb-4">
-                    <div className={`
+                    <div
+                      className={`
                                             w-12 h-12 rounded-xl flex items-center justify-center
-                                            ${isComplete
-                        ? 'bg-green-100 text-green-600'
-                        : isDisabled
-                          ? 'bg-gray-100 text-gray-400'
-                          : `bg-${phase.color}-100 text-${phase.color}-600`
-                      }
-                                        `}>
+                                            ${
+                                              isComplete
+                                                ? "bg-green-100 text-green-600"
+                                                : isDisabled
+                                                  ? "bg-gray-100 text-gray-400"
+                                                  : `bg-${phase.color}-100 text-${phase.color}-600`
+                                            }
+                                        `}
+                    >
                       <Icon size={24} />
                     </div>
                     <div className="flex-1">
@@ -458,10 +523,15 @@ const LandingPage = ({
                   {/* Features */}
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     {phase.features.map((feature, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 text-xs text-gray-600"
+                      >
                         <CheckCircle
                           size={12}
-                          className={isComplete ? 'text-green-500' : 'text-gray-300'}
+                          className={
+                            isComplete ? "text-green-500" : "text-gray-300"
+                          }
                         />
                         {feature}
                       </div>
@@ -472,7 +542,10 @@ const LandingPage = ({
                   {phase.note && (
                     <div className="mb-4 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                       <div className="flex items-start gap-2">
-                        <Info size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                        <Info
+                          size={14}
+                          className="text-amber-600 mt-0.5 flex-shrink-0"
+                        />
                         <p className="text-xs text-amber-700">{phase.note}</p>
                       </div>
                     </div>
@@ -484,12 +557,13 @@ const LandingPage = ({
                     className={`
                                             w-full py-2.5 px-4 rounded-xl font-medium text-sm
                                             flex items-center justify-center gap-2 transition-colors
-                                            ${isDisabled
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : isComplete
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      }
+                                            ${
+                                              isDisabled
+                                                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                                : isComplete
+                                                  ? "bg-green-600 text-white hover:bg-green-700"
+                                                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+                                            }
                                         `}
                   >
                     {phase.cta}
@@ -508,27 +582,35 @@ const LandingPage = ({
           </h3>
           <div className="flex items-center justify-center gap-3 overflow-x-auto pb-2">
             {[
-              { icon: Database, label: 'Data', phase: 1 },
-              { icon: Target, label: 'Cluster', phase: 1 },
-              { icon: Users, label: 'Personas', phase: 1 },
-              { icon: Sparkles, label: 'Export', phase: 1 },
-              { icon: Cpu, label: 'LLMs', phase: 2 },
-              { icon: Settings, label: 'Calibrate', phase: 2 },
-              { icon: BarChart3, label: 'Validate', phase: 3 },
-              { icon: CheckCircle, label: 'Deploy', phase: 4 },
+              { icon: Database, label: "Data", phase: 1 },
+              { icon: Target, label: "Cluster", phase: 1 },
+              { icon: Users, label: "Personas", phase: 1 },
+              { icon: Sparkles, label: "Export", phase: 1 },
+              { icon: Cpu, label: "LLMs", phase: 2 },
+              { icon: Settings, label: "Calibrate", phase: 2 },
+              { icon: BarChart3, label: "Validate", phase: 3 },
+              { icon: CheckCircle, label: "Deploy", phase: 4 },
             ].map((step, idx, arr) => (
               <React.Fragment key={step.label}>
                 <div className="flex flex-col items-center gap-1 min-w-[60px]">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${step.phase === 1 && phase1Complete ? 'bg-green-100 text-green-600' :
-                    step.phase === 2 && phase2Complete ? 'bg-green-100 text-green-600' :
-                      'bg-gray-100 text-gray-400'
-                    }`}>
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      step.phase === 1 && phase1Complete
+                        ? "bg-green-100 text-green-600"
+                        : step.phase === 2 && phase2Complete
+                          ? "bg-green-100 text-green-600"
+                          : "bg-gray-100 text-gray-400"
+                    }`}
+                  >
                     <step.icon size={20} />
                   </div>
                   <span className="text-xs text-gray-500">{step.label}</span>
                 </div>
                 {idx < arr.length - 1 && (
-                  <ArrowRight className="text-gray-300 flex-shrink-0" size={16} />
+                  <ArrowRight
+                    className="text-gray-300 flex-shrink-0"
+                    size={16}
+                  />
                 )}
               </React.Fragment>
             ))}
@@ -555,12 +637,43 @@ const LandingPage = ({
 };
 
 // ============================================================================
+// URL HASH UTILITIES
+// ============================================================================
+
+const getViewFromHash = () => {
+  const hash = window.location.hash.slice(1); // Remove #
+  if (hash.startsWith("/phase1")) return "phase1";
+  if (hash.startsWith("/phase2")) return "phase2";
+  if (hash.startsWith("/ciso")) return "ciso";
+  return "landing";
+};
+
+const getTabFromHash = () => {
+  const hash = window.location.hash.slice(1);
+  const parts = hash.split("/").filter(Boolean);
+  return parts[1] || null; // e.g., /phase1/clustering -> 'clustering'
+};
+
+const setHashForView = (view, tab = null) => {
+  let hash = "";
+  if (view === "phase1") hash = tab ? `/phase1/${tab}` : "/phase1";
+  else if (view === "phase2") hash = tab ? `/phase2/${tab}` : "/phase2";
+  else if (view === "ciso") hash = "/ciso";
+  else hash = "/";
+
+  // Only update if different to avoid duplicate history entries
+  if (window.location.hash !== `#${hash}`) {
+    window.location.hash = hash;
+  }
+};
+
+// ============================================================================
 // MAIN APP COMPONENT
 // ============================================================================
 
 const App = () => {
   // Current view: 'landing', 'phase1', 'phase2', 'ciso'
-  const [currentView, setCurrentView] = useState('landing');
+  const [currentView, setCurrentView] = useState(() => getViewFromHash());
 
   // Phase completion states
   const [phase1Complete, setPhase1Complete] = useState(false);
@@ -572,78 +685,105 @@ const App = () => {
   // Load saved state from localStorage on mount
   useEffect(() => {
     try {
-      const savedState = localStorage.getItem('cypearl_state');
+      const savedState = localStorage.getItem("cypearl_state");
       if (savedState) {
         const state = JSON.parse(savedState);
         if (state.phase1Complete) setPhase1Complete(state.phase1Complete);
         if (state.phase2Complete) setPhase2Complete(state.phase2Complete);
         if (state.exportedPersonas) setExportedPersonas(state.exportedPersonas);
+        // Restore view from localStorage if no hash present
+        if (!window.location.hash && state.currentView) {
+          setCurrentView(state.currentView);
+          setHashForView(state.currentView);
+        }
       }
     } catch (e) {
-      console.warn('Failed to load saved state:', e);
+      console.warn("Failed to load saved state:", e);
     }
   }, []);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      const newView = getViewFromHash();
+      setCurrentView(newView);
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  // Update URL hash when view changes programmatically
+  useEffect(() => {
+    setHashForView(currentView);
+  }, [currentView]);
 
   // Save state to localStorage when it changes
   useEffect(() => {
     try {
       const stateToSave = {
+        currentView,
         phase1Complete,
         phase2Complete,
-        exportedPersonas
+        exportedPersonas,
       };
-      localStorage.setItem('cypearl_state', JSON.stringify(stateToSave));
+      localStorage.setItem("cypearl_state", JSON.stringify(stateToSave));
     } catch (e) {
-      console.warn('Failed to save state:', e);
+      console.warn("Failed to save state:", e);
     }
-  }, [phase1Complete, phase2Complete, exportedPersonas]);
+  }, [currentView, phase1Complete, phase2Complete, exportedPersonas]);
 
   // Handle path selection (admin vs ciso)
   const handleSelectPath = (path) => {
-    if (path === 'ciso') {
-      setCurrentView('ciso');
+    if (path === "ciso") {
+      setCurrentView("ciso");
     }
   };
 
   // Handle phase selection from landing page
   const handleSelectPhase = (phaseId) => {
     if (phaseId === 1) {
-      setCurrentView('phase1');
+      setCurrentView("phase1");
     } else if (phaseId === 2) {
-      setCurrentView('phase2');
+      setCurrentView("phase2");
     }
   };
 
   // Handle export from Phase 1 to Phase 2
   const handleExportToPhase2 = (exportData) => {
-    console.log('Received export data from Phase 1:', exportData);
+    console.log("Received export data from Phase 1:", exportData);
     setExportedPersonas(exportData);
   };
 
   // Handle Phase 1 completion
   const handlePhase1Complete = () => {
     setPhase1Complete(true);
-    setCurrentView('phase2');
+    setCurrentView("phase2");
   };
 
   // Handle Phase 2 completion
   const handlePhase2Complete = () => {
     setPhase2Complete(true);
-    setCurrentView('landing');
+    setCurrentView("landing");
   };
 
   // Handle back navigation
   const handleBackToLanding = () => {
-    setCurrentView('landing');
+    setCurrentView("landing");
+  };
+
+  // Handle back to Phase 1 (from Phase 2)
+  const handleBackToPhase1 = () => {
+    setCurrentView("phase1");
   };
 
   // Render CISO Dashboard
-  if (currentView === 'ciso') {
+  if (currentView === "ciso") {
     return <CISODashboard onBack={handleBackToLanding} />;
   }
 
   // Render Phase 1
-  if (currentView === 'phase1') {
+  if (currentView === "phase1") {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white border-b px-4 py-2">
@@ -664,16 +804,16 @@ const App = () => {
   }
 
   // Render Phase 2
-  if (currentView === 'phase2') {
+  if (currentView === "phase2") {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white border-b px-4 py-2">
           <button
-            onClick={handleBackToLanding}
+            onClick={handleBackToPhase1}
             className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ChevronLeft size={18} />
-            Back to Overview
+            Back to Phase 1
           </button>
         </div>
         <Phase2Dashboard

@@ -12,7 +12,13 @@
  * 8. AI Export - Phase 2 preparation
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   RefreshCw,
   Database,
@@ -37,6 +43,9 @@ import { CrossIndustryTab } from "./tabs/CrossIndustryTab";
 import { ExpertValidationTab } from "./tabs/ExpertValidationTab";
 import { AIExportTab } from "./tabs/AIExportTab";
 
+// Guidance component
+import { StepGuide } from "./common/StepGuide";
+
 // Constants
 import { DEFAULT_WEIGHTS } from "../constants";
 
@@ -51,22 +60,41 @@ import {
   setPersonaLabel,
   getPersonaLabels,
   generatePersonaNames,
+  // Scientific validation
+  runQuickValidation,
+  getGapStatistic,
+  getFeatureImportanceAnalysis,
+  getCrossValidation,
+  getPredictionError,
+  getSoftAssignments,
+  getLLMReadiness,
+  getClusterVisualization,
 } from "../services/api";
 
 // ============================================================================
 // TAB CONFIGURATION
 // ============================================================================
 
-const TABS = [
-  { id: "dataset", label: "Dataset", icon: Database },
-  { id: "clustering", label: "Clustering", icon: Layers },
-  { id: "profiles", label: "Personas", icon: Users },
-  { id: "validation", label: "Validation", icon: Target },
-  { id: "interactions", label: "Interactions", icon: Grid3X3 },
-  { id: "industry", label: "Cross-Industry", icon: Building2 },
-  { id: "expert", label: "Expert", icon: UserCheck },
-  { id: "export", label: "AI Export", icon: Sparkles },
+// Main workflow tabs (required steps)
+const MAIN_TABS = [
+  { id: "dataset", label: "Dataset", icon: Database, step: 1 },
+  { id: "clustering", label: "Clustering", icon: Layers, step: 2 },
+  { id: "profiles", label: "Personas", icon: Users, step: 3 },
+  { id: "export", label: "Export", icon: Sparkles, step: 4 },
 ];
+
+// Optional exploration tabs
+const OPTIONAL_TABS = [
+  { id: "validation", label: "Validation", icon: Target, description: "η² analysis" },
+  { id: "interactions", label: "Interactions", icon: Grid3X3, description: "Email patterns" },
+  { id: "industry", label: "Cross-Industry", icon: Building2, description: "Transferability" },
+];
+
+// Expert review tab (special - for refining personas)
+const EXPERT_TAB = { id: "expert", label: "Expert Review", icon: UserCheck, description: "Refine personas" };
+
+// Combined for compatibility
+const TABS = [...MAIN_TABS, ...OPTIONAL_TABS, EXPERT_TAB];
 
 // ============================================================================
 // HELPER FUNCTION - Determine Cognitive Style
@@ -86,12 +114,49 @@ const determineCognitiveStyle = (cluster) => {
 // MAIN DASHBOARD COMPONENT
 // ============================================================================
 
+// ============================================================================
+// URL & STORAGE UTILITIES FOR PHASE 1
+// ============================================================================
+
+const PHASE1_STORAGE_KEY = 'cypearl_phase1_state';
+
+const getPhase1TabFromHash = () => {
+  const hash = window.location.hash.slice(1);
+  const parts = hash.split('/').filter(Boolean);
+  if (parts[0] === 'phase1' && parts[1]) {
+    const validTabs = ['dataset', 'clustering', 'profiles', 'validation', 'interactions', 'industry', 'expert', 'export'];
+    if (validTabs.includes(parts[1])) {
+      return parts[1];
+    }
+  }
+  return null;
+};
+
+const setPhase1TabInHash = (tab) => {
+  const hash = `/phase1/${tab}`;
+  if (window.location.hash !== `#${hash}`) {
+    window.history.pushState(null, '', `#${hash}`);
+  }
+};
+
 const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
   // ========================================================================
   // STATE
   // ========================================================================
 
-  const [activeTab, setActiveTab] = useState("dataset");
+  // Initialize activeTab from URL hash or localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    const hashTab = getPhase1TabFromHash();
+    if (hashTab) return hashTab;
+    try {
+      const saved = localStorage.getItem(PHASE1_STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        return state.activeTab || 'dataset';
+      }
+    } catch (e) {}
+    return 'dataset';
+  });
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -130,9 +195,63 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
   const [expertRatings, setExpertRatings] = useState([]);
   const [delphiRound, setDelphiRound] = useState(1);
 
+  // Validation progress tracking state
+  const [validationProgress, setValidationProgress] = useState({
+    currentStep: 0,
+    steps: [
+      { id: 1, name: "Quick Validation", endpoint: "quick", status: "pending" },
+      {
+        id: 2,
+        name: "Gap Statistic",
+        endpoint: "gap_statistic",
+        status: "pending",
+      },
+      {
+        id: 3,
+        name: "Feature Importance",
+        endpoint: "feature_importance",
+        status: "pending",
+      },
+      {
+        id: 4,
+        name: "Cross-Validation",
+        endpoint: "cross_validation",
+        status: "pending",
+      },
+      {
+        id: 5,
+        name: "Prediction Error",
+        endpoint: "prediction_error",
+        status: "pending",
+      },
+      {
+        id: 6,
+        name: "Soft Assignments",
+        endpoint: "soft_assignments",
+        status: "pending",
+      },
+      {
+        id: 7,
+        name: "LLM Readiness",
+        endpoint: "llm_readiness",
+        status: "pending",
+      },
+      {
+        id: 8,
+        name: "Cluster Visualization",
+        endpoint: "cluster_visualization",
+        status: "pending",
+      },
+    ],
+  });
+
   // AI Persona Naming states
   const [useAiNaming, setUseAiNaming] = useState(true);
   const [isGeneratingNames, setIsGeneratingNames] = useState(false);
+
+  // Scientific validation states
+  const [validationResult, setValidationResult] = useState(null);
+  const [validationLoading, setValidationLoading] = useState(false);
 
   // Phase completion state
   const [isPhaseComplete, setIsPhaseComplete] = useState(false);
@@ -167,6 +286,87 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
       Object.keys(clusteringResult.clusters || {}).length >= 3
     );
   }, [clusteringResult]);
+
+  // ========================================================================
+  // URL & STATE PERSISTENCE
+  // ========================================================================
+
+  // Sync activeTab with URL hash
+  useEffect(() => {
+    setPhase1TabInHash(activeTab);
+  }, [activeTab]);
+
+  // Handle browser back/forward for tab changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hashTab = getPhase1TabFromHash();
+      if (hashTab && hashTab !== activeTab) {
+        setActiveTab(hashTab);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeTab]);
+
+  // Persist important state to localStorage
+  useEffect(() => {
+    // Don't save during initial loading
+    if (initialLoading) return;
+
+    try {
+      const stateToSave = {
+        activeTab,
+        clusteringResult,
+        optimizationResult,
+        config,
+        optConfig,
+        weights,
+        minClusterSize,
+        personaLabels,
+        validationResult,
+        interactionResult,
+        industryAnalysis,
+        expertRatings,
+        delphiRound,
+        useAiNaming,
+      };
+      localStorage.setItem(PHASE1_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.warn('Failed to save Phase 1 state:', e);
+    }
+  }, [
+    activeTab, clusteringResult, optimizationResult, config, optConfig,
+    weights, minClusterSize, personaLabels, validationResult,
+    interactionResult, industryAnalysis, expertRatings, delphiRound,
+    useAiNaming, initialLoading
+  ]);
+
+  // Restore state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PHASE1_STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        // Restore clustering results and related state
+        if (state.clusteringResult) setClusteringResult(state.clusteringResult);
+        if (state.optimizationResult) setOptimizationResult(state.optimizationResult);
+        if (state.config) setConfig(state.config);
+        if (state.optConfig) setOptConfig(state.optConfig);
+        if (state.weights) setWeights(state.weights);
+        if (state.minClusterSize) setMinClusterSize(state.minClusterSize);
+        if (state.personaLabels) setPersonaLabels(state.personaLabels);
+        if (state.validationResult) setValidationResult(state.validationResult);
+        if (state.interactionResult) setInteractionResult(state.interactionResult);
+        if (state.industryAnalysis) setIndustryAnalysis(state.industryAnalysis);
+        if (state.expertRatings) setExpertRatings(state.expertRatings);
+        if (state.delphiRound) setDelphiRound(state.delphiRound);
+        if (state.useAiNaming !== undefined) setUseAiNaming(state.useAiNaming);
+      }
+    } catch (e) {
+      console.warn('Failed to restore Phase 1 state:', e);
+    }
+  }, []);
 
   // ========================================================================
   // DATA LOADING
@@ -241,21 +441,28 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
     abortControllerRef.current = new AbortController();
 
     setLoading(true);
-    setOperationType('cluster');
+    setOperationType("cluster");
     setIsGeneratingNames(false);
-    console.log('[Clustering] Starting with config:', config);
+    console.log("[Clustering] Starting with config:", config);
 
     try {
-      const result = await runClustering({
-        ...config,
-        min_cluster_size: minClusterSize,
-      }, abortControllerRef.current.signal);
+      const result = await runClustering(
+        {
+          ...config,
+          min_cluster_size: minClusterSize,
+        },
+        abortControllerRef.current.signal,
+      );
 
       if (!result || !result.clusters) {
         throw new Error("Invalid clustering result received");
       }
 
-      console.log('[Clustering] Complete:', Object.keys(result.clusters).length, 'clusters');
+      console.log(
+        "[Clustering] Complete:",
+        Object.keys(result.clusters).length,
+        "clusters",
+      );
       setClusteringResult(result);
       setLoading(false);
       setOperationType(null);
@@ -265,7 +472,11 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
         setIsGeneratingNames(true);
         try {
           const clusters = Object.values(result.clusters);
-          console.log("[AI Naming] Generating names for", clusters.length, "clusters");
+          console.log(
+            "[AI Naming] Generating names for",
+            clusters.length,
+            "clusters",
+          );
           const namesResponse = await generatePersonaNames(clusters);
           console.log("[AI Naming] Response:", namesResponse);
 
@@ -287,8 +498,8 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
         }
       }
     } catch (error) {
-      if (error.name === 'AbortError' || error.message === 'canceled') {
-        console.log('[Clustering] Cancelled by user');
+      if (error.name === "AbortError" || error.message === "canceled") {
+        console.log("[Clustering] Cancelled by user");
         return;
       }
       console.error("[Clustering] Failed:", error);
@@ -310,29 +521,34 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
     abortControllerRef.current = new AbortController();
 
     setLoading(true);
-    setOperationType('optimize');
-    console.log('[K-Sweep] Starting optimization with config:', optConfig);
+    setOperationType("optimize");
+    console.log("[K-Sweep] Starting optimization with config:", optConfig);
 
     try {
-      const result = await optimizeClustering({
-        algorithm: optConfig.algorithm,
-        k_min: parseInt(optConfig.k_min),
-        k_max: parseInt(optConfig.k_max),
-        use_pca: optConfig.use_pca,
-        pca_variance: optConfig.pca_variance,
-        weights: normalizedWeights,
-        min_cluster_size: minClusterSize,
-      }, abortControllerRef.current.signal);
+      const result = await optimizeClustering(
+        {
+          algorithm: optConfig.algorithm,
+          k_min: parseInt(optConfig.k_min),
+          k_max: parseInt(optConfig.k_max),
+          use_pca: optConfig.use_pca,
+          pca_variance: optConfig.pca_variance,
+          weights: normalizedWeights,
+          min_cluster_size: minClusterSize,
+        },
+        abortControllerRef.current.signal,
+      );
 
-      console.log('[K-Sweep] Complete:', result);
+      console.log("[K-Sweep] Complete:", result);
       setOptimizationResult(result);
     } catch (error) {
-      if (error.name === 'AbortError' || error.message === 'canceled') {
-        console.log('[K-Sweep] Cancelled by user');
+      if (error.name === "AbortError" || error.message === "canceled") {
+        console.log("[K-Sweep] Cancelled by user");
         return;
       }
       console.error("[K-Sweep] Failed:", error);
-      alert(`Optimization failed: ${error.message || "Unknown error"}. Check console for details.`);
+      alert(
+        `Optimization failed: ${error.message || "Unknown error"}. Check console for details.`,
+      );
     } finally {
       setLoading(false);
       setOperationType(null);
@@ -342,7 +558,7 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
 
   const handleCancelOperation = () => {
     if (abortControllerRef.current) {
-      console.log('[Cancel] Aborting current operation:', operationType);
+      console.log("[Cancel] Aborting current operation:", operationType);
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
       setLoading(false);
@@ -399,6 +615,206 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
     } catch (error) {
       console.error("Failed to save persona label:", error);
       setPersonaLabels((prev) => ({ ...prev, [clusterId]: label }));
+    }
+  };
+
+  // ========================================================================
+  // SCIENTIFIC VALIDATION HANDLERS
+  // ========================================================================
+
+  const handleRunValidation = async () => {
+    if (!clusteringResult) {
+      alert("Please run clustering first before validation.");
+      return;
+    }
+
+    setValidationLoading(true);
+    setValidationResult(null);
+    console.log(
+      "[Validation] Starting scientific validation for K =",
+      clusteringResult.k,
+    );
+
+    // Reset progress
+    const initialSteps = [
+      { id: 1, name: "Quick Validation", endpoint: "quick", status: "pending" },
+      {
+        id: 2,
+        name: "Gap Statistic",
+        endpoint: "gap_statistic",
+        status: "pending",
+      },
+      {
+        id: 3,
+        name: "Feature Importance",
+        endpoint: "feature_importance",
+        status: "pending",
+      },
+      {
+        id: 4,
+        name: "Cross-Validation",
+        endpoint: "cross_validation",
+        status: "pending",
+      },
+      {
+        id: 5,
+        name: "Prediction Error",
+        endpoint: "prediction_error",
+        status: "pending",
+      },
+      {
+        id: 6,
+        name: "Soft Assignments",
+        endpoint: "soft_assignments",
+        status: "pending",
+      },
+      {
+        id: 7,
+        name: "LLM Readiness",
+        endpoint: "llm_readiness",
+        status: "pending",
+      },
+      {
+        id: 8,
+        name: "Cluster Visualization",
+        endpoint: "cluster_visualization",
+        status: "pending",
+      },
+    ];
+    setValidationProgress({ currentStep: 0, steps: initialSteps });
+
+    const results = {};
+
+    // Helper to update step status
+    const updateStep = (stepId, status) => {
+      setValidationProgress((prev) => ({
+        ...prev,
+        currentStep: status === "running" ? stepId : prev.currentStep,
+        steps: prev.steps.map((s) => (s.id === stepId ? { ...s, status } : s)),
+      }));
+    };
+
+    try {
+      // Step 1: Quick Validation
+      updateStep(1, "running");
+      try {
+        results.quick = await runQuickValidation({ k: clusteringResult.k });
+        updateStep(1, "completed");
+      } catch (e) {
+        console.warn("[Validation] Quick validation failed:", e);
+        results.quick = null;
+        updateStep(1, "failed");
+      }
+
+      // Step 2: Gap Statistic
+      updateStep(2, "running");
+      try {
+        results.gap_statistic = await getGapStatistic({
+          k_min: optConfig.k_min,
+          k_max: optConfig.k_max,
+        });
+        updateStep(2, "completed");
+      } catch (e) {
+        console.warn("[Validation] Gap statistic failed:", e);
+        results.gap_statistic = null;
+        updateStep(2, "failed");
+      }
+
+      // Step 3: Feature Importance
+      updateStep(3, "running");
+      try {
+        results.feature_importance = await getFeatureImportanceAnalysis({
+          k: clusteringResult.k,
+        });
+        updateStep(3, "completed");
+      } catch (e) {
+        console.warn("[Validation] Feature importance failed:", e);
+        results.feature_importance = null;
+        updateStep(3, "failed");
+      }
+
+      // Step 4: Cross-Validation
+      updateStep(4, "running");
+      try {
+        results.cross_validation = await getCrossValidation({
+          k: clusteringResult.k,
+          n_folds: 5,
+        });
+        updateStep(4, "completed");
+      } catch (e) {
+        console.warn("[Validation] Cross-validation failed:", e);
+        results.cross_validation = null;
+        updateStep(4, "failed");
+      }
+
+      // Step 5: Prediction Error
+      updateStep(5, "running");
+      try {
+        results.prediction_error = await getPredictionError({
+          k: clusteringResult.k,
+        });
+        updateStep(5, "completed");
+      } catch (e) {
+        console.warn("[Validation] Prediction error failed:", e);
+        results.prediction_error = null;
+        updateStep(5, "failed");
+      }
+
+      // Step 6: Soft Assignments
+      updateStep(6, "running");
+      try {
+        results.soft_assignments = await getSoftAssignments({
+          k: clusteringResult.k,
+        });
+        updateStep(6, "completed");
+      } catch (e) {
+        console.warn("[Validation] Soft assignments failed:", e);
+        results.soft_assignments = null;
+        updateStep(6, "failed");
+      }
+
+      // Step 7: LLM Readiness
+      updateStep(7, "running");
+      try {
+        results.llm_readiness = await getLLMReadiness({
+          k: clusteringResult.k,
+        });
+        updateStep(7, "completed");
+      } catch (e) {
+        console.warn("[Validation] LLM readiness failed:", e);
+        results.llm_readiness = null;
+        updateStep(7, "failed");
+      }
+
+      // Step 8: Cluster Visualization
+      updateStep(8, "running");
+      try {
+        results.cluster_visualization = await getClusterVisualization({
+          method: "pca",
+        });
+        updateStep(8, "completed");
+      } catch (e) {
+        console.warn("[Validation] Cluster visualization failed:", e);
+        results.cluster_visualization = null;
+        updateStep(8, "failed");
+      }
+
+      // Combine all results
+      const combinedResult = {
+        ...results,
+        timestamp: new Date().toISOString(),
+        k: clusteringResult.k,
+      };
+
+      console.log("[Validation] Complete:", combinedResult);
+      setValidationResult(combinedResult);
+    } catch (error) {
+      console.error("[Validation] Failed:", error);
+      alert(
+        `Validation failed: ${error.message || "Unknown error"}. Check console for details.`,
+      );
+    } finally {
+      setValidationLoading(false);
     }
   };
 
@@ -602,38 +1018,114 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
             </div>
           </div>
 
-          {/* Tab Navigation */}
-          <nav className="flex gap-1 mt-6 overflow-x-auto pb-2">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isExportTab = tab.id === "export";
-              return (
+          {/* Tab Navigation - Redesigned with workflow indicators */}
+          <nav className="mt-6 overflow-x-auto pb-2">
+            <div className="flex items-center gap-6">
+              {/* Main Workflow Tabs */}
+              <div className="flex items-center">
+                {MAIN_TABS.map((tab, index) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  const isExportTab = tab.id === "export";
+                  const isCompleted = tab.id === "dataset" ? true :
+                                     tab.id === "clustering" ? clusteringResult !== null :
+                                     tab.id === "profiles" ? clusteringResult !== null :
+                                     tab.id === "export" ? false : false;
+
+                  return (
+                    <div key={tab.id} className="flex items-center">
+                      <button
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all whitespace-nowrap ${
+                          isActive
+                            ? isExportTab
+                              ? "bg-purple-100 text-purple-700 ring-2 ring-purple-300"
+                              : "bg-indigo-100 text-indigo-700 ring-2 ring-indigo-300"
+                            : isCompleted
+                              ? "bg-green-50 text-green-700 hover:bg-green-100"
+                              : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                        }`}
+                      >
+                        <span className={`flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                          isActive
+                            ? isExportTab ? "bg-purple-600 text-white" : "bg-indigo-600 text-white"
+                            : isCompleted
+                              ? "bg-green-500 text-white"
+                              : "bg-gray-300 text-gray-600"
+                        }`}>
+                          {isCompleted && !isActive ? "✓" : tab.step}
+                        </span>
+                        <Icon size={16} />
+                        {tab.label}
+                        {isExportTab && canProceedToPhase2 && (
+                          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                        )}
+                      </button>
+                      {/* Arrow between main tabs */}
+                      {index < MAIN_TABS.length - 1 && (
+                        <ArrowRight size={16} className="mx-2 text-gray-300" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Separator */}
+              <div className="h-8 w-px bg-gray-200" />
+
+              {/* Optional Tabs */}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 mr-2 uppercase tracking-wide">Optional:</span>
+                {OPTIONAL_TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      title={tab.description}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-all whitespace-nowrap ${
+                        isActive
+                          ? "bg-gray-100 text-gray-900 ring-1 ring-gray-300"
+                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      }`}
+                    >
+                      <Icon size={14} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+
+                {/* Expert Review Tab - Special styling */}
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium 
-                                        border-b-2 transition-colors whitespace-nowrap ${
-                                          activeTab === tab.id
-                                            ? isExportTab
-                                              ? "border-purple-600 text-purple-600"
-                                              : "border-indigo-600 text-indigo-600"
-                                            : "border-transparent text-gray-500 hover:text-gray-700"
-                                        }`}
+                  onClick={() => setActiveTab(EXPERT_TAB.id)}
+                  title={EXPERT_TAB.description}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-all whitespace-nowrap border ${
+                    activeTab === EXPERT_TAB.id
+                      ? "bg-orange-50 text-orange-700 border-orange-200 ring-1 ring-orange-300"
+                      : "text-orange-600 border-orange-200 hover:bg-orange-50"
+                  }`}
                 >
-                  <Icon size={16} />
-                  {tab.label}
-                  {isExportTab && canProceedToPhase2 && (
-                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                  )}
+                  <EXPERT_TAB.icon size={14} />
+                  {EXPERT_TAB.label}
                 </button>
-              );
-            })}
+              </div>
+            </div>
           </nav>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-8 py-6">
+        {/* Step-by-step guidance for current tab */}
+        <StepGuide
+          phase={1}
+          tab={activeTab}
+          collapsed={true}
+          className="mb-6"
+        />
+
         {activeTab === "dataset" && (
           <DatasetDescriptionTab summary={summary} dataQuality={dataQuality} />
         )}
@@ -665,6 +1157,11 @@ const Phase1Dashboard = ({ onExportToPhase2, onPhaseComplete }) => {
             setUseAiNaming={setUseAiNaming}
             isGeneratingNames={isGeneratingNames}
             personaLabels={personaLabels}
+            // Scientific validation props
+            validationResult={validationResult}
+            validationLoading={validationLoading}
+            validationProgress={validationProgress}
+            onRunValidation={handleRunValidation}
           />
         )}
 

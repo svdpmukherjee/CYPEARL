@@ -67,6 +67,9 @@ import {
 import * as api from "../services/phase2Api";
 import { CalibrationTab } from "./tabs/CalibrationTab";
 import { ResultsTab as ResultsTabView } from "./tabs/ResultsTab";
+import { StepGuide, PHASE2_GUIDANCE } from "./common/StepGuide";
+import { ResearchTab } from "./tabs/ResearchTab";
+import { SystematicCodeLegend } from "./common";
 
 // ============================================================================
 // CONSTANTS
@@ -1158,6 +1161,11 @@ const OverviewTab = ({
       >
         {personas.length > 0 ? (
           <div className="space-y-4">
+            {/* Systematic Code Legend */}
+            <div className="mb-2">
+              <SystematicCodeLegend />
+            </div>
+
             {/* Risk Summary */}
             <div className="grid grid-cols-4 gap-3">
               {Object.entries(riskCounts).map(([level, count]) => (
@@ -1199,21 +1207,27 @@ const OverviewTab = ({
                     p.behavioral_targets?.phishing_click_rate ||
                     0) * 100
                 ).toFixed(0);
+                const reportRate = (
+                  (p.behavioral_statistics?.report_rate ||
+                    p.behavioral_targets?.report_rate ||
+                    0) * 100
+                ).toFixed(0);
                 return (
                   <div
                     key={p.persona_id}
-                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900">
                         {p.name || p.persona_id}
                       </div>
-                      <div className="text-sm text-gray-500 truncate">
+                      <div className="text-sm text-gray-500 mt-1">
                         {p.description}
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {clickRate}% click
+                    <div className="text-sm text-gray-500 shrink-0 text-right">
+                      <div className="text-red-600">{clickRate}% click</div>
+                      <div className="text-green-600">{reportRate}% report</div>
                     </div>
                     <Badge
                       color={
@@ -1440,8 +1454,34 @@ const ProviderSetupTab = ({
   const [testing, setTesting] = useState({});
   const [results, setResults] = useState({});
   const [selectedModels, setSelectedModels] = useState(new Set());
+  const [envKeyLoaded, setEnvKeyLoaded] = useState(false);
 
-  // Build factorial matrix: Family Ãƒâ€” Tier
+  // Auto-populate API key from environment variables
+  useEffect(() => {
+    const loadEnvConfig = async () => {
+      try {
+        const envConfig = await api.getEnvConfig();
+        if (envConfig?.openrouter?.configured && envConfig.openrouter.api_key) {
+          setConfigs((prev) => ({
+            ...prev,
+            openrouter: {
+              ...prev.openrouter,
+              api_key: envConfig.openrouter.api_key,
+            },
+          }));
+          setEnvKeyLoaded(true);
+          console.log(
+            "[Provider Setup] OpenRouter API key auto-populated from environment",
+          );
+        }
+      } catch (error) {
+        console.log("[Provider Setup] No env config available:", error.message);
+      }
+    };
+    loadEnvConfig();
+  }, []);
+
+  // Build factorial matrix: Family x Tier
   const factorialMatrix = useMemo(() => {
     const matrix = {};
     Object.values(LLM_FAMILIES).forEach((family) => {
@@ -1801,11 +1841,28 @@ const ProviderSetupTab = ({
                       {/* Config */}
                       <div>
                         <h4 className="font-medium mb-3">Configuration</h4>
+                        {/* Auto-populated indicator */}
+                        {provider.id === "openrouter" && envKeyLoaded && (
+                          <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                            <CheckCircle size={16} className="text-green-600" />
+                            <span className="text-sm text-green-700">
+                              API key auto-populated from environment (.env
+                              file)
+                            </span>
+                          </div>
+                        )}
                         <div className="space-y-3">
                           {provider.configFields.map((field) => (
                             <div key={field.key}>
                               <label className="block text-sm text-gray-600 mb-1">
                                 {field.label}
+                                {provider.id === "openrouter" &&
+                                  field.key === "api_key" &&
+                                  envKeyLoaded && (
+                                    <span className="ml-2 text-xs text-green-600">
+                                      (from .env)
+                                    </span>
+                                  )}
                               </label>
                               <div className="flex gap-2">
                                 <input
@@ -2875,9 +2932,12 @@ const ExperimentBuilderTab = ({
         {/* Personas - With description */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">
-              Personas ({config.selectedPersonas.length})
-            </h3>
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold">
+                Personas ({config.selectedPersonas.length})
+              </h3>
+              <SystematicCodeLegend />
+            </div>
             <div className="flex gap-2">
               <button
                 className="text-xs text-gray-500 hover:text-gray-700"
@@ -2897,42 +2957,61 @@ const ExperimentBuilderTab = ({
           </div>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {personas.length > 0 ? (
-              personas.map((p) => (
-                <label
-                  key={p.persona_id}
-                  className="flex items-start gap-2 p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200"
-                >
-                  <input
-                    type="checkbox"
-                    checked={config.selectedPersonas.includes(p.persona_id)}
-                    onChange={() => togglePersona(p.persona_id)}
-                    className="w-4 h-4 mt-1"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
-                        {p.name || p.persona_id}
-                      </span>
-                      <Badge
-                        color={
-                          p.risk_level === "CRITICAL"
-                            ? "red"
-                            : p.risk_level === "HIGH"
-                              ? "orange"
-                              : p.risk_level === "MEDIUM"
-                                ? "yellow"
-                                : "green"
-                        }
-                      >
-                        {p.risk_level}
-                      </Badge>
+              personas.map((p) => {
+                const clickRate = (
+                  (p.behavioral_statistics?.phishing_click_rate ||
+                    p.behavioral_targets?.phishing_click_rate ||
+                    0) * 100
+                ).toFixed(0);
+                const reportRate = (
+                  (p.behavioral_statistics?.report_rate ||
+                    p.behavioral_targets?.report_rate ||
+                    0) * 100
+                ).toFixed(0);
+                return (
+                  <label
+                    key={p.persona_id}
+                    className="flex items-start gap-2 p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-transparent hover:border-gray-200"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={config.selectedPersonas.includes(p.persona_id)}
+                      onChange={() => togglePersona(p.persona_id)}
+                      className="w-4 h-4 mt-1"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">
+                          {p.name || p.persona_id}
+                        </span>
+                        <Badge
+                          color={
+                            p.risk_level === "CRITICAL"
+                              ? "red"
+                              : p.risk_level === "HIGH"
+                                ? "orange"
+                                : p.risk_level === "MEDIUM"
+                                  ? "yellow"
+                                  : "green"
+                          }
+                        >
+                          {p.risk_level}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {p.description}
+                      </p>
+                      <p className="text-xs mt-1">
+                        <span className="text-red-600">{clickRate}% click</span>
+                        <span className="mx-1">•</span>
+                        <span className="text-green-600">
+                          {reportRate}% report
+                        </span>
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                      {p.description}
-                    </p>
-                  </div>
-                </label>
-              ))
+                  </label>
+                );
+              })
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
                 No personas loaded. Import from Overview tab.
@@ -3748,14 +3827,63 @@ const TABS = [
   { id: "providers", label: "Providers", icon: Server },
   { id: "prompts", label: "Prompts", icon: Code },
   { id: "calibration", label: "Calibration", icon: Beaker },
+  { id: "research", label: "Research", icon: Brain },
   { id: "experiment", label: "Experiment", icon: Zap },
   { id: "execution", label: "Execution", icon: Play },
   { id: "results", label: "Results", icon: BarChart3 },
   { id: "publish", label: "Publish", icon: Share2 },
 ];
 
+// ============================================================================
+// URL & STORAGE UTILITIES FOR PHASE 2
+// ============================================================================
+
+const PHASE2_STORAGE_KEY = "cypearl_phase2_state";
+
+const getPhase2TabFromHash = () => {
+  const hash = window.location.hash.slice(1);
+  const parts = hash.split("/").filter(Boolean);
+  if (parts[0] === "phase2" && parts[1]) {
+    const validTabs = [
+      "overview",
+      "providers",
+      "prompts",
+      "experiment",
+      "execution",
+      "results",
+      "boundaries",
+      "calibration",
+      "research",
+      "publish",
+    ];
+    if (validTabs.includes(parts[1])) {
+      return parts[1];
+    }
+  }
+  return null;
+};
+
+const setPhase2TabInHash = (tab) => {
+  const hash = `/phase2/${tab}`;
+  if (window.location.hash !== `#${hash}`) {
+    window.history.pushState(null, "", `#${hash}`);
+  }
+};
+
 const Phase2Dashboard = ({ importedPersonas }) => {
-  const [activeTab, setActiveTab] = useState("overview");
+  // Initialize activeTab from URL hash or localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    const hashTab = getPhase2TabFromHash();
+    if (hashTab) return hashTab;
+    try {
+      const saved = localStorage.getItem(PHASE2_STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        return state.activeTab || "overview";
+      }
+    } catch (e) {}
+    return "overview";
+  });
   const [loading, setLoading] = useState(false);
   const [personas, setPersonas] = useState([]);
   const [emails, setEmails] = useState([]);
@@ -3767,6 +3895,76 @@ const Phase2Dashboard = ({ importedPersonas }) => {
     DEFAULT_PROMPT_TEMPLATES,
   );
   const [autoImported, setAutoImported] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // ========================================================================
+  // URL & STATE PERSISTENCE
+  // ========================================================================
+
+  // Sync activeTab with URL hash
+  useEffect(() => {
+    setPhase2TabInHash(activeTab);
+  }, [activeTab]);
+
+  // Handle browser back/forward for tab changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hashTab = getPhase2TabFromHash();
+      if (hashTab && hashTab !== activeTab) {
+        setActiveTab(hashTab);
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [activeTab]);
+
+  // Persist important state to localStorage
+  useEffect(() => {
+    if (initialLoading) return;
+
+    try {
+      const stateToSave = {
+        activeTab,
+        personas,
+        emails,
+        providers,
+        experiments,
+        promptTemplates,
+      };
+      localStorage.setItem(PHASE2_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.warn("Failed to save Phase 2 state:", e);
+    }
+  }, [
+    activeTab,
+    personas,
+    emails,
+    providers,
+    experiments,
+    promptTemplates,
+    initialLoading,
+  ]);
+
+  // Restore state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PHASE2_STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        if (state.personas?.length > 0 && !importedPersonas?.personas?.length) {
+          setPersonas(state.personas);
+        }
+        if (state.emails?.length > 0) setEmails(state.emails);
+        if (state.providers) setProviders(state.providers);
+        if (state.experiments?.length > 0) setExperiments(state.experiments);
+        if (state.promptTemplates) setPromptTemplates(state.promptTemplates);
+      }
+    } catch (e) {
+      console.warn("Failed to restore Phase 2 state:", e);
+    }
+    setInitialLoading(false);
+  }, []);
 
   // Check for imported personas FIRST
   useEffect(() => {
@@ -3935,6 +4133,16 @@ const Phase2Dashboard = ({ importedPersonas }) => {
           </div>
         ) : (
           <>
+            {/* Step-by-step guidance for current tab */}
+            {PHASE2_GUIDANCE[activeTab] && (
+              <StepGuide
+                phase={2}
+                tab={activeTab}
+                collapsed={true}
+                className="mb-6"
+              />
+            )}
+
             {activeTab === "overview" && (
               <OverviewTab
                 personas={personas}
@@ -3967,6 +4175,9 @@ const Phase2Dashboard = ({ importedPersonas }) => {
                 models={models}
                 emails={emails}
               />
+            )}
+            {activeTab === "research" && (
+              <ResearchTab personas={personas} models={models} />
             )}
             {activeTab === "experiment" && (
               <ExperimentBuilderTab

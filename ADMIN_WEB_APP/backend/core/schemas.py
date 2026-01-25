@@ -248,20 +248,25 @@ class EmailContent(BaseModel):
 
 
 class EmailStimulus(BaseModel):
-    """Complete email stimulus definition"""
+    """Complete email stimulus definition.
+
+    Note: Removed unused columns that were never processed in analysis:
+    - content_domain (always hardcoded as "general")
+    - has_aggressive_content (use framing_type == "threat" instead)
+    - has_spelling_errors (never used)
+    - has_suspicious_url (never used)
+    - requests_sensitive_info (never used)
+    - aggression_level (never used)
+
+    For emotional susceptibility analysis, use framing_type from factorial design.
+    """
     email_id: str
     email_type: str  # phishing, legitimate
     sender_familiarity: str  # familiar, unfamiliar
     urgency_level: str  # high, medium, low
     framing_type: str  # threat, reward, neutral
-    content_domain: str
-    has_aggressive_content: bool = False
-    has_spelling_errors: bool = False
-    has_suspicious_url: bool = False
-    requests_sensitive_info: bool = False
     phishing_quality: Optional[str] = None  # high, medium, low
     ground_truth: int  # 1=phishing, 0=legitimate
-    aggression_level: Optional[str] = None  # very_high, high, medium, low
 
     # Email content fields (from JSON import)
     subject_line: Optional[str] = None

@@ -18,15 +18,23 @@ async def reset():
     # Clear participants
     result = await db.participants.delete_many({})
     print(f"Deleted {result.deleted_count} participants.")
-    
-    # Clear responses
+
+    # Clear responses (email experiment observations)
     result = await db.responses.delete_many({})
     print(f"Deleted {result.deleted_count} responses.")
-    
+
+    # Clear pre-survey responses
+    result = await db.pre_survey_responses.delete_many({})
+    print(f"Deleted {result.deleted_count} pre-survey responses.")
+
+    # Clear post-survey responses
+    result = await db.post_survey_responses.delete_many({})
+    print(f"Deleted {result.deleted_count} post-survey responses.")
+
     # Clear logs (optional, but good for fresh start)
     result = await db.logs.delete_many({})
     print(f"Deleted {result.deleted_count} logs.")
-    
+
     print("Simulation reset complete.")
 
 if __name__ == "__main__":

@@ -3,7 +3,13 @@
  */
 
 import React, { useState } from "react";
-import { RefreshCw, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import {
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Info,
+} from "lucide-react";
 import { RISK_COLORS } from "../../constants";
 
 // ============================================================================
@@ -51,7 +57,13 @@ export const LoadingSpinner = () => (
 // DATA DISPLAY COMPONENTS
 // ============================================================================
 
-export const MetricCard = ({ label, value, status = "neutral" }) => {
+export const MetricCard = ({
+  label,
+  value,
+  status = "neutral",
+  reference = null, // e.g., "≥0.14"
+  interpretation = null, // e.g., "Large effect size"
+}) => {
   const statusColors = {
     success: "bg-green-50 border-green-200 text-green-700",
     warning: "bg-yellow-50 border-yellow-200 text-yellow-700",
@@ -59,10 +71,28 @@ export const MetricCard = ({ label, value, status = "neutral" }) => {
     neutral: "bg-gray-50 border-gray-200 text-gray-700",
   };
 
+  const statusIcons = {
+    success: "✓",
+    warning: "⚠",
+    danger: "✗",
+    neutral: "○",
+  };
+
   return (
     <div className={`p-3 rounded-lg border ${statusColors[status]}`}>
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className="text-xl font-bold">{value}</div>
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-500">{label}</div>
+        {reference && (
+          <div className="text-xs text-gray-400">target: {reference}</div>
+        )}
+      </div>
+      <div className="flex items-baseline gap-2">
+        <div className="text-xl font-bold">{value}</div>
+        <span className="text-sm">{statusIcons[status]}</span>
+      </div>
+      {interpretation && (
+        <div className="text-xs mt-1 opacity-80">{interpretation}</div>
+      )}
     </div>
   );
 };
@@ -100,15 +130,32 @@ export const ClusterCard = ({ cluster, minClusterSize, personaLabel }) => {
   const riskColors = RISK_COLORS[cluster.risk_level] || RISK_COLORS.MEDIUM;
   const isSmall = cluster.n_participants < minClusterSize;
 
-  // Use AI-generated name if available, otherwise fall back to default
+  // Extract AI-generated name only (no systematic code)
+  let aiName = personaLabel?.llm_name;
+  if (!aiName && personaLabel?.name && personaLabel.name.includes(": ")) {
+    aiName = personaLabel.name.split(": ").slice(1).join(": ");
+  }
   const displayName =
-    personaLabel?.name || cluster.label || `Persona ${cluster.cluster_id + 1}`;
+    aiName ||
+    personaLabel?.name ||
+    cluster.label ||
+    `Persona ${cluster.cluster_id + 1}`;
+  const systematicCode = personaLabel?.archetype;
+
+  // Clean description: remove "Click rate: X%, N=Y" or "Click rate: X%, Report rate: Y%, N=Z" suffix
+  let description = personaLabel?.description || cluster.description || "";
+  description = description
+    .replace(
+      /\s*Click rate:\s*[\d.]+%,?\s*(Report rate:\s*[\d.]+%,?)?\s*N=\d+\.?/gi,
+      "",
+    )
+    .trim();
 
   return (
     <div
       className={`p-4 rounded-lg border ${isSmall ? "border-red-300 bg-red-50" : "border-gray-200"}`}
     >
-      {/* Risk indicator at the top for better UI */}
+      {/* Risk indicator and N at the top */}
       <div className="flex items-center justify-between mb-2">
         <span
           className="px-2 py-0.5 text-xs font-medium rounded"
@@ -129,6 +176,9 @@ export const ClusterCard = ({ cluster, minClusterSize, personaLabel }) => {
       </div>
       <div className="mb-3">
         <span className="font-semibold text-gray-900">{displayName}</span>
+        {systematicCode && (
+          <span className="text-xs text-gray-500 ml-1">({systematicCode})</span>
+        )}
       </div>
 
       <div className="flex items-center gap-4 mb-3 text-sm">
@@ -149,9 +199,7 @@ export const ClusterCard = ({ cluster, minClusterSize, personaLabel }) => {
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 line-clamp-2">
-        {cluster.description}
-      </p>
+      <p className="text-sm text-gray-600">{description}</p>
 
       {isSmall && (
         <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
@@ -212,6 +260,127 @@ export const CustomTooltip = ({ active, payload, label }) => {
             : entry.value}
         </p>
       ))}
+    </div>
+  );
+};
+
+// ============================================================================
+// SYSTEMATIC CODE LEGEND (Overlay Popover)
+// ============================================================================
+
+export const SystematicCodeLegend = () => {
+  const [showPopover, setShowPopover] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setShowPopover(!showPopover)}
+        onBlur={() => setTimeout(() => setShowPopover(false), 200)}
+        className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 transition-colors"
+      >
+        <Info size={14} />
+        <span>Code Legend</span>
+      </button>
+
+      {showPopover && (
+        <div className="absolute z-50 left-0 top-full mt-1 w-[600px] max-w-[90vw] p-3 bg-white rounded-lg border border-indigo-200 shadow-xl">
+          <p className="text-xs text-indigo-700 mb-2">
+            Systematic code (e.g.,{" "}
+            <span className="font-mono bg-indigo-100 px-1 rounded">
+              LO-ANL-CUR-RPT
+            </span>
+            ) encodes:
+          </p>
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            <div className="bg-indigo-50 p-2 rounded">
+              <span className="font-semibold text-indigo-800">Risk</span>
+              <ul className="text-indigo-600 mt-1">
+                <li>
+                  <span className="font-mono">CR</span>=Critical
+                </li>
+                <li>
+                  <span className="font-mono">HI</span>=High
+                </li>
+                <li>
+                  <span className="font-mono">MD</span>=Medium
+                </li>
+                <li>
+                  <span className="font-mono">LO</span>=Low
+                </li>
+              </ul>
+            </div>
+            <div className="bg-indigo-50 p-2 rounded">
+              <span className="font-semibold text-indigo-800">Cognitive</span>
+              <ul className="text-indigo-600 mt-1">
+                <li>
+                  <span className="font-mono">INT</span>=Intuitive
+                </li>
+                <li>
+                  <span className="font-mono">ANL</span>=Analytical
+                </li>
+                <li>
+                  <span className="font-mono">BAL</span>=Balanced
+                </li>
+              </ul>
+            </div>
+            <div className="bg-indigo-50 p-2 rounded">
+              <span className="font-semibold text-indigo-800">Trait</span>
+              <ul className="text-indigo-600 mt-1">
+                <li>
+                  <span className="font-mono">IMP</span>=Impulsive
+                </li>
+                <li>
+                  <span className="font-mono">TRU</span>=Trusting
+                </li>
+                <li>
+                  <span className="font-mono">CUR</span>=Curious
+                </li>
+                <li>
+                  <span className="font-mono">ANX</span>=Anxious
+                </li>
+                <li>
+                  <span className="font-mono">SKP</span>=Skeptical
+                </li>
+                <li>
+                  <span className="font-mono">CMP</span>=Compliant
+                </li>
+                <li>
+                  <span className="font-mono">CNF</span>=Confident
+                </li>
+                <li>
+                  <span className="font-mono">OVR</span>=Overwhelmed
+                </li>
+                <li>
+                  <span className="font-mono">CTN</span>=Cautious
+                </li>
+                <li>
+                  <span className="font-mono">DST</span>=Distracted
+                </li>
+              </ul>
+            </div>
+            <div className="bg-indigo-50 p-2 rounded">
+              <span className="font-semibold text-indigo-800">Behavior</span>
+              <ul className="text-indigo-600 mt-1">
+                <li>
+                  <span className="font-mono">CLK</span>=Clicker
+                </li>
+                <li>
+                  <span className="font-mono">RPT</span>=Reporter
+                </li>
+                <li>
+                  <span className="font-mono">IGN</span>=Ignorer
+                </li>
+                <li>
+                  <span className="font-mono">HST</span>=Hesitant
+                </li>
+                <li>
+                  <span className="font-mono">INS</span>=Inspector
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

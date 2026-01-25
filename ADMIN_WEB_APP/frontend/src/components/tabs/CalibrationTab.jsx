@@ -61,59 +61,6 @@ const ProgressBar = ({ value, max = 100, color = "blue" }) => {
   );
 };
 
-// Collapsible ICL Info Box component
-const ICLInfoBox = () => {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <div className="mt-3 p-3 bg-white/70 rounded-lg border border-indigo-100">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between text-left"
-      >
-        <div className="flex items-center gap-2">
-          <Info size={14} className="text-indigo-500 flex-shrink-0" />
-          <span className="text-xs font-medium text-gray-700">
-            Incremental prompting with ICL
-          </span>
-        </div>
-        <div className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800">
-          {expanded ? (
-            <>
-              <span>Hide details</span>
-              <ChevronDown size={14} />
-            </>
-          ) : (
-            <>
-              <span>Show more...</span>
-              <ChevronRight size={14} />
-            </>
-          )}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="mt-2 pt-2 border-t border-indigo-100">
-          <ul className="text-xs text-gray-600 ml-5 list-disc space-y-1">
-            <li>
-              <span className="font-medium">Baseline:</span> 29 traits + 6
-              minimal ICL examples (action only)
-            </li>
-            <li>
-              <span className="font-medium">BASELINE + Stats:</span> + 8
-              behavioral outcomes + ICL with reasoning
-            </li>
-            <li>
-              <span className="font-medium">STATS + CoT:</span> + actual
-              participant reasoning chains
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Accuracy badge component
 const AccuracyBadge = ({ accuracy, threshold = 0.8 }) => {
   const percentage = (accuracy * 100).toFixed(1);
@@ -289,21 +236,15 @@ export const CalibrationTab = ({
     setError(null);
     setAutoCalibrationResult(null);
     try {
-      const requestBody = {
-        calibration_key: calibrationResult.calibration_key,
-        suggestion_indices: [], // Apply all suggestions
-        auto_rerun: true,
-        max_iterations: maxIterations,
-      };
-      // Pass quick test sample size if enabled
-      if (useQuickTest && testSampleSize) {
-        requestBody.test_sample_size = testSampleSize;
-      }
-
       const response = await fetch(`${apiBase}/calibration/apply-suggestions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          calibration_key: calibrationResult.calibration_key,
+          suggestion_indices: [], // Apply all suggestions
+          auto_rerun: true,
+          max_iterations: maxIterations,
+        }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -326,12 +267,10 @@ export const CalibrationTab = ({
     setLoading(true);
     setError(null);
     try {
-      // Build query params including quick test sample size if enabled
-      let url = `${apiBase}/calibration/compare-configs?persona_id=${selectedPersona}&model_id=${selectedModel}&use_icl=${useICL}`;
-      if (useQuickTest && testSampleSize) {
-        url += `&test_sample_size=${testSampleSize}`;
-      }
-      const response = await fetch(url, { method: "POST" });
+      const response = await fetch(
+        `${apiBase}/calibration/compare-configs?persona_id=${selectedPersona}&model_id=${selectedModel}&use_icl=${useICL}`,
+        { method: "POST" },
+      );
       const data = await response.json();
       if (response.ok) {
         setConfigComparison(data);
@@ -621,8 +560,36 @@ export const CalibrationTab = ({
             </button>
           </div>
 
-          {/* ICL Info Box - shown when ICL is enabled, collapsible */}
-          {useICL && <ICLInfoBox />}
+          {/* ICL Info Box - shown when ICL is enabled */}
+          {useICL && (
+            <div className="mt-3 p-3 bg-white/70 rounded-lg border border-indigo-100">
+              <div className="flex items-start gap-2">
+                <Info
+                  size={14}
+                  className="text-indigo-500 mt-0.5 flex-shrink-0"
+                />
+                <div className="text-xs text-gray-600">
+                  <strong className="text-gray-700">
+                    Incremental prompting with ICL:
+                  </strong>
+                  <ul className="mt-1 ml-3 list-disc space-y-0.5">
+                    <li>
+                      <span className="font-medium">Baseline:</span> 29 traits +
+                      6 minimal ICL examples (action only)
+                    </li>
+                    <li>
+                      <span className="font-medium">BASELINE + Stats:</span> + 8
+                      behavioral outcomes + ICL with reasoning
+                    </li>
+                    <li>
+                      <span className="font-medium">STATS + CoT:</span> + actual
+                      participant reasoning chains
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -684,7 +651,7 @@ export const CalibrationTab = ({
               )}
               <AccuracyBadge accuracy={calibrationResult.accuracy} />
               {/* Quick test indicator */}
-              {/* {calibrationResult.is_quick_test && (
+              {calibrationResult.is_quick_test && (
                 <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Zap size={10} />
                   Quick ({calibrationResult.n_trials}/
@@ -701,7 +668,7 @@ export const CalibrationTab = ({
                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
                     No ICL
                   </span>
-                ))} */}
+                ))}
             </h4>
             {expandedSections.calibration ? (
               <ChevronDown size={20} />
@@ -1039,13 +1006,6 @@ export const CalibrationTab = ({
               Prompt Configuration Comparison
             </h4>
             <div className="flex items-center gap-2">
-              {/* Quick test indicator */}
-              {useQuickTest && testSampleSize && (
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full flex items-center gap-1">
-                  <Zap size={12} />
-                  Quick Test ({testSampleSize} trials each)
-                </span>
-              )}
               {useICL ? (
                 <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full flex items-center gap-1">
                   <BookOpen size={12} />

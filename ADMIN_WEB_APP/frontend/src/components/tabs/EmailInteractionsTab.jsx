@@ -25,16 +25,36 @@ import {
   Cell,
 } from "recharts";
 import { Grid3X3, AlertCircle, RefreshCw } from "lucide-react";
-import { Card, ChartCard, EmptyState, CustomTooltip } from "../common";
+import {
+  Card,
+  ChartCard,
+  EmptyState,
+  CustomTooltip,
+  SystematicCodeLegend,
+} from "../common";
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
 /**
- * Get persona display name from personaLabels or fall back to default
+ * Get AI-generated persona name only (for charts)
+ * Extracts just the AI name without systematic code
  */
-const getPersonaName = (clusterId, personaLabels) => {
+const getAIName = (clusterId, personaLabels) => {
+  const label = personaLabels?.[clusterId];
+  if (label?.llm_name) return label.llm_name;
+  if (label?.name && label.name.includes(": ")) {
+    return label.name.split(": ").slice(1).join(": ");
+  }
+  if (label?.name) return label.name;
+  return `Persona ${parseInt(clusterId) + 1}`;
+};
+
+/**
+ * Get full persona name with systematic code (for tables)
+ */
+const getFullPersonaName = (clusterId, personaLabels) => {
   const label = personaLabels?.[clusterId];
   if (label?.name) return label.name;
   return `Persona ${parseInt(clusterId) + 1}`;
@@ -58,7 +78,7 @@ const transformInteractionData = (data, personaLabels) => {
   return Array.from(clusters)
     .sort((a, b) => parseInt(a) - parseInt(b))
     .map((clusterId) => {
-      const row = { cluster: getPersonaName(clusterId, personaLabels) };
+      const row = { cluster: getAIName(clusterId, personaLabels) };
       Object.entries(data).forEach(([attr, values]) => {
         if (values && typeof values === "object") {
           row[attr] = (values[clusterId] || 0) * 100; // Convert to percentage
@@ -78,7 +98,7 @@ const transformEffectData = (data, personaLabels) => {
 
   return Object.entries(data)
     .map(([clusterId, value]) => ({
-      cluster: getPersonaName(clusterId, personaLabels),
+      cluster: getAIName(clusterId, personaLabels),
       clusterId: parseInt(clusterId),
       effect: value * 100, // Convert to percentage points
     }))
@@ -179,16 +199,28 @@ export const EmailInteractionsTab = ({
                   title="Urgency Susceptibility"
                   subtitle="High vs Low urgency click rates"
                 >
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <BarChart
+                      layout="vertical"
                       data={transformInteractionData(
                         interactionResult.by_urgency,
                         personaLabels,
                       )}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                      <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                      <YAxis
+                        type="category"
+                        dataKey="cluster"
+                        stroke="#6b7280"
+                        fontSize={11}
+                        width={140}
+                      />
+                      <XAxis
+                        type="number"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        unit="%"
+                      />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar dataKey="low" name="Low Urgency" fill="#3b82f6" />
@@ -205,16 +237,28 @@ export const EmailInteractionsTab = ({
                   title="Familiarity Trust"
                   subtitle="Familiar vs Unfamiliar sender click rates"
                 >
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <BarChart
+                      layout="vertical"
                       data={transformInteractionData(
                         interactionResult.by_familiarity,
                         personaLabels,
                       )}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                      <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                      <YAxis
+                        type="category"
+                        dataKey="cluster"
+                        stroke="#6b7280"
+                        fontSize={11}
+                        width={140}
+                      />
+                      <XAxis
+                        type="number"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        unit="%"
+                      />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar
@@ -235,16 +279,28 @@ export const EmailInteractionsTab = ({
                   title="Framing Effect"
                   subtitle="Threat vs Reward framing click rates"
                 >
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <BarChart
+                      layout="vertical"
                       data={transformInteractionData(
                         interactionResult.by_framing,
                         personaLabels,
                       )}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                      <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                      <YAxis
+                        type="category"
+                        dataKey="cluster"
+                        stroke="#6b7280"
+                        fontSize={11}
+                        width={140}
+                      />
+                      <XAxis
+                        type="number"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        unit="%"
+                      />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar dataKey="reward" name="Reward" fill="#f59e0b" />
@@ -261,16 +317,28 @@ export const EmailInteractionsTab = ({
                   title="Aggressive Content Effect"
                   subtitle="With vs Without aggressive content"
                 >
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <BarChart
+                      layout="vertical"
                       data={transformInteractionData(
                         interactionResult.by_aggressive,
                         personaLabels,
                       )}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                      <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                      <YAxis
+                        type="category"
+                        dataKey="cluster"
+                        stroke="#6b7280"
+                        fontSize={11}
+                        width={140}
+                      />
+                      <XAxis
+                        type="number"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        unit="%"
+                      />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar
@@ -291,16 +359,28 @@ export const EmailInteractionsTab = ({
                   title="Email Type Response"
                   subtitle="Phishing vs Legitimate email click rates"
                 >
-                  <ResponsiveContainer width="100%" height={280}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <BarChart
+                      layout="vertical"
                       data={transformInteractionData(
                         interactionResult.by_email_type,
                         personaLabels,
                       )}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                      <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                      <YAxis
+                        type="category"
+                        dataKey="cluster"
+                        stroke="#6b7280"
+                        fontSize={11}
+                        width={140}
+                      />
+                      <XAxis
+                        type="number"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        unit="%"
+                      />
                       <RechartsTooltip content={<CustomTooltip />} />
                       <Legend />
                       <Bar
@@ -320,18 +400,30 @@ export const EmailInteractionsTab = ({
                 title="Urgency Effect Size"
                 subtitle="High - Low urgency (positive = more susceptible)"
               >
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={320}>
                   <BarChart
+                    layout="vertical"
                     data={transformEffectData(
                       interactionResult.interaction_effects.urgency_effect,
                       personaLabels,
                     )}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                    <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                    <YAxis
+                      type="category"
+                      dataKey="cluster"
+                      stroke="#6b7280"
+                      fontSize={11}
+                      width={140}
+                    />
+                    <XAxis
+                      type="number"
+                      stroke="#6b7280"
+                      fontSize={12}
+                      unit="%"
+                    />
                     <RechartsTooltip content={<CustomTooltip />} />
-                    <ReferenceLine y={0} stroke="#000" />
+                    <ReferenceLine x={0} stroke="#000" />
                     <Bar dataKey="effect" name="Effect Size">
                       {transformEffectData(
                         interactionResult.interaction_effects.urgency_effect,
@@ -354,18 +446,30 @@ export const EmailInteractionsTab = ({
                 title="Familiarity Effect Size"
                 subtitle="Familiar - Unfamiliar (positive = trusts familiar more)"
               >
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={320}>
                   <BarChart
+                    layout="vertical"
                     data={transformEffectData(
                       interactionResult.interaction_effects.familiarity_effect,
                       personaLabels,
                     )}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                    <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                    <YAxis
+                      type="category"
+                      dataKey="cluster"
+                      stroke="#6b7280"
+                      fontSize={11}
+                      width={140}
+                    />
+                    <XAxis
+                      type="number"
+                      stroke="#6b7280"
+                      fontSize={12}
+                      unit="%"
+                    />
                     <RechartsTooltip content={<CustomTooltip />} />
-                    <ReferenceLine y={0} stroke="#000" />
+                    <ReferenceLine x={0} stroke="#000" />
                     <Bar dataKey="effect" name="Effect Size">
                       {transformEffectData(
                         interactionResult.interaction_effects
@@ -389,18 +493,30 @@ export const EmailInteractionsTab = ({
                 title="Framing Effect Size"
                 subtitle="Threat - Reward (positive = more susceptible to threat)"
               >
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={320}>
                   <BarChart
+                    layout="vertical"
                     data={transformEffectData(
                       interactionResult.interaction_effects.framing_effect,
                       personaLabels,
                     )}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="cluster" stroke="#6b7280" fontSize={12} />
-                    <YAxis stroke="#6b7280" fontSize={12} unit="%" />
+                    <YAxis
+                      type="category"
+                      dataKey="cluster"
+                      stroke="#6b7280"
+                      fontSize={11}
+                      width={140}
+                    />
+                    <XAxis
+                      type="number"
+                      stroke="#6b7280"
+                      fontSize={12}
+                      unit="%"
+                    />
                     <RechartsTooltip content={<CustomTooltip />} />
-                    <ReferenceLine y={0} stroke="#000" />
+                    <ReferenceLine x={0} stroke="#000" />
                     <Bar dataKey="effect" name="Effect Size">
                       {transformEffectData(
                         interactionResult.interaction_effects.framing_effect,
@@ -421,9 +537,12 @@ export const EmailInteractionsTab = ({
           {/* Vulnerability Summary */}
           {interactionResult.interaction_effects && (
             <Card>
-              <h3 className="text-lg font-semibold mb-4">
-                Vulnerability Summary by Persona
-              </h3>
+              <div className="flex items-center gap-4 mb-4">
+                <h3 className="text-lg font-semibold">
+                  Vulnerability Summary by Persona
+                </h3>
+                <SystematicCodeLegend />
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
@@ -492,7 +611,7 @@ export const EmailInteractionsTab = ({
                           className="border-t hover:bg-gray-50"
                         >
                           <td className="px-4 py-3 font-medium">
-                            {getPersonaName(clusterId, personaLabels)}
+                            {getFullPersonaName(clusterId, personaLabels)}
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span

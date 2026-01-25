@@ -124,7 +124,7 @@ const ActionModal = ({ isOpen, onClose, onSubmit, actionType }) => {
                                 value={detailsNoticed}
                                 onChange={(e) => setDetailsNoticed(e.target.value)}
                                 placeholder="e.g., sender address, urgent language, links..."
-                                required
+                                // required  // TESTING MODE: Validation disabled
                                 autoFocus
                             />
                         </div>
@@ -139,7 +139,7 @@ const ActionModal = ({ isOpen, onClose, onSubmit, actionType }) => {
                                 value={stepsTaken}
                                 onChange={(e) => setStepsTaken(e.target.value)}
                                 placeholder="e.g., checked the sender, hovered over links..."
-                                required
+                                // required  // TESTING MODE: Validation disabled
                             />
                         </div>
                     </div>
@@ -160,7 +160,7 @@ const ActionModal = ({ isOpen, onClose, onSubmit, actionType }) => {
                                 value={decisionReason}
                                 onChange={(e) => setDecisionReason(e.target.value)}
                                 placeholder="Explain your reasoning..."
-                                required
+                                // required  // TESTING MODE: Validation disabled
                             />
                         </div>
 
@@ -174,7 +174,7 @@ const ActionModal = ({ isOpen, onClose, onSubmit, actionType }) => {
                                 value={confidenceReason}
                                 onChange={(e) => setConfidenceReason(e.target.value)}
                                 placeholder="What confirmed your decision?"
-                                required
+                                // required  // TESTING MODE: Validation disabled
                             />
                         </div>
 
@@ -188,7 +188,7 @@ const ActionModal = ({ isOpen, onClose, onSubmit, actionType }) => {
                                 value={unsureAbout}
                                 onChange={(e) => setUnsureAbout(e.target.value)}
                                 placeholder="e.g., nothing, or I wasn't sure about the logo..."
-                                required
+                                // required  // TESTING MODE: Validation disabled
                             />
                         </div>
                     </div>

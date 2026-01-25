@@ -55,111 +55,211 @@ async def seed():
             "sender_email": "irisc@uni.lu",
             "subject": "Study Instructions: Email Decision Making Simulation",
             "body": """
-            <div style="font-family: Arial, sans-serif; max-width: 800px; line-height: 1.6;">
-                <p style="margin-bottom: 24px;">Dear Participant,</p>
-                
-                <p style="margin-bottom: 24px;">Thank you for participating in our research study on email decision-making. This study is conducted by the <strong>University of Luxembourg</strong>.</p>
-                
-                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">📋 Your Role</h3>
-                <p style="margin-bottom: 24px;">Think of yourself as an employee at <strong>LuxConsultancy</strong>, a consulting firm based in Paris. LuxConsultancy works with various clients across multiple industries.</p>
-            
-                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">📩 You Get Work Emails Daily</h3>
-                <p style="margin-bottom: 24px;">As a LuxConsultancy employee, you often get emails from either your company or <strong>clients</strong> with verified and trusted sources:</p>
-            
-                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; margin-bottom: 24px;">
-                    <tr style="background: #f0f7ff;">
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Client Name</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Relationship</th>
-                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Email Domain</th>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>LuxConsultancy</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Your employer (internal)</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@luxconsultancy.com</code></td>
-                    </tr>
-                    <tr style="background: #fafafa;">
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>SecureNebula</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Cloud services provider</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@securenebula.com</code></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>LockGrid</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Security solutions client</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@lockgrid.com</code></td>
-                    </tr>
-                    <tr style="background: #fafafa;">
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>SuperFinance</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Tax & accounting partner</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@superfinance.com</code></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>TrendyLetter</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Newsletter service</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@trendyletter.com</code></td>
-                    </tr>
-                    <tr style="background: #fafafa;">
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>GreenEnvi</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Environmental consulting client</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@greenenvi.com</code></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><strong>WattVoltBridge</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">Energy sector client</td>
-                        <td style="padding: 8px; border: 1px solid #ddd;"><code>@wattvoltbridge.com</code></td>
-                    </tr>
-                </table>
-                
-                <p style="background: #fff3cd; padding: 12px; border-left: 4px solid #ff9800; margin: 15px 0; margin-bottom: 24px;">
-                    <strong>⚠️ Important:</strong> Any domain NOT listed above is <strong>unknown</strong> to you. Unknown senders aren't necessarily unsafe, some may be legitimate new contacts, while others could be suspicious.
-                </p>
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; line-height: 1.7; color: #1f2937;">
 
-                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">📧 What You Will Do</h3>
-                <p style="margin-bottom: 24px;">You will review <strong>16 workplace emails</strong> and decide how to respond to each one. For every email, you can:</p>
-                <ul style="margin: 10px 0; margin-bottom: 24px;">
-                    <li><strong>Mark Safe</strong>: You find the email legitimate, no concerns</li>
-                    <li><strong>Report</strong>: You find the email suspicious</li>
-                    <li><strong>Delete</strong>: You find the email not needed or spam</li>
-                    <li><strong>Ignore</strong>: You skip for now</li>
-                </ul>
+                <!-- ========== YOUR ROLE ========== -->
+                <div style="margin-bottom: 28px;">
+                    <h3 style="color: #1e40af; font-size: 18px; margin: 0 0 12px 0; display: flex; align-items: center; gap: 10px;">
+                        1. Your Role
+                    </h3>
+                    <p style="margin: 0; color: #374151;">
+                        Imagine you work at <strong style="color: #1e40af;">LuxConsultancy</strong>, a consulting firm based in <strong>Paris</strong>.
+                        You handle emails from your company and various <strong>trusted business partners</strong> listed below.
+                    </p>
+                </div>
                 
-                <p style="background: #e8f5e9; padding: 10px; border-left: 4px solid #4caf50; margin-bottom: 24px;">
-                    <strong>💡 Remember:</strong> You can return to this email anytime to check the known sender list by clicking on it in your inbox.
-                </p>
-                
-                <h3 style="color: #0078d4; margin-top: 25px; border-bottom: 2px solid #0078d4; padding-bottom: 5px; margin-bottom: 24px;">💰 Bonus Points & Rewards</h3>
-                <div style="background: linear-gradient(135deg, #f6f8fa 0%, #e9ecef 100%); border: 1px solid #d1d5db; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <p style="margin-top: 0; margin-bottom: 15px; font-weight: 500; color: #374151;">During this study, you can earn <strong>BONUS MONEY</strong> based on your decisions:</p>
-                    
-                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                        <div style="flex: 1; background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                            <div style="color: #059669; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Correct Action</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #10b981; margin: 5px 0;">+ 5 Cents</div>
-                            <div style="font-size: 12px; color: #6b7280;">Clicking safe links</div>
+                <!-- ========== QUICK START SUMMARY ========== -->
+                <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px;">
+                    <h3 style="margin: 0 0 14px 0; color: #1e40af; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #3b82f6; color: white; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⚡</span>
+                        Quick Start Summary
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                        <div style="background: white; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Role</div>
+                            <div style="font-weight: 600; color: #1f2937;">Employee @ LuxConsultancy</div>
                         </div>
-                        
-                        <div style="flex: 1; background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #ef4444; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                            <div style="color: #b91c1c; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Risky Action</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #ef4444; margin: 5px 0;">- 5 Cents</div>
-                            <div style="font-size: 12px; color: #6b7280;">Clicking phishing links</div>
+                        <div style="background: white; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Location</div>
+                            <div style="font-weight: 600; color: #1f2937;">Paris, France</div>
                         </div>
-                    </div>
-                    
-                    <div style="background: #eff6ff; padding: 12px; border-radius: 6px; border: 1px solid #bfdbfe; display: flex; align-items: start;">
-                        <span style="font-size: 18px; margin-right: 10px;">💡</span>
-                        <div style="font-size: 14px; color: #1e40af;">
-                            <strong>Pro Tip:</strong> You must use your own judgment. Hover over links to preview URLs before clicking!
+                        <div style="background: white; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Your Task</div>
+                            <div style="font-weight: 600; color: #1f2937;">Review 16 work emails</div>
+                        </div>
+                        <div style="background: white; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Goal</div>
+                            <div style="font-weight: 600; color: #1f2937;">Decide: Safe, Report, Delete, or Ignore</div>
                         </div>
                     </div>
                 </div>
                 
-                <hr style="margin: 25px 0; border: none; border-top: 1px solid #ddd; margin-bottom: 24px;">
+
+                <!-- ========== TRUSTED PARTNERS TABLE ========== -->
+                <div style="margin-bottom: 28px;">
+                    <h3 style="color: #1e40af; font-size: 18px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
+                        2. Your Company & Trusted Partners
+                    </h3>
+
+                    <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e5e7eb;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                                    <th style="padding: 14px 16px; text-align: left; color: white; font-weight: 600;">Company</th>
+                                    <th style="padding: 14px 16px; text-align: left; color: white; font-weight: 600;">Relationship</th>
+                                    <th style="padding: 14px 16px; text-align: left; color: white; font-weight: 600;">Trusted Domain</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background: #eff6ff;">
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><strong style="color: #1e40af;">LuxConsultancy</strong></td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">Your employer (internal)</td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><code style="background: #dbeafe; padding: 4px 8px; border-radius: 4px; color: #1e40af; font-weight: 600;">@luxconsultancy.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><strong>SecureNebula</strong></td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">Cloud services provider</td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">@securenebula.com</code></td>
+                                </tr>
+                                <tr style="background: #f9fafb;">
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><strong>LockGrid</strong></td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">Security solutions client</td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">@lockgrid.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><strong>SuperFinance</strong></td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">Tax & accounting partner</td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">@superfinance.com</code></td>
+                                </tr>
+                                <tr style="background: #f9fafb;">
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><strong>TrendyLetter</strong></td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">Newsletter service</td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">@trendyletter.com</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><strong>GreenEnvi</strong></td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">Environmental consulting</td>
+                                    <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;"><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">@greenenvi.com</code></td>
+                                </tr>
+                                <tr style="background: #f9fafb;">
+                                    <td style="padding: 12px 16px;"><strong>WattVoltBridge</strong></td>
+                                    <td style="padding: 12px 16px;">Energy sector client</td>
+                                    <td style="padding: 12px 16px;"><code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">@wattvoltbridge.com</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 16px 20px; border-radius: 10px; margin-top: 16px; border-left: 5px solid #f59e0b; display: flex; align-items: start; gap: 12px;">
+                        <span style="font-size: 22px; line-height: 1;">⚠️</span>
+                        <div>
+                            <strong style="color: #92400e;">Important:</strong>
+                            <span style="color: #78350f;"> Any domain <strong>NOT</strong> in the table above is <strong>unknown</strong> to you. Unknown senders aren't necessarily unsafe; some may be legitimate new contacts, others could be suspicious. Use your judgment!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== WHAT YOU WILL DO ========== -->
+                <div style="margin-bottom: 28px;">
+                    <h3 style="color: #1e40af; font-size: 18px; margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px;">
+                        3. What You Will Do
+                    </h3>
+                    <p style="margin: 0 0 16px 0; color: #374151;">You will review <strong>16 workplace emails</strong> and decide how to respond. For each email, choose one action:</p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                        <!-- Mark Safe - CheckCircle icon -->
+                        <div style="background: #ecfdf5; padding: 14px 16px; border-radius: 10px; border: 1px solid #a7f3d0; text-align: center;">
+                            <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+                            </div>
+                            <div style="font-weight: 700; color: #065f46;">Mark Safe</div>
+                            <div style="font-size: 12px; color: #047857;">Email looks legitimate</div>
+                        </div>
+                        <!-- Report - AlertOctagon icon -->
+                        <div style="background: #fef2f2; padding: 14px 16px; border-radius: 10px; border: 1px solid #fecaca; text-align: center;">
+                            <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+                            </div>
+                            <div style="font-weight: 700; color: #991b1b;">Report</div>
+                            <div style="font-size: 12px; color: #b91c1c;">Email seems suspicious</div>
+                        </div>
+                        <!-- Delete - Trash2 icon -->
+                        <div style="background: #f3f4f6; padding: 14px 16px; border-radius: 10px; border: 1px solid #d1d5db; text-align: center;">
+                            <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                            </div>
+                            <div style="font-weight: 700; color: #374151;">Delete</div>
+                            <div style="font-size: 12px; color: #6b7280;">Not needed or spam</div>
+                        </div>
+                        <!-- Ignore - Ban icon -->
+                        <div style="background: #fefce8; padding: 14px 16px; border-radius: 10px; border: 1px solid #fef08a; text-align: center;">
+                            <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m4.9 4.9 14.2 14.2"></path></svg>
+                            </div>
+                            <div style="font-weight: 700; color: #854d0e;">Ignore</div>
+                            <div style="font-size: 12px; color: #a16207;">Skip for now</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== REMINDER TIP ========== -->
+                <div style="padding: 16px 20px; border-radius: 10px; margin-bottom: 28px; border: 1px solid #a7f3d0; display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 24px;">💡</span>
+                    <div style="color: #065f46;">
+                        <strong>Remember:</strong> You can return to this email anytime to check information by clicking on it in your inbox.
+                    </div>
+                </div>
                 
-                <p style="font-size: 13px; color: #666; margin-bottom: 24px;">
-                    All emails are simulated for research purposes. Please respond as you would in a real workplace.<br>
-                    Thank you for your participation!
-                </p>
-                
-                <p style="margin-bottom: 0;">Best regards,<br><strong>IRiSC Research Team</strong><br>University of Luxembourg</p>
+                <!-- ========== HERO BONUS BANNER - TOP PLACEMENT FOR MAXIMUM VISIBILITY ========== -->
+                <div style="background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%); border-radius: 16px; padding: 0; margin-bottom: 28px; box-shadow: 0 10px 40px rgba(5, 150, 105, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset; overflow: hidden; position: relative;">
+                    <!-- Animated shimmer effect overlay -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%); pointer-events: none;"></div>
+
+                    <div style="padding: 24px 28px; text-align: center; position: relative;">
+                        <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 20px; margin-bottom: 12px;">
+                            <span style="color: #ffffff; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;">💰 Earn Real Money by Clicking Links in Emails 💰</span>
+                        </div>
+                        <h2 style="margin: 0 0 8px 0; color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">BONUS REWARDS FOR YOUR DECISIONS</h2>
+                        <p style="margin: 0; color: rgba(255,255,255,0.9); font-size: 15px;">Your careful email judgments directly increase your payment!</p>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.95); padding: 24px 28px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px; max-width: 280px; background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; border-radius: 12px; border: 2px solid #10b981; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                            <div style="width: 50px; height: 50px; background: #10b981; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 24px;">✓</span>
+                            </div>
+                            <div style="color: #065f46; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Correct Action</div>
+                            <div style="font-size: 36px; font-weight: 900; color: #059669; line-height: 1;">+5¢</div>
+                            <div style="font-size: 12px; color: #047857; margin-top: 6px;">per safe link clicked</div>
+                        </div>
+
+                        <div style="flex: 1; min-width: 200px; max-width: 280px; background: linear-gradient(180deg, #fef2f2 0%, #fecaca 100%); padding: 20px; border-radius: 12px; border: 2px solid #ef4444; text-align: center; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);">
+                            <div style="width: 50px; height: 50px; background: #ef4444; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 24px;">✗</span>
+                            </div>
+                            <div style="color: #991b1b; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Risky Action</div>
+                            <div style="font-size: 36px; font-weight: 900; color: #dc2626; line-height: 1;">-5¢</div>
+                            <div style="font-size: 12px; color: #b91c1c; margin-top: 6px;">per suspicious link clicked</div>
+                        </div>
+                    </div>
+
+                    <div style="background: #fef3c7; padding: 14px 24px; border-top: 2px dashed #f59e0b; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <span style="font-size: 20px;">💡</span>
+                        <span style="color: #92400e; font-weight: 600; font-size: 14px;"><strong>Pro Tip:</strong> Hover over links to preview URLs before clicking! Your judgment matters.</span>
+                    </div>
+                </div>
+
+                <!-- ========== FOOTER ========== -->
+                <div style="border-top: 2px solid #e5e7eb; padding-top: 20px; margin-top: 28px;">
+                    <p style="font-size: 13px; color: #6b7280; margin: 0 0 16px 0;">
+                        All emails are simulated for research purposes. Please respond as you would in a real workplace.
+                    </p>
+                    <p style="margin: 0; color: #374151;">
+                        Best regards,<br>
+                        <span style="color: #6b7280;">IRiSC Research Team</span><br>
+                        <span style="color: #6b7280;">University of Luxembourg</span>
+                    </p>
+                </div>
             </div>
             """,
             "is_phishing": False,

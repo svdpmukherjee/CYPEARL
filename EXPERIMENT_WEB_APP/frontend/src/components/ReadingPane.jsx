@@ -28,7 +28,7 @@ import {
     ChevronDown, ChevronUp, Shield, Lock, X
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // =========================================================================
 // SENDER DETAILS PANEL COMPONENT (Gmail-style expandable)

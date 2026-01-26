@@ -1,14 +1,14 @@
 /**
- * CYPEARL Experiment Web App - Main Application (UPDATED v5 - FULL SURVEY FLOW)
+ * CYPEARL Experiment Web App - Main Application (UPDATED v6 - REVISED FLOW)
  *
  * UPDATES IN THIS VERSION:
- * 1. Added Pre-Experiment Survey (single page with all validated instruments)
- * 2. Added Post-Experiment Survey (STAI-6, PSS-4, Fatigue)
- * 3. New flow: Pre-Survey → Prolific ID → Email Experiment → Post-Survey → Complete
+ * 1. Changed flow order: Prolific ID first, then Pre-Survey
+ * 2. Pre-Survey now submitted with participant_id (after login)
+ * 3. Flow: Prolific ID → Pre-Survey → Email Experiment → Post-Survey → Complete
  *
  * FLOW:
- * 1. preExperiment: Single page pre-experiment questionnaire
- * 2. prolificId: Enter Prolific ID
+ * 1. prolificId: Enter Prolific ID (creates participant)
+ * 2. preExperiment: Single page pre-experiment questionnaire
  * 3. emailExperiment: 16 emails one by one
  * 4. postExperiment: Post-experiment state measures
  * 5. completed: Thank you screen
@@ -56,7 +56,7 @@ import axios from "axios";
 
 const getParticipantId = () => localStorage.getItem("participant_id");
 const getStudyStage = () =>
-  localStorage.getItem("study_stage") || "preExperiment";
+  localStorage.getItem("study_stage") || "prolificId";
 const getPreSurveyData = () => {
   const data = localStorage.getItem("pre_survey_data");
   return data ? JSON.parse(data) : null;
@@ -81,7 +81,7 @@ const getClientInfo = () => ({
   user_agent: navigator.userAgent,
 });
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 // =========================================================================
 // MAIN APP COMPONENT
@@ -151,22 +151,23 @@ function App() {
     localStorage.setItem("pre_survey_data", JSON.stringify(data));
     setPreSurveyData(data);
 
-    // Immediately save to backend - don't wait for Prolific ID step
-    const sessionId = getSessionId();
+    // Save to backend with participant_id (login already happened)
+    const currentParticipantId = participantId || getParticipantId();
     try {
       await axios.post(`${API_URL}/survey/pre`, {
-        session_id: sessionId,
+        participant_id: currentParticipantId,
+        session_id: getSessionId(),
         user_agent: navigator.userAgent,
         screen_resolution: `${window.screen.width}x${window.screen.height}`,
         pre_survey_data: data,
       });
-      console.log("Pre-survey saved to MongoDB immediately");
+      console.log("Pre-survey saved to MongoDB with participant_id");
     } catch (error) {
-      console.error("Error saving pre-survey immediately:", error);
-      // Continue anyway - will try again during login
+      console.error("Error saving pre-survey:", error);
+      // Continue anyway - data is in localStorage
     }
 
-    updateStudyStage("prolificId");
+    updateStudyStage("emailExperiment");
   };
 
   // =========================================================================
@@ -177,26 +178,21 @@ function App() {
     e.preventDefault();
     if (!prolificIdInput.trim()) return;
 
-    // Get session ID to link pre-survey record
+    // Get session ID for linking
     const sessionId = getSessionId();
-
-    // Read pre-survey data from localStorage as fallback
-    const storedPreSurveyData = getPreSurveyData();
-    const surveyDataToSend = storedPreSurveyData || preSurveyData;
 
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
         prolific_id: prolificIdInput.trim(),
-        session_id: sessionId, // Link to pre-survey record
+        session_id: sessionId,
         user_agent: navigator.userAgent,
         screen_resolution: `${window.screen.width}x${window.screen.height}`,
-        pre_survey_data: surveyDataToSend, // Fallback if no pre-survey record found
       });
 
       const newParticipantId = response.data.participant_id;
       localStorage.setItem("participant_id", newParticipantId);
       setParticipantId(newParticipantId);
-      updateStudyStage("emailExperiment");
+      updateStudyStage("preExperiment"); // Now go to pre-survey
     } catch (error) {
       console.error("Login error:", error);
       alert("Failed to start session. Please try again.");
@@ -632,7 +628,7 @@ function App() {
       openedEmailsRef.current.clear();
       markedReadRef.current.clear();
       setParticipantId(null);
-      setStudyStage("preExperiment");
+      setStudyStage("prolificId");
       setPreSurveyData(null);
       setPostSurveyData(null);
       setEmailList([]);
@@ -672,22 +668,19 @@ function App() {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100 font-sans">
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="w-6 h-6 text-green-600" />
-            <span className="text-green-700 font-medium">
-              Pre-experiment survey completed!
-            </span>
-          </div>
           <h1 className="text-2xl font-bold mb-6 text-center text-[#0078d4]">
-            Enter Your ID
+            Welcome to the Email Study
           </h1>
+          <p className="text-gray-600 mb-6 text-center">
+            Thank you for participating in this research study.
+          </p>
           <form onSubmit={handleProlificSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="prolificId"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Please enter your Prolific ID to continue...
+                Please enter your Prolific ID to begin...
               </label>
               <input
                 type="text"
@@ -703,7 +696,7 @@ function App() {
               type="submit"
               className="w-full bg-[#0078d4] text-white py-2 px-4 rounded-md hover:bg-[#106ebe] transition-colors font-semibold flex items-center justify-center gap-2"
             >
-              Start Email Evaluation
+              Continue to Survey
               <ArrowRight size={18} />
             </button>
           </form>

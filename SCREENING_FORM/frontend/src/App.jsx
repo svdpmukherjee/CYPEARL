@@ -14,7 +14,12 @@ import {
   Gift,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? "https://prolific-screening-form.onrender.com"
+    : "/api")
+).replace(/\/$/, "");
 
 const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Rarely"];
 

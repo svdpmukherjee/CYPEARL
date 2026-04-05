@@ -1,0 +1,102 @@
+Here are all 80 role-matched emails across 10 clusters:
+
+1. Finance/Accounts Payable
+Cell	Type	Sender	Subject	Features
+9	PHISH	SuperFinance Tax Services	URGENT: Tax Credit Refund of €3,200 Ready for Collection	Known, high urgency, reward, high qual
+10	PHISH	PaymentAudit Services	Quarterly Transaction Review - Action Suggested	Unknown, low urgency, threat, med qual
+11	PHISH	LockGrid Customer Portal	Scheduled Banking Security Module Update	Known, low urgency, threat, med qual
+12	PHISH	EuroInvest Premium Services	URGENT: Exclusive Investment Bonus - Claim €5,000 Within 24h	Unknown, high urgency, reward, high qual
+13	LEGIT	SuperFinance Insights	New Tax Optimization Guide Available for Partners	Known, low urgency, reward
+14	LEGIT	FinReg Authority Compliance Office	URGENT: Outstanding AML Documentation - Response Required	Unknown, high urgency, threat
+15	LEGIT	Marcus Chen (LockGrid)	URGENT: Suspicious Activity on Financial Systems	Known, high urgency, threat
+16	LEGIT	FinTech Forum EU	Complimentary Registration - European Banking Innovation Summit	Unknown, low urgency, reward
+2. IT Support/Helpdesk
+Cell	Type	Sender	Subject	Features
+9	PHISH	SecureNebula Upgrade Team	URGENT: Free Cloud Storage Upgrade - Activate Now	Known, high urgency, reward, high qual
+10	PHISH	DevLicense Compliance	Software License Compliance Check	Unknown, low urgency, threat, med qual
+11	PHISH	LockGrid Patch Center	System Security Patch Available	Known, low urgency, threat, med qual
+12	PHISH	CloudCert Awards Committee	URGENT: DevOps Team of the Year - Confirm Before Midnight	Unknown, high urgency, reward, high qual
+13	LEGIT	SecureNebula Academy	Free Training Credits for Your Cloud Team	Known, low urgency, reward
+14	LEGIT	EuroCyberWatch Agency	CRITICAL: Zero-Day Vulnerability Alert	Unknown, high urgency, threat
+15	LEGIT	LockGrid Security Operations	URGENT: Endpoint Security Update - Deploy by Tomorrow	Known, high urgency, threat
+16	LEGIT	Open Source Alliance EU	Free Workshop: Open Source Security Best Practices	Unknown, low urgency, reward
+3. HR/People Operations
+Cell	Type	Sender	Subject	Features
+9	PHISH	LuxConsultancy HR Portal	URGENT: Annual Performance Bonus - Verify Payment Details	Known, high urgency, reward, high qual
+10	PHISH	HR Compliance Bureau	Routine Employee Records Audit Notification	Unknown, low urgency, threat, med qual
+11	PHISH	GreenEnvi HR Services	Updated Contractor Agreement - Signature Required	Known, low urgency, threat, med qual
+12	PHISH	Employee Benefits EU	URGENT: Unclaimed Benefits Package Worth €2,400	Unknown, high urgency, reward, high qual
+13	LEGIT	TrendyLetter HR Digest	New HR Management Best Practices Guide	Known, low urgency, reward
+14	LEGIT	EU Labour Standards Office	URGENT: New Employment Law Changes Effective Immediately	Unknown, high urgency, threat
+15	LEGIT	LuxConsultancy Management	URGENT: Mandatory Policy Update - Acknowledgment Required	Known, high urgency, threat
+16	LEGIT	Workplace Wellness EU	Free Workplace Mental Health Webinar	Unknown, low urgency, reward
+4. Sales/Business Development
+Cell	Type	Sender	Subject	Features
+9	PHISH	Marc Duval — LuxConsultancy Sales Ops	You've Been Selected for the Q2 President's Club Bonus	Known, high urgency, reward, high qual
+10	PHISH	CRMVault Compliance Team	CRM Data Retention Policy — Review Required	Unknown, low urgency, threat, med qual
+11	PHISH	SecureNebula Account Services	Upcoming Changes to Cloud Storage Quota — Sales Shared Drive	Known, low urgency, threat, med qual
+12	PHISH	Elena Marchetti — European Sales Summit	Exclusive Speaker Invitation + VIP Pass — Response Needed Today	Unknown, high urgency, reward, high qual
+13	LEGIT	Sophie Kieffer — LuxConsultancy	Meridian Group Contract Renewed for 2 More Years	Known, low urgency, reward
+14	LEGIT	Thomas Berger — Rheinwerk Industries	URGENT: Possible Issue with Tomorrow's Proposal Submission	Unknown, high urgency, threat
+15	LEGIT	LockGrid Security Alerts	URGENT: Suspicious Login on Your Sales Tools Account	Known, high urgency, threat
+16	LEGIT	Amélie Fontaine — SalesForward Magazine	Feature Opportunity: Top 30 BD Professionals in Luxembourg	Unknown, low urgency, reward
+5. Operations/Logistics
+Cell	Type	Sender	Subject	Features
+9	PHISH	WattVoltBridge Procurement	URGENT: Equipment Cost Savings Rebate - Claim €4,500	Known, high urgency, reward, high qual
+10	PHISH	Supply Chain Audit Service	Routine Supply Chain Compliance Verification	Unknown, low urgency, threat, med qual
+11	PHISH	SecureNebula Asset Management	Asset Tracking System - Credential Update Needed	Known, low urgency, threat, med qual
+12	PHISH	Industrial Excellence Awards	URGENT: Best Operations Team Award - Closing Today	Unknown, high urgency, reward, high qual
+13	LEGIT	WattVoltBridge Tools	New Energy Efficiency Tools - Free Access	Known, low urgency, reward
+14	LEGIT	EU Safety Standards Agency	URGENT: Updated Workplace Safety Regulations	Unknown, high urgency, threat
+15	LEGIT	Sophie Laurent (GreenEnvi)	URGENT: Environmental Compliance Deadline	Known, high urgency, threat
+16	LEGIT	Supply Chain Council EU	Free Supply Chain Innovation Conference	Unknown, low urgency, reward
+6. Customer Service/Client Support
+Cell	Type	Sender	Subject	Features
+9	PHISH	LuxConsultancy HR Rewards	Q1 Customer Excellence Award — Action Required by EOD	Known, high urgency, reward, high qual
+10	PHISH	ClientPulse Analytics	Negative Client Sentiment Detected — Review Required	Unknown, low urgency, threat, med qual
+11	PHISH	SecureNebula Cloud Services	CRM Data Retention Policy Update — Compliance Action Needed	Known, low urgency, threat, med qual
+12	PHISH	European Customer Service Institute	LuxConsultancy Shortlisted for 2026 Service Excellence Award	Unknown, high urgency, reward, high qual
+13	LEGIT	TrendyLetter	Top Strategies That Boosted Client Retention by 20%	Known, low urgency, reward
+14	LEGIT	GDPR Compliance Bureau — Luxembourg	URGENT: Client Data Subject Access Request — 72-Hour Window	Unknown, high urgency, threat
+15	LEGIT	LockGrid Security Solutions	CRITICAL: Unusual Login on Your CRM Support Console	Known, high urgency, threat
+16	LEGIT	ServiceBench Research	2026 Client Support Benchmarking Study (€75 Incentive)	Unknown, low urgency, reward
+7. Marketing/Communications
+Cell	Type	Sender	Subject	Features
+9	PHISH	TrendyLetter Campaign Awards	You've Won the 2025 Best Campaign Award — Claim €2,500	Known, high urgency, reward, high qual
+10	PHISH	BrandGuard Compliance	Trademark Infringement Notice - LuxConsultancy Brand Assets	Unknown, low urgency, threat, med qual
+11	PHISH	SecureNebula Cloud Services	Marketing Cloud Storage Approaching Quota Limit	Known, low urgency, threat, med qual
+12	PHISH	DigiMarketer Pro	Exclusive Sponsorship Slot for LuxConsultancy — Response Today	Unknown, high urgency, reward, high qual
+13	LEGIT	Sophie Laurent (GreenEnvi)	Free Co-Branding Opportunity — Joint Sustainability Report	Known, low urgency, reward
+14	LEGIT	EU Advertising Standards Authority	URGENT: Consumer Complaint Filed Against Ad Campaign	Unknown, high urgency, threat
+15	LEGIT	Marcus Chen (LockGrid)	URGENT: Compromised Social Media Credentials	Known, high urgency, threat
+16	LEGIT	European Content Marketing Association	Complimentary ECMA Membership for Marketing Team	Unknown, low urgency, reward
+8. Procurement/Purchasing
+Cell	Type	Sender	Subject	Features
+9	PHISH	Procurement Awards — LuxConsultancy	Q1 Preferred Vendor Negotiation Bonus - Claim by EOD	Known, high urgency, reward, high qual
+10	PHISH	VendorShield Compliance	Vendor Compliance Certification Gap Identified	Unknown, low urgency, threat, med qual
+11	PHISH	SecureNebula Procurement Portal	Supplier Portal Credential Rotation - Update Required	Known, low urgency, threat, med qual
+12	PHISH	GlobalSource Procurement Network	Exclusive Bulk Discount Agreement - 35% Savings Expiring Tomorrow	Unknown, high urgency, reward, high qual
+13	LEGIT	Anne Richter (SuperFinance)	New Procurement Cost Analytics Dashboard Available	Known, low urgency, reward
+14	LEGIT	EU Public Procurement Regulatory Office	URGENT: Updated Procurement Thresholds - Mandatory Compliance	Unknown, high urgency, threat
+15	LEGIT	Thomas Meier (GreenEnvi)	URGENT: Supply Chain Due Diligence Act - Vendor Audit Deadline	Known, high urgency, threat
+16	LEGIT	ProcureTech Innovation Forum	Free Webinar - AI-Powered Procurement Optimization	Unknown, low urgency, reward
+9. Administrative/Executive Support
+Cell	Type	Sender	Subject	Features
+9	PHISH	Claire Dubois	Executive Assistant Recognition Award — Action Required	Known, high urgency, reward, high qual
+10	PHISH	Facilities Alert — Regus Luxembourg	Building Access Card Revalidation	Unknown, low urgency, threat, med qual
+11	PHISH	SecureNebula Support	Document Storage Quota Warning	Known, low urgency, threat, med qual
+12	PHISH	Marco Bellini	VIP Pass — Luxembourg Admin Professionals Summit (Respond Today)	Unknown, high urgency, reward, high qual
+13	LEGIT	Sophie Kieffer	New Perk: Discounted Corporate Gym Memberships	Known, low urgency, reward
+14	LEGIT	Luxembourg Fire Safety Authority	URGENT: Mandatory Fire Drill Scheduled — 31 March	Unknown, high urgency, threat
+15	LEGIT	Thomas Weber	Critical: Office Alarm System Maintenance — Codes Reset Required	Known, high urgency, threat
+16	LEGIT	Anais Dumont	New Corporate Catalogue — Special First-Order Discount	Unknown, low urgency, reward
+10. Compliance/Risk/Audit
+Cell	Type	Sender	Subject	Features
+9	PHISH	LuxConsultancy Compliance Office	€2,500 Regulatory Excellence Award — Claim by EOD	Known, high urgency, reward, high qual
+10	PHISH	RegWatch Compliance Alerts	GDPR Enforcement Trend Report - Potential Gaps Identified	Unknown, low urgency, threat, med qual
+11	PHISH	GreenEnvi Compliance Team	Updated Environmental Due Diligence Questionnaire	Known, low urgency, threat, med qual
+12	PHISH	EU Anti-Money Laundering Institute	Complimentary AMLA Certification - Registration Closes Tonight	Unknown, high urgency, reward, high qual
+13	LEGIT	Marie Fontaine (SuperFinance)	New AML/CFT Compliance Toolkit Available	Known, low urgency, reward
+14	LEGIT	CSSF Supervisory Division	URGENT: DORA Compliance Gap Assessment - Response Required	Unknown, high urgency, threat
+15	LEGIT	David Mueller (LockGrid)	URGENT: Critical Vulnerability in Compliance Monitoring Platform	Known, high urgency, threat
+16	LEGIT	European Compliance Forum	Complimentary Access - Annual GRC Innovation Summit 2025	Unknown, low urgency, reward

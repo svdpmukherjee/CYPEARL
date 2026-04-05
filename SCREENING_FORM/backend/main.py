@@ -29,7 +29,23 @@ if not MONGO_URL:
     raise ValueError("MONGO_URL not found in environment variables")
 
 DB_NAME = os.getenv("SCREENING_DB_NAME", "cypearl_screening")
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
+
+def parse_allowed_origins(raw_origins: Optional[str]) -> list[str]:
+    # Browsers send Origin without trailing slash; normalize env entries to match.
+    if not raw_origins:
+        return ["http://localhost:5173", "http://localhost:5174"]
+
+    parsed = []
+    for origin in raw_origins.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            parsed.append(cleaned)
+
+    return parsed or ["http://localhost:5173", "http://localhost:5174"]
+
+
+ALLOWED_ORIGINS = parse_allowed_origins(os.getenv("ALLOWED_ORIGINS"))
 
 client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
 db = client[DB_NAME]

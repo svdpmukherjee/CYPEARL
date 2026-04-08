@@ -92,12 +92,18 @@ class SenderEntry(BaseModel):
         return self
 
 
+class GenericEmailEntry(BaseModel):
+    sender: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+
+
 class ScreeningResponse(BaseModel):
     prolific_id: str = Field(..., min_length=1)
     job_cluster: str = Field(..., min_length=1)
     job_title: str = Field(..., min_length=1)
     daily_tasks: str = Field(..., min_length=1)
     email_senders: list[SenderEntry] = Field(..., min_items=1)
+    generic_emails: list[GenericEmailEntry] = Field(default_factory=list)
     suspicious_emails: list[str] = Field(default_factory=list)
 
 

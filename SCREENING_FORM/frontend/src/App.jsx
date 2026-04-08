@@ -53,9 +53,7 @@ function countFilledEmails(senders) {
 }
 
 function isSenderComplete(sender) {
-  return (
-    sender.role.trim() && sender.type && sender.emails.some(isEmailFilled)
-  );
+  return sender.role.trim() && sender.type && sender.emails.some(isEmailFilled);
 }
 
 function formatBonus(pence) {
@@ -94,7 +92,13 @@ function StepIndicator({ current, total }) {
 
 // ── Dynamic text-box list ───────────────────────────────────────────────
 
-function TextBoxList({ items, onChange, placeholder, minBoxes = 1 }) {
+function TextBoxList({
+  items,
+  onChange,
+  placeholder,
+  minBoxes = 1,
+  labelPrefix = "",
+}) {
   const updateItem = (index, value) => {
     const updated = [...items];
     updated[index] = value;
@@ -110,21 +114,21 @@ function TextBoxList({ items, onChange, placeholder, minBoxes = 1 }) {
     <div className="space-y-2">
       {items.map((val, i) => (
         <div key={i} className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 w-5 text-right shrink-0">
-            {i + 1}.
+          <span className="text-xs text-slate-500 shrink-0 font-medium w-16 text-right">
+            {labelPrefix ? `${labelPrefix} ${i + 1}` : `${i + 1}.`}
           </span>
           <input
             type="text"
             value={val}
             onChange={(e) => updateItem(i, e.target.value)}
             placeholder={placeholder}
-            className="flex-1 border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 border border-slate-300 rounded-md p-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-slate-400"
           />
           {items.length > minBoxes && (
             <button
               type="button"
               onClick={() => removeBox(i)}
-              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+              className="p-1 text-slate-400 hover:text-red-400 transition-colors"
               title="Remove"
             >
               <X size={16} />
@@ -169,28 +173,28 @@ function EmailCard({
       }`}
     >
       {/* Email toolbar */}
-      <div className="bg-slate-50 px-3 py-2 flex items-center justify-between border-b border-slate-200">
-        <div className="flex items-center gap-2 text-xs text-slate-500 min-w-0">
+      <div className="bg-slate-600 px-3 py-2 flex items-center justify-between border-b border-slate-500">
+        <div className="flex items-center gap-2 text-xs text-slate-300 min-w-0">
           <div
             className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
               senderType === "internal"
-                ? "bg-indigo-100 text-indigo-600"
+                ? "bg-indigo-400/30 text-indigo-200"
                 : senderType === "external"
-                  ? "bg-amber-100 text-amber-600"
-                  : "bg-gray-100 text-gray-400"
+                  ? "bg-amber-400/30 text-amber-200"
+                  : "bg-slate-500 text-slate-300"
             }`}
           >
             <User size={10} />
           </div>
-          <span className="truncate font-medium text-slate-600">
+          <span className="truncate font-medium text-white">
             {senderRole || "Sender"} — Email {index + 1}
           </span>
           {senderType && (
             <span
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide ${
                 senderType === "internal"
-                  ? "bg-indigo-100 text-indigo-600"
-                  : "bg-amber-100 text-amber-600"
+                  ? "bg-indigo-400/20 text-indigo-200"
+                  : "bg-amber-400/20 text-amber-200"
               }`}
             >
               {senderType}
@@ -201,7 +205,7 @@ function EmailCard({
           <button
             type="button"
             onClick={onRemove}
-            className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+            className="p-0.5 text-slate-400 hover:text-red-400 transition-colors"
             title="Remove this email"
           >
             <X size={12} />
@@ -210,11 +214,11 @@ function EmailCard({
       </div>
 
       {/* Email body */}
-      <div className="bg-white px-3 py-2.5 space-y-2">
+      <div className="bg-slate-700 px-3 py-2.5 space-y-2">
         <div className="flex items-center gap-2">
           <span
             className={`text-[10px] font-semibold uppercase tracking-wider w-14 shrink-0 ${
-              subjectMissing ? "text-red-500" : "text-slate-400"
+              subjectMissing ? "text-red-400" : "text-slate-300"
             }`}
           >
             Subject
@@ -223,16 +227,16 @@ function EmailCard({
             type="text"
             value={email.subject}
             onChange={(e) => onChange({ ...email, subject: e.target.value })}
-            placeholder="What does the subject line usually say?"
-            className={`flex-1 border-0 border-b p-1 text-sm font-medium text-slate-700 focus:outline-none focus:border-blue-400 bg-transparent placeholder:text-slate-300 ${
-              subjectMissing ? "border-red-400" : "border-slate-200"
+            placeholder="Type in here..."
+            className={`flex-1 rounded-md p-1.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white placeholder:text-slate-400 ${
+              subjectMissing ? "ring-2 ring-red-400" : "border border-slate-300"
             }`}
           />
         </div>
         <div className="flex items-start gap-2">
           <span
             className={`text-[10px] font-semibold uppercase tracking-wider w-14 shrink-0 mt-1.5 ${
-              contentMissing ? "text-red-500" : "text-slate-400"
+              contentMissing ? "text-red-400" : "text-slate-300"
             }`}
           >
             About
@@ -240,10 +244,10 @@ function EmailCard({
           <textarea
             value={email.content}
             onChange={(e) => onChange({ ...email, content: e.target.value })}
-            placeholder="In a sentence, what is this email typically about?"
+            placeholder="Type in here..."
             rows={2}
-            className={`flex-1 border-0 border-b p-1 text-sm text-slate-600 focus:outline-none focus:border-blue-400 bg-transparent resize-none placeholder:text-slate-300 ${
-              contentMissing ? "border-red-400" : "border-slate-200"
+            className={`flex-1 rounded-md p-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white resize-none placeholder:text-slate-400 ${
+              contentMissing ? "ring-2 ring-red-400" : "border border-slate-300"
             }`}
           />
         </div>
@@ -252,7 +256,7 @@ function EmailCard({
         <div className="pt-1">
           <p
             className={`text-[11px] font-medium mb-1.5 ${
-              frequencyMissing ? "text-red-500" : "text-slate-500"
+              frequencyMissing ? "text-red-400" : "text-slate-300"
             }`}
           >
             How often do you receive this type of email?
@@ -266,7 +270,7 @@ function EmailCard({
                 onClick={() => onChange({ ...email, frequency: freq })}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
                   email.frequency === freq
-                    ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                    ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
                     : frequencyMissing
                       ? "bg-white text-red-400 border-red-300 hover:border-red-400"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700"
@@ -301,9 +305,7 @@ function RewardBar({ totalEmails }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-sm">
           <Mail size={14} className="text-slate-500" />
-          <span className="text-slate-700 font-semibold">
-            {totalEmails}
-          </span>
+          <span className="text-slate-700 font-semibold">{totalEmails}</span>
           <span className="text-slate-500 text-xs">
             {totalEmails === 1 ? "email" : "emails"} described
           </span>
@@ -345,7 +347,7 @@ function RewardBar({ totalEmails }) {
 
       {/* Bottom row: motivational text */}
       <div className="flex items-center justify-between mt-1.5">
-        <div className="flex gap-3 text-[10px] text-slate-400">
+        <div className="flex gap-3 text-xs text-slate-400">
           <span>
             <span className="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1" />
             Required ({mandatoryDone}/{MANDATORY_EMAILS})
@@ -356,12 +358,12 @@ function RewardBar({ totalEmails }) {
           </span>
         </div>
         {mandatoryComplete ? (
-          <p className="text-[10px] text-emerald-600 font-medium">
-            Each additional email earns you{" "}
-            {formatBonus(BONUS_PER_EMAIL_PENCE)} bonus!
+          <p className="text-xs text-emerald-600 font-medium">
+            Each additional email earns you {formatBonus(BONUS_PER_EMAIL_PENCE)}{" "}
+            bonus!
           </p>
         ) : (
-          <p className="text-[10px] text-slate-400">
+          <p className="text-xs text-slate-400">
             Complete {MANDATORY_EMAILS} emails to unlock bonus rewards
           </p>
         )}
@@ -400,17 +402,18 @@ export default function App() {
     Array.from({ length: MANDATORY_EMAILS }, () => EMPTY_SENDER()),
   );
 
-  // Step 3 — hard-to-judge emails
-  const [suspiciousEmails, setSuspiciousEmails] = useState(
-    Array(3).fill(""),
+  // Step 3 — generic (non-job-specific) workplace emails
+  const EMPTY_GENERIC = () => ({ sender: "", description: "" });
+  const [genericEmails, setGenericEmails] = useState(
+    Array.from({ length: 5 }, () => EMPTY_GENERIC()),
   );
+
+  // Step 4 — hard-to-judge emails
+  const [suspiciousEmails, setSuspiciousEmails] = useState(Array(5).fill(""));
 
   // ── Computed ──────────────────────────────────────────────────────────
 
-  const totalEmailCount = useMemo(
-    () => countFilledEmails(senders),
-    [senders],
-  );
+  const totalEmailCount = useMemo(() => countFilledEmails(senders), [senders]);
 
   const bonusEmails = Math.max(0, totalEmailCount - MANDATORY_EMAILS);
   const bonusPence = bonusEmails * BONUS_PER_EMAIL_PENCE;
@@ -474,7 +477,7 @@ export default function App() {
 
   const goNextFromStep2 = () => {
     if (isLastSenderPage) {
-      setStep(3);
+      setStep(3); // generic emails step
     } else {
       setSenderPageIdx(senderPageIdx + 1);
     }
@@ -522,10 +525,15 @@ export default function App() {
 
   // ── Validation ────────────────────────────────────────────────────────
 
+  const filledGenericCount = genericEmails.filter(
+    (g) => g.sender.trim() && g.description.trim(),
+  ).length;
+
   const canAdvance = () => {
     if (step === 0) return prolificId.trim().length > 0;
     if (step === 1) return jobCluster && jobTitle.trim() && dailyTasks.trim();
-    if (step === 3) return filledEntries(suspiciousEmails).length >= 1;
+    if (step === 3) return filledGenericCount >= 5;
+    if (step === 4) return filledEntries(suspiciousEmails).length >= 5;
     return true;
   };
 
@@ -535,18 +543,21 @@ export default function App() {
     setSubmitting(true);
     setError("");
     try {
-      const cleanedSenders = senders
-        .filter(isSenderComplete)
-        .map((s) => ({
-          role: s.role.trim(),
-          type: s.type,
-          emails: s.emails
-            .filter(isEmailFilled)
-            .map((e) => ({
-              subject: e.subject.trim(),
-              content: e.content.trim(),
-              frequency: e.frequency || "",
-            })),
+      const cleanedSenders = senders.filter(isSenderComplete).map((s) => ({
+        role: s.role.trim(),
+        type: s.type,
+        emails: s.emails.filter(isEmailFilled).map((e) => ({
+          subject: e.subject.trim(),
+          content: e.content.trim(),
+          frequency: e.frequency || "",
+        })),
+      }));
+
+      const cleanedGeneric = genericEmails
+        .filter((g) => g.sender.trim() && g.description.trim())
+        .map((g) => ({
+          sender: g.sender.trim(),
+          description: g.description.trim(),
         }));
 
       await axios.post(`${API_URL}/submit`, {
@@ -555,9 +566,10 @@ export default function App() {
         job_title: jobTitle.trim(),
         daily_tasks: dailyTasks.trim(),
         email_senders: cleanedSenders,
+        generic_emails: cleanedGeneric,
         suspicious_emails: filledEntries(suspiciousEmails),
       });
-      setStep(4);
+      setStep(5);
     } catch (err) {
       if (err.response?.status === 409) {
         setError(
@@ -586,31 +598,65 @@ export default function App() {
           <ClipboardList size={20} className="text-white" />
         </div>
         <h2 className="text-xl font-bold text-slate-800">
-          Welcome — Workplace Email Patterns Survey
+          Welcome to Workplace Email Patterns Survey
         </h2>
       </div>
-      <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-        Thank you for participating in this research study on{" "}
-        <strong>workplace email patterns</strong>. This short survey
-        (approx. 3–4 minutes) helps us understand the types of emails
-        professionals in different roles receive at work.
+      <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+        Thank you for participating in this research study. We are building a
+        library of <strong>realistic workplace email templates</strong> to study
+        how employees evaluate email legitimacy and make trust decisions. Your
+        task is to describe the emails you actually receive at work so we can
+        make those templates as authentic as possible.
       </p>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-        <p className="text-sm text-blue-800">
-          <strong>Why does this matter?</strong> Your answers help researchers
-          understand how workplace email landscapes differ across professions.
-          The more accurately you describe the emails you receive, the more
-          valuable your contribution will be. Please draw from your actual
-          workplace experience.
+        <p className="text-sm text-blue-800 font-semibold mb-4">
+          This survey has 3 parts:
         </p>
+
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-blue-800 font-semibold">Part A</p>
+            <p className="text-sm text-blue-700 ml-4 mt-0.5">
+              <strong>Job-Specific Emails</strong>: Emails directly related to
+              your job role.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-blue-800 font-semibold">Part B</p>
+            <p className="text-sm text-blue-700 ml-4 mt-0.5">
+              <strong>General Workplace Emails</strong>: Emails everyone in your
+              company receives regardless of role.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-blue-800 font-semibold">Part C</p>
+            <p className="text-sm text-blue-700 ml-4 mt-0.5">
+              <strong>Suspicious / Hard-to-Judge Emails</strong>: Work emails
+              where you were unsure whether they were legitimate or a scam.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-blue-200">
+          <p className="text-sm text-blue-700 mb-2">
+            For each email, think of it as a <strong>skeleton</strong>:
+          </p>
+          <ul className="list-disc list-inside text-sm text-blue-700 space-y-1 ml-2">
+            <li>Who (not names, only job roles) sent it?</li>
+            <li>What the subject line said?</li>
+            <li>A one-line summary of what it was about.</li>
+          </ul>
+        </div>
       </div>
 
       {/* Anonymity notice */}
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
         <p className="text-sm text-slate-700">
           <strong>Your privacy is protected.</strong> Your identity will be{" "}
-          <strong>strictly anonymised</strong> — there is no way for anyone to
+          <strong>strictly anonymised</strong>; there is no way for anyone to
           identify you from your responses. Please{" "}
           <strong>do not mention any personal names</strong> (yours or anyone
           else&apos;s) in any of your answers. We are only interested in job
@@ -618,23 +664,40 @@ export default function App() {
         </p>
       </div>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-        <p className="text-sm text-gray-700 mb-2">
-          <strong>Estimated time:</strong> 3–4 minutes &nbsp;|&nbsp;{" "}
-          <strong>Base compensation:</strong> £0.50
-        </p>
-        <div className="flex items-start gap-2 mt-2 pt-2 border-t border-gray-200">
-          <Gift size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-          <div className="text-sm text-gray-700">
-            <strong>Earn a bonus</strong> for sharing more detail about your
-            inbox. You will describe at least {MANDATORY_EMAILS} emails
-            (required). Each additional email beyond {MANDATORY_EMAILS} earns
-            you{" "}
-            <strong className="text-emerald-600">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-lg p-4 mb-6 text-white shadow-md">
+        <div className="flex items-center justify-around mb-3">
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-slate-300 mb-0.5">
+              Estimated time
+            </p>
+            <p className="text-lg font-bold">3–4 min</p>
+          </div>
+          <div className="w-px h-8 bg-slate-500" />
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-slate-300 mb-0.5">
+              Base pay
+            </p>
+            <p className="text-lg font-bold">£0.50</p>
+          </div>
+          <div className="w-px h-8 bg-slate-500" />
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-wider text-slate-300 mb-0.5">
+              Bonus
+            </p>
+            <p className="text-lg font-bold text-emerald-400">+ extra</p>
+          </div>
+        </div>
+        <div className="bg-white/10 rounded-md p-3 flex items-start gap-2">
+          <Gift size={16} className="text-emerald-400 mt-0.5 shrink-0" />
+          <p className="text-sm text-slate-200">
+            In Part A, each additional email beyond the required{" "}
+            {MANDATORY_EMAILS} earns you{" "}
+            <strong className="text-emerald-400">
               {formatBonus(BONUS_PER_EMAIL_PENCE)}
             </strong>{" "}
-            bonus (paid via Prolific).
-          </div>
+            bonus via Prolific. Parts B and C are required but do not earn
+            bonus.
+          </p>
         </div>
       </div>
 
@@ -768,18 +831,27 @@ export default function App() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-800">
-              Your Email Landscape
+              Part A: Job-Specific Email Skeletons
             </h2>
-            <p className="text-xs text-slate-500">{pageLabel}</p>
+            {/* <p className="text-xs text-slate-500">{pageLabel}</p> */}
           </div>
         </div>
 
-        <p className="text-gray-600 text-sm mb-4">
-          Think about your <strong>workplace inbox</strong> over a typical week.
-          Describe the emails you regularly receive — the job role of the sender,
-          whether they are inside or outside your organisation, and what
-          the email is typically about.
+        <p className="text-gray-600 text-sm mb-2">
+          Think about emails <strong>directly related to your job role</strong>{" "}
+          over a typical week. For each email skeleton, tell us the{" "}
+          <strong>sender&apos;s type</strong>, whether they are{" "}
+          <strong>inside or outside</strong> your organisation, the typical{" "}
+          <strong>subject line</strong>, and a <strong>one-line summary</strong>{" "}
+          of what the email is about.
         </p>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-amber-800">
+            <strong>What is an email skeleton?</strong> A skeleton is a brief
+            template of a real email you receive: who sends it, what the subject
+            line says, and what it is about — no actual content needed.
+          </p>
+        </div>
 
         {/* Validation error alert */}
         {showValidation && pageErrors.length > 0 && (
@@ -827,33 +899,33 @@ export default function App() {
         </div>
 
         {/* ── Sender info ─────────────────────────────────────────────── */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden mb-4">
-          <div className="bg-gray-50 p-4">
+        <div className="border border-slate-300 rounded-xl overflow-hidden mb-4">
+          <div className="bg-slate-100 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                <User size={14} className="text-slate-500" />
+              <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center shrink-0">
+                <User size={14} className="text-slate-600" />
               </div>
               <div className="flex-1 space-y-2.5">
                 {/* Sender role */}
                 <div>
                   <p
                     className={`text-[11px] font-medium mb-1 ${
-                      roleMissing ? "text-red-500" : "text-slate-500"
+                      roleMissing ? "text-red-500" : "text-slate-600"
                     }`}
                   >
-                    What is the job role or title of someone who regularly emails
-                    you at work?
+                    What is the job role or title of someone who regularly
+                    emails you at work?
                     {roleMissing && " *"}
                   </p>
                   <input
                     type="text"
                     value={sender.role}
-                    onChange={(e) => updateCurrentSender("role", e.target.value)}
-                    placeholder="Enter a job role or title..."
-                    className={`w-full border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                      roleMissing
-                        ? "border-red-400 bg-red-50/50"
-                        : "border-gray-300"
+                    onChange={(e) =>
+                      updateCurrentSender("role", e.target.value)
+                    }
+                    placeholder="Type in here..."
+                    className={`w-full border rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white ${
+                      roleMissing ? "border-red-400" : "border-slate-300"
                     }`}
                   />
                 </div>
@@ -862,7 +934,7 @@ export default function App() {
                 <div>
                   <p
                     className={`text-[11px] font-medium mb-1.5 ${
-                      typeMissing ? "text-red-500" : "text-slate-500"
+                      typeMissing ? "text-red-500" : "text-slate-600"
                     }`}
                   >
                     Is this role inside or outside your organisation?
@@ -902,7 +974,7 @@ export default function App() {
           </div>
 
           {/* Email entries */}
-          <div className="p-4 pt-3 space-y-3 bg-slate-50/50">
+          <div className="p-4 pt-3 space-y-3 bg-slate-100">
             <p className="text-xs text-gray-500">
               What kinds of emails does{" "}
               <strong className="text-slate-600">
@@ -982,9 +1054,7 @@ export default function App() {
                   : "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer"
               }`}
             >
-              {isLastSenderPage
-                ? "Next: Hard-to-Judge Emails"
-                : "Next email"}{" "}
+              {isLastSenderPage ? "Next: Part B" : "Next email"}{" "}
               <ArrowRight size={16} />
             </button>
           </div>
@@ -1001,39 +1071,163 @@ export default function App() {
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // STEP 3 — Hard-to-judge emails
+  // STEP 3 — Generic (non-job-specific) workplace emails
   // ═══════════════════════════════════════════════════════════════════
 
-  const renderStep3 = () => (
+  const updateGenericEmail = (index, field, value) => {
+    const updated = [...genericEmails];
+    updated[index] = { ...updated[index], [field]: value };
+    setGenericEmails(updated);
+  };
+
+  const addGenericEmail = () =>
+    setGenericEmails([...genericEmails, EMPTY_GENERIC()]);
+
+  const removeGenericEmail = (index) => {
+    if (genericEmails.length <= 5) return;
+    setGenericEmails(genericEmails.filter((_, i) => i !== index));
+  };
+
+  const renderStep3Generic = () => (
+    <div>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
+          <Inbox size={20} className="text-white" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">
+          Part B — General Workplace Email Skeletons
+        </h2>
+      </div>
+      <p className="text-gray-600 text-sm mb-2">
+        Now think about emails that <strong>everyone in your company</strong>{" "}
+        receives, regardless of job role — things like IT security alerts, HR
+        announcements, company newsletters, benefits enrolment, facility
+        notices, vendor promotions, etc.
+      </p>
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+        <p className="text-xs text-amber-800">
+          <strong>Reminder:</strong> An email skeleton = who sends it + what it
+          is about. These are <strong>not</strong> related to your specific job
+          duties — they are emails any employee at your company might get.
+          Please describe at least 5.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {genericEmails.map((g, i) => (
+          <div
+            key={i}
+            className="border border-slate-200 rounded-lg p-4 bg-slate-100"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-600">
+                General email {i + 1}
+              </span>
+              {genericEmails.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => removeGenericEmail(i)}
+                  className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[11px] font-medium text-slate-600 mb-1 block">
+                  Who sends this email?
+                </label>
+                <input
+                  type="text"
+                  value={g.sender}
+                  onChange={(e) =>
+                    updateGenericEmail(i, "sender", e.target.value)
+                  }
+                  placeholder="Type in here..."
+                  className="w-full border border-slate-300 rounded-md p-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-slate-400"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-slate-600 mb-1 block">
+                  What is this email typically about?
+                </label>
+                <textarea
+                  value={g.description}
+                  onChange={(e) =>
+                    updateGenericEmail(i, "description", e.target.value)
+                  }
+                  placeholder="Type in here..."
+                  rows={2}
+                  className="w-full border border-slate-300 rounded-md p-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-slate-400 resize-none"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={addGenericEmail}
+        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors mt-3"
+      >
+        <Plus size={14} /> Add more
+      </button>
+
+      {filledGenericCount < 5 && (
+        <p className="text-xs text-amber-600 mt-3">
+          Please describe at least 5 general email skeletons to continue. You
+          have {filledGenericCount} so far.
+        </p>
+      )}
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════
+  // STEP 4 — Hard-to-judge emails
+  // ═══════════════════════════════════════════════════════════════════
+
+  const renderStep4 = () => (
     <div>
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
           <Mail size={20} className="text-white" />
         </div>
         <h2 className="text-xl font-bold text-slate-800">
-          Hard-to-Judge Emails
+          Part C — Suspicious / Hard-to-Judge Email Skeletons
         </h2>
       </div>
-      <p className="text-gray-600 text-sm mb-6">
+      <p className="text-gray-600 text-sm mb-2">
         Finally, think of work emails where you were{" "}
-        <strong>unsure whether they were legitimate or suspicious</strong>.
-        Describe the types of emails that were hardest to judge.
+        <strong>unsure whether they were legitimate or a scam</strong>. These
+        help us understand which email scenarios are hardest for employees to
+        judge.
       </p>
 
-      <label className="block text-md font-semibold text-slate-700 mb-2">
-        Types of work emails you find hardest to judge as safe or risky
-      </label>
-      <p className="text-xs text-gray-500 mb-3">
-        Think of specific <strong>types</strong> of emails you have received in
-        your workplace inbox where you were unsure whether they were legitimate
-        or suspicious. One per box. Do not mention any personal names.
-      </p>
-      <TextBoxList
-        items={suspiciousEmails}
-        onChange={setSuspiciousEmails}
-        placeholder="Describe one type of email..."
-        minBoxes={1}
-      />
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+        <p className="text-xs text-amber-800">
+          <strong>Reminder:</strong> Describe the <strong>type</strong> of email
+          — not the actual content. One skeleton per box. Please provide at
+          least 5. Do not mention any personal names.
+        </p>
+      </div>
+      <div className="bg-slate-100 border border-slate-200 rounded-lg p-4">
+        <TextBoxList
+          items={suspiciousEmails}
+          onChange={setSuspiciousEmails}
+          placeholder="Type in here..."
+          minBoxes={5}
+          labelPrefix="Email"
+        />
+      </div>
+      {filledEntries(suspiciousEmails).length < 5 && (
+        <p className="text-xs text-amber-600 mt-3">
+          Please describe at least 5 suspicious email types to submit. You have{" "}
+          {filledEntries(suspiciousEmails).length} so far.
+        </p>
+      )}
     </div>
   );
 
@@ -1082,19 +1276,21 @@ export default function App() {
   // RENDER
   // ═══════════════════════════════════════════════════════════════════
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">
-            Research Study on Workplace Email Patterns
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Workplace Email Patterns Survey
-          </p>
-        </div>
+        {step === 0 && (
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-slate-800">
+              Research Study on Workplace Email Patterns
+            </h1>
+            <p className="text-gray-500 text-sm">
+              Workplace Email Patterns Survey
+            </p>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
           {step < totalSteps && (
@@ -1104,8 +1300,9 @@ export default function App() {
           {step === 0 && renderStep0()}
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
-          {step === 4 && renderThankYou()}
+          {step === 3 && renderStep3Generic()}
+          {step === 4 && renderStep4()}
+          {step === 5 && renderThankYou()}
 
           {error && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -1113,7 +1310,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Navigation for steps 0, 1, 3 — step 2 has its own nav */}
+          {/* Navigation for steps 0, 1, 3, 4 — step 2 has its own nav */}
           {step < totalSteps && step !== 2 && (
             <div className="flex justify-between mt-8">
               {step > 0 ? (
@@ -1135,7 +1332,7 @@ export default function App() {
                 <div />
               )}
 
-              {step < 3 ? (
+              {step < 4 ? (
                 <button
                   onClick={() => setStep(step + 1)}
                   disabled={!canAdvance()}

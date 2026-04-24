@@ -140,4 +140,4 @@ async def get_response(prolific_id: str):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "healthy"}

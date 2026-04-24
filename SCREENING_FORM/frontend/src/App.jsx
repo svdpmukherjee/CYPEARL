@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import sampleEmailImg from "./assets/sample_email.jpg";
 import {
   ArrowRight,
   ArrowLeft,
@@ -12,6 +13,7 @@ import {
   Inbox,
   User,
   Gift,
+  ShieldAlert,
 } from "lucide-react";
 
 const API_URL = (
@@ -37,6 +39,7 @@ const JOB_CLUSTERS = [
 ];
 
 const MANDATORY_EMAILS = 5;
+const MANDATORY_SENDERS = 5;
 const REQUIRED_GENERIC = 5;
 const REQUIRED_SUSPICIOUS = 5;
 const BONUS_PER_EMAIL_PENCE = 2; // £0.02 per additional email beyond mandatory
@@ -261,12 +264,16 @@ function RewardPanel({
   totalEmails,
   mandatory = MANDATORY_EMAILS,
   showBonus = true,
+  senderBreakdown = null,
+  mandatorySenders = MANDATORY_SENDERS,
 }) {
   const mandatoryDone = Math.min(totalEmails, mandatory);
   const remaining = Math.max(0, mandatory - totalEmails);
   const bonusEmails = Math.max(0, totalEmails - mandatory);
   const bonusPence = bonusEmails * BONUS_PER_EMAIL_PENCE;
   const mandatoryComplete = totalEmails >= mandatory;
+  const sendersDone = senderBreakdown ? senderBreakdown.length : 0;
+  const sendersRemaining = Math.max(0, mandatorySenders - sendersDone);
 
   // When bonus is hidden, the required portion fills the entire bar.
   const requiredWidth = showBonus ? 60 : 100;
@@ -284,11 +291,52 @@ function RewardPanel({
 
       {/* Stats grid */}
       <div className="space-y-2.5 mb-4">
+        {senderBreakdown && (
+          <div className="bg-gray-700/60 rounded-md px-3 py-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm text-slate-300">Senders added</span>
+              <span className="text-white font-bold text-sm">
+                {sendersDone}
+                <span className="text-slate-400 font-normal">
+                  {" "}
+                  / {mandatorySenders}
+                </span>
+              </span>
+            </div>
+            {sendersRemaining > 0 && (
+              <p className="text-[11px] text-amber-300 mt-0.5">
+                {sendersRemaining} more sender
+                {sendersRemaining === 1 ? "" : "s"} needed
+              </p>
+            )}
+            {senderBreakdown.length > 0 && (
+              <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto pr-1">
+                {senderBreakdown.map((s, i) => (
+                  <li
+                    key={i}
+                    className="flex items-baseline justify-between text-[11px] text-slate-300"
+                  >
+                    <span className="truncate mr-2" title={s.role}>
+                      {i + 1}. {s.role}
+                    </span>
+                    <span className="text-slate-400 shrink-0">
+                      {s.emailCount} email{s.emailCount === 1 ? "" : "s"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         <div className="bg-gray-700/60 rounded-md px-3 py-2">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-slate-300">Required completed</span>
+            <span className="text-sm text-slate-300">
+              {senderBreakdown ? "Total emails" : "Required completed"}
+            </span>
             <span className="text-white font-bold text-sm">
-              {mandatoryDone}
+              <span className={bonusEmails > 0 ? "text-emerald-300" : ""}>
+                {totalEmails}
+              </span>
               <span className="text-slate-400 font-normal"> / {mandatory}</span>
             </span>
           </div>
@@ -298,18 +346,9 @@ function RewardPanel({
               {showBonus ? " to unlock bonus" : ""}
             </p>
           )}
-        </div>
-
-        <div className="bg-gray-700/60 rounded-md px-3 py-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm text-slate-300">Additional added</span>
-            <span className="text-emerald-400 font-bold text-sm">
-              +{bonusEmails}
-            </span>
-          </div>
-          {showBonus && (
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              beyond the {mandatory} required
+          {showBonus && bonusEmails > 0 && (
+            <p className="text-[11px] text-emerald-300 mt-0.5">
+              +{bonusEmails} beyond the {mandatory} required
             </p>
           )}
         </div>
@@ -427,16 +466,39 @@ export default function App() {
     EMPTY_SUSPICIOUS(),
   ]);
 
-  // ── Committed counters ────────────────────────────────────────────────
-  // Increment only when user explicitly commits an entry via button clicks
-  // ("Next email" / "Add more"). Typing into a field does NOT change them.
-  const [committedEmails, setCommittedEmails] = useState(0);
-  const [committedGeneric, setCommittedGeneric] = useState(0);
-  const [committedSuspicious, setCommittedSuspicious] = useState(0);
+  // Ref for the most recently added email card — used to scroll it into view
+  // after the user clicks "Add another email type…" so the subject field is
+  // immediately focused, without them having to scroll manually.
+  const lastEmailCardRef = useRef(null);
+  const [shouldScrollToNewEmail, setShouldScrollToNewEmail] = useState(false);
 
-  // ── Computed ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (shouldScrollToNewEmail && lastEmailCardRef.current) {
+      lastEmailCardRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      const subjectInput =
+        lastEmailCardRef.current.querySelector("input[type='text']");
+      if (subjectInput) subjectInput.focus({ preventScroll: true });
+      setShouldScrollToNewEmail(false);
+    }
+  }, [shouldScrollToNewEmail]);
 
-  const totalEmailCount = committedEmails;
+  // ── Computed counts ───────────────────────────────────────────────────
+  // Derive from the actual data so that removing an email via the X button
+  // immediately decreases the count (and the bonus). Using live counters
+  // that only increment on commit would overpay users who delete entries.
+  const totalEmailCount = senders.reduce(
+    (sum, s) => sum + s.emails.filter(isEmailFilled).length,
+    0,
+  );
+  const committedGeneric = genericEmails.filter(
+    (g) => g.sender.trim() && g.description.trim(),
+  ).length;
+  const committedSuspicious = suspiciousEmails.filter((s) =>
+    s.description.trim(),
+  ).length;
 
   const bonusEmails = Math.max(0, totalEmailCount - MANDATORY_EMAILS);
   const bonusPence = bonusEmails * BONUS_PER_EMAIL_PENCE;
@@ -481,7 +543,7 @@ export default function App() {
       ],
     };
     setSenders(updated);
-    setCommittedEmails((c) => c + 1);
+    setShouldScrollToNewEmail(true);
   };
 
   const updateEmail = (emailIdx, updatedEmail) => {
@@ -512,12 +574,14 @@ export default function App() {
     const newSenders = [...senders, EMPTY_SENDER()];
     setSenders(newSenders);
     setSenderPageIdx(newSenders.length - 1);
-    setCommittedEmails((c) => c + 1);
   };
 
   // ── Step 2 navigation ────────────────────────────────────────────────
 
-  const canLeaveStep2 = totalEmailCount >= MANDATORY_EMAILS;
+  // To leave Part A, the user must have described at least MANDATORY_SENDERS
+  // distinct senders (each with ≥1 complete email).
+  const completedSendersCount = senders.filter(isSenderComplete).length;
+  const canLeaveStep2 = completedSendersCount >= MANDATORY_SENDERS;
 
   // ── Page-level validation (all fields required) ───────────────────────
 
@@ -545,8 +609,6 @@ export default function App() {
       return;
     }
     setShowValidation(false);
-    // Commit this page's last email before navigating away.
-    setCommittedEmails((c) => c + 1);
     if (isLastSenderPage) {
       if (canLeaveStep2) setStep(3);
     } else {
@@ -717,7 +779,7 @@ export default function App() {
       <div>
         {/* Anonymity notice */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-          <div className="text-sm text-slate-700">
+          <div className="text-sm text-slate-700 leading-8">
             <div className="text-slate-800 uppercase tracking-wider font-semibold">
               Your privacy is protected.
             </div>
@@ -755,13 +817,14 @@ export default function App() {
             </div>
           </div>
           <div className="bg-white rounded-md p-3 flex items-start gap-2">
-            <Gift size={16} className="text-blue-800 mt-0.5 shrink-0" />
-            <p className="text-sm text-slate-800">
-              In Part A, you need to complete{" "}
+            <ShieldAlert size={36} className="text-blue-800 mt-0.5 shrink-0" />
+            <p className="text-sm leading-10 text-slate-800">
+              In Part A, you need to describe emails from{" "}
               <span className="font-bold">
-                at least {MANDATORY_EMAILS} emails
-              </span>
-              . Each additional email you create beyond the required{" "}
+                at least {MANDATORY_SENDERS} distinct senders
+              </span>{" "}
+              (so <strong>at least {MANDATORY_EMAILS} emails</strong>). <br />
+              Each additional email you create beyond the required{" "}
               {MANDATORY_EMAILS} earns you{" "}
               <strong className="text-blue-800">
                 {formatBonus(BONUS_PER_EMAIL_PENCE)} bonus
@@ -927,7 +990,7 @@ export default function App() {
               real content.
             </p>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <p className="text-sm text-amber-800">
                 <strong>What is an email skeleton?</strong> A brief template:
                 who sends it (job role only), what the subject line looks like,
@@ -935,17 +998,48 @@ export default function App() {
               </p>
             </div>
 
-            {/* <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-8 mb-6">
-              <p className="text-sm font-semibold text-slate-700 mb-1">
-                GIF placeholder
+            <div className="p-3 mb-5">
+              <p className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-semibold">
+                Example
               </p>
-              <p className="text-xs text-slate-500">
-                We will put the explanatory GIF here for the participants.
+              <img
+                src={sampleEmailImg}
+                alt="Example of a filled-in email skeleton"
+                className="w-7/8 rounded-lg border border-slate-200 mx-auto"
+              />
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5 text-left">
+              <p className="text-sm text-blue-900 font-semibold mb-2">
+                Before you start, please note:
               </p>
-            </div> */}
+              <ul className="list-disc list-inside text-sm text-blue-900 space-y-1.5">
+                <li>
+                  You need to describe emails from{" "}
+                  <strong>at least {MANDATORY_SENDERS} distinct senders</strong>{" "}
+                  (i.e. {MANDATORY_SENDERS} different job roles). This means at
+                  least {MANDATORY_SENDERS} emails in total.
+                </li>
+                <li>
+                  For each sender, you can add{" "}
+                  <strong>as many email types as you want</strong>, or move on
+                  to a different sender — whichever reflects your inbox better.
+                </li>
+                <li>
+                  You can keep adding{" "}
+                  <strong>more senders and more emails</strong> beyond the
+                  required {MANDATORY_SENDERS} — each extra email earns a bonus.
+                </li>
+                <li>
+                  Once you move forward, you{" "}
+                  <strong>cannot go back to edit earlier senders</strong>, so
+                  please complete each sender carefully before moving on.
+                </li>
+              </ul>
+            </div>
 
             <div className="flex items-center justify-between">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => {
                   setShowValidation(false);
@@ -954,7 +1048,7 @@ export default function App() {
                 className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors"
               >
                 <ArrowLeft size={16} /> Back to Job Role
-              </button>
+              </button> */}
 
               <button
                 type="button"
@@ -964,7 +1058,7 @@ export default function App() {
                 }}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                Next <ArrowRight size={16} />
+                I am ready <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -1088,58 +1182,84 @@ export default function App() {
               </strong>{" "}
               typically send you?
             </p>
-            {sender.emails.map((email, emailIdx) => (
-              <div key={emailIdx} className="space-y-2">
-                <div className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold bg-slate-700 text-white">
-                  {sender.emails.length === 1
-                    ? `Email ${senderPageIdx + 1}`
-                    : `Email ${senderPageIdx + 1}.${emailIdx + 1}`}
+            {sender.emails.map((email, emailIdx) => {
+              const isLast = emailIdx === sender.emails.length - 1;
+              return (
+                <div
+                  key={emailIdx}
+                  ref={isLast ? lastEmailCardRef : null}
+                  className="space-y-2 scroll-mt-4"
+                >
+                  <div className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold bg-slate-700 text-white">
+                    {sender.emails.length === 1
+                      ? `Email ${senderPageIdx + 1}`
+                      : `Email ${senderPageIdx + 1}.${emailIdx + 1}`}
+                  </div>
+                  <EmailCard
+                    email={email}
+                    senderRole={sender.role}
+                    senderType={sender.type}
+                    onChange={(updated) => updateEmail(emailIdx, updated)}
+                    onRemove={() => removeEmail(emailIdx)}
+                    canRemove={sender.emails.length > 1}
+                    showValidation={showValidation}
+                  />
                 </div>
-                <EmailCard
-                  email={email}
-                  senderRole={sender.role}
-                  senderType={sender.type}
-                  onChange={(updated) => updateEmail(emailIdx, updated)}
-                  onRemove={() => removeEmail(emailIdx)}
-                  canRemove={sender.emails.length > 1}
-                  showValidation={showValidation}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        <div className="mt-4">
-          {senderPageIdx === 0 && sender.emails.length === 1 && (
-            <p className="text-xs text-slate-500 mb-2 text-center">
-              Employees often receive <strong>2-3 different types</strong> of
-              emails from the same sender
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={addEmailToCurrentSender}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-500 text-emerald-700 hover:text-emerald-800 font-semibold text-sm transition-all group cursor-pointer shadow-sm hover:shadow"
-          >
-            <div className="w-6 h-6 rounded-full bg-emerald-500 group-hover:bg-emerald-600 flex items-center justify-center transition-colors">
-              <Plus size={14} className="text-white" />
-            </div>
-            <span>
-              Add another email type from same sender ("
-              <strong>{sender.role || "this sender"}</strong>")
-            </span>
-            {/* {totalEmailCount >= MANDATORY_EMAILS && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-xs font-bold ml-1">
-                <Gift size={12} />+{formatBonus(BONUS_PER_EMAIL_PENCE)}
+        {/* Show the "add another email" + "move to different sender" options
+            only once the current email is fully filled (sender role/type set
+            and the last email has subject, content, and frequency). */}
+        {isLastEmailValid(sender) && (
+          <div className="mt-8 pt-4 border-t border-dashed border-slate-200 space-y-3">
+            {senderPageIdx === 0 && sender.emails.length === 1 && (
+              <p className="text-xs text-slate-500 mb-2 text-center">
+                Employees often receive <strong>2-3 different types</strong> of
+                emails from the same sender
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={addEmailToCurrentSender}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-500 text-emerald-700 hover:text-emerald-800 font-semibold text-sm transition-all group cursor-pointer shadow-sm hover:shadow"
+            >
+              <div className="w-6 h-6 rounded-full bg-emerald-500 group-hover:bg-emerald-600 flex items-center justify-center transition-colors">
+                <Plus size={14} className="text-white" />
+              </div>
+              <span>
+                Add another email type from same sender ("
+                <strong>{sender.role || "this sender"}</strong>")
               </span>
-            )} */}
-          </button>
-        </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={isLastSenderPage ? addNewSenderPage : tryNavigateForward}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-indigo-400 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-500 text-indigo-700 hover:text-indigo-800 font-semibold text-sm transition-all group cursor-pointer shadow-sm hover:shadow"
+            >
+              <div className="w-6 h-6 rounded-full bg-indigo-500 group-hover:bg-indigo-600 flex items-center justify-center transition-colors">
+                <ArrowRight size={14} className="text-white" />
+              </div>
+              <span>
+                That's it for "<strong>{sender.role || "this sender"}</strong>"
+                — move on to a different sender
+              </span>
+              {isLastSenderPage && totalEmailCount >= MANDATORY_EMAILS && (
+                <span className="text-indigo-600 font-semibold">
+                  (+{formatBonus(BONUS_PER_EMAIL_PENCE)})
+                </span>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* ── Page navigation ─────────────────────────────────────────── */}
         <div className="flex items-center justify-between mt-6">
           {/* Back */}
-          <button
+          {/* <button
             type="button"
             onClick={() => {
               setShowValidation(false);
@@ -1148,40 +1268,24 @@ export default function App() {
             className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors"
           >
             <ArrowLeft size={16} /> Back to Job Role
-          </button>
+          </button>*/}
 
           <div className="flex items-center gap-3">
-            {/* Add another sender — visible on last page only */}
+            {/* Proceed to Part B — only on last sender page */}
             {isLastSenderPage && (
               <button
                 type="button"
-                onClick={addNewSenderPage}
-                className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border-2 border-x-emerald-400  border-y-emerald-400 hover:border-emerald-500 rounded-lg px-3 py-2 transition-all cursor-pointer"
+                onClick={tryNavigateForward}
+                disabled={!canLeaveStep2}
+                className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  !canLeaveStep2
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer"
+                }`}
               >
-                <Plus size={14} />
-                Someone else emails me regularly too
-                {totalEmailCount >= MANDATORY_EMAILS && (
-                  <span className="text-emerald-600 font-semibold">
-                    (+{formatBonus(BONUS_PER_EMAIL_PENCE)})
-                  </span>
-                )}
+                I am done! Move on to Part B <ArrowRight size={16} />
               </button>
             )}
-
-            {/* Next / Proceed — both use tryNavigateForward */}
-            <button
-              type="button"
-              onClick={tryNavigateForward}
-              disabled={isLastSenderPage && !canLeaveStep2}
-              className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                isLastSenderPage && !canLeaveStep2
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer"
-              }`}
-            >
-              {isLastSenderPage ? "Next: Part B" : "Next email"}{" "}
-              <ArrowRight size={16} />
-            </button>
           </div>
         </div>
 
@@ -1225,9 +1329,8 @@ export default function App() {
       return;
     }
     setShowValidation(false);
-    setCommittedGeneric((c) => c + 1);
     if (isLastGenericPage) {
-      if (committedGeneric + 1 >= REQUIRED_GENERIC) setStep(4);
+      if (committedGeneric >= REQUIRED_GENERIC) setStep(4);
       else {
         // Need more; auto-advance by appending a fresh page.
         setGenericEmails([...genericEmails, EMPTY_GENERIC()]);
@@ -1238,7 +1341,7 @@ export default function App() {
     }
   };
 
-  const addGenericPage = () => {
+  const addAnotherGenericPage = () => {
     if (!isCurrentGenericValid()) {
       setShowValidation(true);
       return;
@@ -1247,7 +1350,6 @@ export default function App() {
     const updated = [...genericEmails, EMPTY_GENERIC()];
     setGenericEmails(updated);
     setGenericPageIdx(updated.length - 1);
-    setCommittedGeneric((c) => c + 1);
   };
 
   const renderStep3Generic = () => {
@@ -1271,9 +1373,10 @@ export default function App() {
             </p>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-amber-800 leading-10">
                 <strong>Reminder:</strong> An email skeleton = who sends it +
-                what it is about. These are <strong>not</strong> related to your
+                what it is about. <br />
+                The emails should <strong>NOT</strong> be related to your
                 specific job duties. Please describe at least {REQUIRED_GENERIC}
                 .
               </p>
@@ -1310,7 +1413,7 @@ export default function App() {
                 }}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                Next <ArrowRight size={16} />
+                I am ready <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -1406,27 +1509,33 @@ export default function App() {
           </button>
 
           <div className="flex items-center gap-3">
-            {isLastGenericPage && isCurrentGenericValid() && (
+            {isLastGenericPage && canLeaveStep3 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={addAnotherGenericPage}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <Plus size={14} />
+                  Add more
+                </button>
+                <button
+                  type="button"
+                  onClick={tryNavigateGenericForward}
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
+                >
+                  I am done! Move on to Part C <ArrowRight size={16} />
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                onClick={addGenericPage}
-                className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-2 border-dashed border-emerald-400 hover:border-emerald-500 rounded-lg px-3 py-2 transition-all cursor-pointer"
+                onClick={tryNavigateGenericForward}
+                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                <Plus size={14} />
-                Add more
+                Add next email <ArrowRight size={16} />
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={tryNavigateGenericForward}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
-            >
-              {isLastGenericPage && canLeaveStep3
-                ? "Next: Part C"
-                : "Next email"}{" "}
-              <ArrowRight size={16} />
-            </button>
           </div>
         </div>
 
@@ -1463,9 +1572,8 @@ export default function App() {
       return;
     }
     setShowValidation(false);
-    setCommittedSuspicious((c) => c + 1);
     if (isLastSuspiciousPage) {
-      if (committedSuspicious + 1 >= REQUIRED_SUSPICIOUS) {
+      if (committedSuspicious >= REQUIRED_SUSPICIOUS) {
         // Stay on this page; submit is handled by the bottom nav.
       } else {
         setSuspiciousEmails([...suspiciousEmails, EMPTY_SUSPICIOUS()]);
@@ -1476,7 +1584,7 @@ export default function App() {
     }
   };
 
-  const addSuspiciousPage = () => {
+  const addAnotherSuspiciousPage = () => {
     if (!isCurrentSuspiciousValid()) {
       setShowValidation(true);
       return;
@@ -1485,7 +1593,6 @@ export default function App() {
     const updated = [...suspiciousEmails, EMPTY_SUSPICIOUS()];
     setSuspiciousEmails(updated);
     setSuspiciousPageIdx(updated.length - 1);
-    setCommittedSuspicious((c) => c + 1);
   };
 
   const renderStep4 = () => {
@@ -1504,15 +1611,17 @@ export default function App() {
             <p className="text-slate-600 text-sm leading-relaxed mb-5">
               Finally, think of work emails where you were{" "}
               <strong>unsure whether they were legitimate or a scam</strong>.
+              <br />
               These help us understand which email scenarios are hardest for
               employees to judge.
             </p>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-amber-800 leading-10">
                 <strong>Reminder:</strong> Describe the <strong>type</strong> of
-                email — not the actual content. Please provide at least{" "}
-                {REQUIRED_SUSPICIOUS}. Do not mention any personal names.
+                email — not the actual content. <br />
+                Please provide at least {REQUIRED_SUSPICIOUS}. Do not mention
+                any personal names.
               </p>
             </div>
 
@@ -1547,7 +1656,7 @@ export default function App() {
                 }}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                Next <ArrowRight size={16} />
+                I am ready <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -1611,38 +1720,38 @@ export default function App() {
           </button>
 
           <div className="flex items-center gap-3">
-            {isLastSuspiciousPage && isCurrentSuspiciousValid() && (
-              <button
-                type="button"
-                onClick={addSuspiciousPage}
-                className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-2 border-dashed border-emerald-400 hover:border-emerald-500 rounded-lg px-3 py-2 transition-all cursor-pointer"
-              >
-                <Plus size={14} />
-                Add more
-              </button>
-            )}
-
             {isLastSuspiciousPage && canLeaveStep4 ? (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
-                  submitting
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-emerald-600 text-white hover:bg-emerald-700"
-                }`}
-              >
-                {submitting ? "Submitting..." : "Submit"}{" "}
-                {!submitting && <CheckCircle size={16} />}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={addAnotherSuspiciousPage}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <Plus size={14} />
+                  Add more
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
+                    submitting
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-emerald-600 text-white hover:bg-emerald-700"
+                  }`}
+                >
+                  {submitting ? "Submitting..." : "Submit"}{" "}
+                  {!submitting && <CheckCircle size={16} />}
+                </button>
+              </>
             ) : (
               <button
                 type="button"
                 onClick={tryNavigateSuspiciousForward}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                Next email <ArrowRight size={16} />
+                Add more <ArrowRight size={16} />
               </button>
             )}
           </div>
@@ -1712,8 +1821,13 @@ export default function App() {
   let railTotal = 0;
   let railMandatory = MANDATORY_EMAILS;
   let railShowBonus = true;
+  let railSenderBreakdown = null;
   if (showSideRailA) {
     railTotal = totalEmailCount;
+    railSenderBreakdown = senders.filter(isSenderComplete).map((s) => ({
+      role: s.role.trim(),
+      emailCount: s.emails.filter(isEmailFilled).length,
+    }));
   } else if (showSideRailB) {
     railTotal = committedGeneric;
     railMandatory = REQUIRED_GENERIC;
@@ -1791,6 +1905,7 @@ export default function App() {
                 totalEmails={railTotal}
                 mandatory={railMandatory}
                 showBonus={railShowBonus}
+                senderBreakdown={railSenderBreakdown}
               />
             </aside>
           )}

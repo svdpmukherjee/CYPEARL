@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const proxyTarget = (env.VITE_API_URL || "http://localhost:8001").replace(
+  const proxyTarget = (env.VITE_API_URL || "http://localhost:8000").replace(
     /\/$/,
     "",
   );

@@ -1392,7 +1392,7 @@ export default function App() {
     }
 
     const sender = currentSender;
-    const pageLabel = `Email ${senderPageIdx + 1}`;
+    const pageLabel = `Sender ${senderPageIdx + 1}`;
 
     const pageErrors = showValidation ? getPageErrors(sender) : [];
     const roleMissing = showValidation && !sender.role.trim();

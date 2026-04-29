@@ -15,6 +15,7 @@ import {
   Gift,
   ShieldAlert,
   Trash2,
+  Monitor,
 } from "lucide-react";
 
 const API_URL = (
@@ -777,6 +778,22 @@ export default function App() {
               Welcome to Workplace Email Patterns Survey
             </h2> */}
           </div>
+
+          <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 mb-5 flex items-start gap-3 shadow-sm">
+            <Monitor className="w-6 h-6 text-amber-700 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-900 leading-relaxed">
+              <p className="font-bold uppercase tracking-wide mb-1">
+                Please use a laptop or desktop computer
+              </p>
+              <p>
+                This survey is designed for a wider screen and is{" "}
+                <strong>not supported on mobile phones or tablets</strong>. If
+                you are on a phone or tablet, please return later from a laptop
+                or desktop to complete the study.
+              </p>
+            </div>
+          </div>
+
           <p className=" text-sm mb-4 leading-relaxed">
             Thank you for participating in this research study.
             <br />
@@ -924,7 +941,7 @@ export default function App() {
                 <p className="text-xs uppercase tracking-wider text-slate-800 mb-0.5">
                   Estimated total time
                 </p>
-                <p className="text-lg font-bold">6 mins</p>
+                <p className="text-lg font-bold">~7 mins</p>
               </div>
               <div className="w-px h-8 bg-slate-500" />
               <div className="text-center">
@@ -2175,8 +2192,8 @@ export default function App() {
           <p className="text-sm text-emerald-800 flex items-center justify-center gap-2">
             <Gift size={16} />
             <span>
-              You described <strong>{totalEmailCount}</strong> emails (
-              {bonusEmails} bonus). You earned a{" "}
+              You described <strong>{totalEmailCount}</strong> emails in Part A
+              ({bonusEmails} additional emails). You earned a{" "}
               <strong>{formatBonus(bonusPence)} bonus</strong>! The bonus will
               be paid via Prolific.
             </span>
@@ -2191,9 +2208,27 @@ export default function App() {
           you for contributing to this study.
         </p>
       </div>
-      <p className="text-sm text-gray-400 mt-6">
-        You may now close this window or return to Prolific.
-      </p>
+
+      <div className="bg-blue-50 border-2 border-blue-400 rounded-lg p-5 max-w-md mx-auto mt-6 shadow-sm">
+        <p className="text-sm font-semibold text-blue-900 uppercase tracking-wide mb-2">
+          Your Prolific completion code
+        </p>
+        <div className="bg-white border border-blue-300 rounded-md py-2 px-3 mb-3">
+          <p className="text-lg font-mono font-bold text-blue-900 tracking-widest">
+            C1X95X6D
+          </p>
+        </div>
+        <p className="text-sm text-blue-900 mb-3 leading-relaxed">
+          Click the link below to return to Prolific and confirm your submission
+          so your payment can be released.
+        </p>
+        <a
+          href="https://app.prolific.com/submissions/complete?cc=C1X95X6D"
+          className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+        >
+          Submit on Prolific <ArrowRight size={16} />
+        </a>
+      </div>
     </div>
   );
 

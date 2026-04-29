@@ -1574,11 +1574,11 @@ export default function App() {
                 That's it for "<strong>{sender.role || "this sender"}</strong>"
                 — move on to a different sender
               </span>
-              {isLastSenderPage && totalEmailCount >= MANDATORY_EMAILS && (
+              {/* {isLastSenderPage && totalEmailCount >= MANDATORY_EMAILS && (
                 <span className="text-indigo-600 font-semibold">
                   (+{formatBonus(BONUS_PER_EMAIL_PENCE)})
                 </span>
-              )}
+              )} */}
             </button>
           </div>
         )}

@@ -219,6 +219,7 @@ export default function App() {
   const handleCopyCompletionCode = async () => {
     try {
       await navigator.clipboard.writeText(COMPLETION_CODE);
+      clearLocal();
       setCodeCopied(true);
       window.setTimeout(() => setCodeCopied(false), 2000);
     } catch (err) {
@@ -463,7 +464,11 @@ export default function App() {
           </p>
 
           <div className="rounded-lg p-4 mb-10 shadow-[0_0_24px_rgba(255,0.2,0,0.2)]">
-            <p className="text-sm mb-4">This survey has 3 parts:</p>
+            <div className="inline-flex items-center px-4 py-2 mb-4 rounded-xl border-2 border-violet-300 bg-violet-100 shadow-[4px_4px_0_rgba(124,58,237,0.35)]">
+              <p className="text-sm font-semibold text-violet-900">
+                This survey has 3 parts:
+              </p>
+            </div>
 
             <div className="space-y-6">
               <p className="text-xs text-slate-500 italic -mt-2 mb-1">
@@ -533,9 +538,11 @@ export default function App() {
           </div>
 
           <div className=" border-slate-200 rounded-lg p-4 mb-5">
-            <p className="text-sm font-semibold text-slate-800 mb-2">
+            {/* <div className="inline-flex items-center px-4 py-2 mb-3 rounded-xl border-2 border-violet-300 bg-violet-100 shadow-[4px_4px_0_rgba(124,58,237,0.35)]"> */}
+            <p className="text-md font-semibold text-black mb-4">
               Informed consent &amp; privacy
             </p>
+            {/* </div> */}
             <ul className="text-sm leading-relaxed list-disc list-outside ml-5 space-y-1.5 mb-3">
               <li>
                 Participation is <strong>voluntary</strong>. You may withdraw at
@@ -1018,20 +1025,21 @@ export default function App() {
               <ul className="list-disc list-inside text-sm text-blue-900 space-y-1.5">
                 <li>
                   You need to describe{" "}
-                  <strong>at least {MANDATORY_EMAILS} email types</strong> in
-                  total.
-                </li>
-                <li>
-                  Where possible, try to cover{" "}
-                  <strong>different senders</strong> (e.g., manager, HR, IT,
-                  external clients). If you mainly hear from one or two people,
-                  that's okay — just describe the email types you actually
-                  receive.
+                  <strong>at least {MANDATORY_EMAILS} emails</strong> in total.
                 </li>
                 <li>
                   For each sender, you can add{" "}
-                  <strong>as many email types as you want</strong>.
+                  <strong>as many emails as you want</strong>.
                 </li>
+                <li>
+                  Where possible, try to describe emails from{" "}
+                  <strong>different senders</strong> (e.g., CEO, external
+                  clients).
+                  {/* If you mainly hear from one or two people, that's
+                  okay — just describe the types of emails you typically
+                  receive. */}
+                </li>
+
                 <li>
                   Once you have described the required {MANDATORY_EMAILS}{" "}
                   emails, every <strong>additional email</strong> earns a bonus
@@ -1408,8 +1416,7 @@ export default function App() {
             <p className="text-slate-600 text-sm leading-relaxed mb-5">
               Now think about emails that{" "}
               <strong>everyone in your company</strong> receives, regardless of
-              job role — e.g., any alerts, announcements, newsletters, notices,
-              vendor promotions, etc.
+              job role — e.g., any alerts, announcements, newsletters etc.
             </p>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
@@ -1502,8 +1509,9 @@ export default function App() {
         <div className="rounded-lg p-3 mb-4 text-sm text-black">
           Describe emails you receive that are{" "}
           <strong>not specific to your job role</strong> — e.g., all-staff
-          announcements, fire-drill notices, holiday updates. <br />
-          Skip anything tied to your day-to-day work tasks (those go in Part A).
+          announcements. <br />
+          This section should exclude your day-to-day work related emails (those
+          go in Part A).
         </div>
 
         <div className="mb-5 flex items-center justify-between">
@@ -1968,6 +1976,7 @@ export default function App() {
         </p>
         <a
           href={`https://app.prolific.com/submissions/complete?cc=${COMPLETION_CODE}`}
+          onClick={clearLocal}
           className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
         >
           Submit on Prolific <ArrowRight size={16} />

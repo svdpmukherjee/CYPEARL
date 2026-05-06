@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import sampleEmailImg from "./assets/sample_email.jpg";
 import {
   ArrowRight,
@@ -7,494 +6,39 @@ import {
   CheckCircle,
   Briefcase,
   Mail,
-  ClipboardList,
   Plus,
-  X,
   Inbox,
   User,
-  Gift,
   ShieldAlert,
   Trash2,
   Monitor,
+  Gift,
+  Copy,
 } from "lucide-react";
 
-const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD
-    ? "https://prolific-screening-form.onrender.com"
-    : "/api")
-).replace(/\/$/, "");
-
-const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Rarely"];
-
-const JOB_CLUSTERS = [
-  "Finance / Accounts Payable",
-  "IT Support / Helpdesk",
-  "HR / People Operations",
-  "Sales / Business Development",
-  "Operations / Logistics",
-  "Customer Service / Client Support",
-  "Marketing / Communications",
-  "Procurement / Purchasing",
-  "Administrative / Executive Support",
-  "Compliance / Risk / Audit",
-];
-
-const MANDATORY_EMAILS = 5;
-const MANDATORY_SENDERS = 5;
-const REQUIRED_GENERIC = 5;
-const REQUIRED_SUSPICIOUS = 5;
-const BONUS_PER_EMAIL_PENCE = 5; // £0.05 per additional email beyond mandatory
-const MAX_BONUS_EMAILS = 0.5; // Cap the bonus at 20 extra emails (£0.40) to prevent overpaying
-
-// ── Helpers ─────────────────────────────────────────────────────────────
-
-function isEmailFilled(e) {
-  return !!(e.subject?.trim() && e.content?.trim() && e.frequency);
-}
-
-function isSenderComplete(sender) {
-  return sender.role.trim() && sender.type && sender.emails.some(isEmailFilled);
-}
-
-function formatBonus(pence) {
-  if (pence <= 0) return "£0.00";
-  return `£${(pence / 100).toFixed(2)}`;
-}
-
-// ── Dynamic text-box list ───────────────────────────────────────────────
-
-function TextBoxList({
-  items,
-  onChange,
-  placeholder,
-  minBoxes = 1,
-  labelPrefix = "",
-}) {
-  const updateItem = (index, value) => {
-    const updated = [...items];
-    updated[index] = value;
-    onChange(updated);
-  };
-  const addBox = () => onChange([...items, ""]);
-  const removeBox = (index) => {
-    if (items.length <= minBoxes) return;
-    onChange(items.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div className="space-y-2">
-      {items.map((val, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 shrink-0 font-medium w-16 text-right">
-            {labelPrefix ? `${labelPrefix} ${i + 1}` : `${i + 1}.`}
-          </span>
-          <input
-            type="text"
-            value={val}
-            onChange={(e) => updateItem(i, e.target.value)}
-            placeholder={placeholder}
-            className="flex-1 border border-slate-300 rounded-md p-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-slate-400"
-          />
-          {items.length > minBoxes && (
-            <button
-              type="button"
-              onClick={() => removeBox(i)}
-              className="p-1 text-slate-400 hover:text-red-400 transition-colors"
-              title="Remove"
-            >
-              <X size={16} />
-            </button>
-          )}
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={addBox}
-        className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors mt-1"
-      >
-        <Plus size={14} /> Add more
-      </button>
-    </div>
-  );
-}
-
-// ── Email Card ──────────────────────────────────────────────────────────
-
-function EmailCard({
-  email,
-  senderRole,
-  senderType,
-  onChange,
-  onRemove,
-  canRemove,
-  showValidation,
-}) {
-  const hasContent = email.subject.trim() || email.content.trim();
-  const subjectMissing = showValidation && !email.subject.trim();
-  const contentMissing = showValidation && !email.content.trim();
-  const frequencyMissing = showValidation && !email.frequency;
-
-  return (
-    <div
-      className={`rounded-lg border overflow-hidden transition-all ${
-        hasContent
-          ? "border-slate-300 shadow-sm"
-          : "border-dashed border-gray-300"
-      }`}
-    >
-      {/* Email toolbar */}
-      <div className="bg-slate-200 px-3 py-2 flex items-center justify-between border-b border-slate-300">
-        <div className="flex items-center gap-2 text-xs text-slate-600 min-w-0">
-          <strong>From</strong>
-          {/* <div
-            className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-              senderType === "internal"
-                ? "bg-indigo-100 text-indigo-700"
-                : senderType === "external"
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-slate-300 text-slate-600"
-            }`}
-          >
-            {" "}
-            <User size={16} />
-          </div> */}
-          <span className="truncate font-medium text-black">
-            "{senderRole || "Sender"}"
-          </span>
-          {/* {senderType && (
-            <span
-              className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide ${
-                senderType === "internal"
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-indigo-100 text-indigo-700"
-              }`}
-            >
-              {senderType}
-            </span>
-          )} */}
-        </div>
-        {canRemove && (
-          <span className="relative group">
-            <button
-              type="button"
-              onClick={onRemove}
-              aria-label="Remove this email"
-              className="p-0.5 text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
-            >
-              <Trash2 size={16} />
-            </button>
-            <span className="pointer-events-none absolute right-0 top-full mt-1 z-10 whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-[11px] font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity duration-0">
-              Remove this email
-            </span>
-          </span>
-        )}
-      </div>
-
-      {/* Email body */}
-      <div className="bg-slate-50 p-5 space-y-2">
-        <div className="flex items-center gap-2 p-2">
-          <span
-            className={`text-xs font-medium w-16 shrink-0 text-right ${
-              subjectMissing ? "text-red-500" : "text-slate-600"
-            }`}
-          >
-            subject:
-          </span>
-          <input
-            type="text"
-            value={email.subject}
-            onChange={(e) => onChange({ ...email, subject: e.target.value })}
-            placeholder='e.g., "Q3 budget review — please confirm"'
-            className={`flex-1 rounded-md p-1.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white placeholder:text-slate-400 ${
-              subjectMissing ? "ring-2 ring-red-400" : "border border-slate-300"
-            }`}
-          />
-        </div>
-        <div className="flex items-start gap-2 p-2">
-          <span
-            className={`text-xs font-medium w-16 shrink-0 text-right mt-1.5 ${
-              contentMissing ? "text-red-500" : "text-slate-600"
-            }`}
-          >
-            about:
-          </span>
-          <textarea
-            value={email.content}
-            onChange={(e) => onChange({ ...email, content: e.target.value })}
-            placeholder="One line on what this email is for — e.g., 'asks me to review and approve the quarterly budget'"
-            rows={2}
-            className={`flex-1 rounded-md p-1.5 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white resize-none placeholder:text-slate-400 ${
-              contentMissing ? "ring-2 ring-red-400" : "border border-slate-300"
-            }`}
-          />
-        </div>
-      </div>
-
-      {/* Frequency is outside the email skeleton content area */}
-      <div className="bg-slate-50 border-t border-slate-200 px-3 py-2.5">
-        <div>
-          <p
-            className={`text-sm font-medium mb-1.5 ${
-              frequencyMissing ? "text-red-500" : "text-slate-600"
-            }`}
-          >
-            How often do you receive this type of email?
-            {frequencyMissing && " *"}
-          </p>
-          <div className="flex gap-1.5">
-            {FREQUENCY_OPTIONS.map((freq) => (
-              <button
-                key={freq}
-                type="button"
-                onClick={() => onChange({ ...email, frequency: freq })}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
-                  email.frequency === freq
-                    ? "bg-indigo-500 text-white border-indigo-500 shadow-sm"
-                    : frequencyMissing
-                      ? "bg-white text-red-400 border-red-300 hover:border-red-400"
-                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700"
-                }`}
-              >
-                {freq}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Gamified Reward Panel (side rail) ───────────────────────────────────
-
-function RewardPanel({
-  totalEmails,
-  mandatory = MANDATORY_EMAILS,
-  showBonus = true,
-  senderBreakdown = null,
-  mandatorySenders = MANDATORY_SENDERS,
-  showSenderCount = true,
-  entriesLabel = "Entries",
-}) {
-  const mandatoryDone = Math.min(totalEmails, mandatory);
-  const remaining = Math.max(0, mandatory - totalEmails);
-  const bonusEmails = Math.max(0, totalEmails - mandatory);
-  const bonusPence = bonusEmails * BONUS_PER_EMAIL_PENCE;
-  const mandatoryComplete = totalEmails >= mandatory;
-  const sendersDone = senderBreakdown ? senderBreakdown.length : 0;
-  const sendersRemaining = Math.max(0, mandatorySenders - sendersDone);
-
-  // When bonus is hidden, the required portion fills the entire bar.
-  const requiredWidth = showBonus ? 60 : 100;
-  const mandatoryPct = Math.round((mandatoryDone / mandatory) * requiredWidth);
-  const bonusPct = showBonus ? Math.min(40, bonusEmails * 4) : 0;
-
-  return (
-    <div className="bg-gray-800 rounded-lg p-4 shadow-md">
-      <div className="flex items-center gap-2 mb-3">
-        <Mail size={16} className="text-white" />
-        <h3 className="text-white text-sm font-semibold uppercase tracking-wider">
-          Your progress
-        </h3>
-      </div>
-
-      {/* Stats grid */}
-      <div className="space-y-2.5 mb-4">
-        {senderBreakdown && (
-          <div className="bg-gray-700/60 rounded-md px-3 py-2">
-            {showSenderCount ? (
-              <>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-sm text-slate-300">Senders added</span>
-                  <span className="text-white font-bold text-sm">
-                    {sendersDone}
-                    <span className="text-slate-400 font-normal">
-                      {" "}
-                      / {mandatorySenders}
-                    </span>
-                  </span>
-                </div>
-                {sendersRemaining > 0 && (
-                  <p className="text-[11px] text-amber-300 mt-0.5">
-                    {sendersRemaining} more sender
-                    {sendersRemaining === 1 ? "" : "s"} needed
-                  </p>
-                )}
-              </>
-            ) : (
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-slate-300">{entriesLabel}</span>
-                <span className="text-white font-bold text-sm">
-                  {senderBreakdown.length}
-                </span>
-              </div>
-            )}
-            {senderBreakdown.length > 0 && (
-              <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto pr-1">
-                {senderBreakdown.map((s, i) => (
-                  <li
-                    key={i}
-                    className="flex items-baseline justify-between text-[11px] text-slate-300"
-                  >
-                    <span className="truncate mr-2" title={s.role}>
-                      {i + 1}. {s.role}
-                    </span>
-                    {showSenderCount && (
-                      <span className="text-slate-400 shrink-0">
-                        {s.emailCount} email{s.emailCount === 1 ? "" : "s"}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-        <div className="bg-gray-700/60 rounded-md px-3 py-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm text-slate-300">
-              {showSenderCount && senderBreakdown
-                ? "Total emails"
-                : "Required completed"}
-            </span>
-            <span className="text-white font-bold text-sm">
-              <span className={bonusEmails > 0 ? "text-emerald-300" : ""}>
-                {totalEmails}
-              </span>
-              <span className="text-slate-400 font-normal"> / {mandatory}</span>
-            </span>
-          </div>
-          {!mandatoryComplete && (
-            <p className="text-[11px] text-amber-300 mt-0.5">
-              {remaining} more required
-              {showBonus ? " to unlock bonus" : ""}
-            </p>
-          )}
-          {showBonus && bonusEmails > 0 && (
-            <p className="text-[11px] text-emerald-300 mt-0.5">
-              +{bonusEmails} beyond the {mandatory} required
-            </p>
-          )}
-        </div>
-
-        {showBonus && (
-          <>
-            <div
-              className={`rounded-md px-3 py-2 ${
-                bonusPence > 0
-                  ? "bg-emerald-500/20 border border-emerald-400/40"
-                  : "bg-gray-700/60"
-              }`}
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-slate-300 flex items-center gap-1">
-                  <Gift size={12} /> Bonus earned
-                </span>
-                <span
-                  className={`font-bold text-sm ${
-                    bonusPence > 0 ? "text-emerald-300" : "text-slate-400"
-                  }`}
-                >
-                  {formatBonus(bonusPence)}
-                </span>
-              </div>
-              {mandatoryComplete && (
-                <p className="text-[11px] text-emerald-300 mt-0.5">
-                  +{formatBonus(BONUS_PER_EMAIL_PENCE)} per extra email
-                </p>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Progress bar */}
-      <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden relative mb-2">
-        {/* Required (blue) — fills 0% → requiredWidth% as user hits target */}
-        <div
-          className="absolute top-0 left-0 h-full transition-all duration-500 ease-out bg-gradient-to-r from-blue-400 to-blue-500"
-          style={{ width: `${mandatoryPct}%` }}
-        />
-        {/* Bonus (green) — starts exactly where blue ends, no gap */}
-        {showBonus && bonusEmails > 0 && (
-          <div
-            className="absolute top-0 h-full transition-all duration-500 ease-out bg-gradient-to-r from-emerald-400 to-emerald-500"
-            style={{ left: `${mandatoryPct}%`, width: `${bonusPct}%` }}
-          />
-        )}
-      </div>
-
-      {showBonus && (
-        <div className="flex justify-between text-xs text-slate-400">
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500" />
-            Required
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Bonus
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Completed-part summary (shown in side rail for earlier parts) ──────
-
-function CompletedPartSummary({ title, headline, items, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="bg-gray-800 rounded-lg p-3 shadow-sm mt-3">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-2 text-left cursor-pointer"
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <CheckCircle size={14} className="text-emerald-400 shrink-0" />
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-slate-400">
-              {title}
-            </p>
-            <p className="text-xs text-slate-200 truncate">{headline}</p>
-          </div>
-        </div>
-        <span
-          className={`text-slate-400 text-xs shrink-0 transition-transform ${
-            open ? "rotate-90" : ""
-          }`}
-        >
-          ▶
-        </span>
-      </button>
-      {open && items.length > 0 && (
-        <ul className="mt-2 space-y-1 max-h-40 overflow-y-auto pr-1 border-t border-gray-700 pt-2">
-          {items.map((it, i) => (
-            <li
-              key={i}
-              className="flex items-baseline justify-between text-[11px] text-slate-300 gap-2"
-            >
-              <span className="truncate" title={it.label}>
-                {i + 1}. {it.label}
-              </span>
-              {it.suffix && (
-                <span className="text-slate-400 shrink-0">{it.suffix}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+import {
+  FREQUENCY_OPTIONS,
+  JOB_CLUSTERS,
+  MANDATORY_EMAILS,
+  REQUIRED_GENERIC,
+  REQUIRED_SUSPICIOUS,
+  BONUS_PER_EMAIL_PENCE,
+  MAX_BONUS_EMAILS,
+} from "./constants";
+import { isEmailFilled, isSenderComplete, formatBonus } from "./lib/helpers";
+import { registerUser, loadDraft, submitFinal } from "./lib/api";
+import { loadLocal, clearLocal } from "./lib/persistence";
+import useDraftSync from "./hooks/useDraftSync";
+import EmailCard from "./components/EmailCard";
+import RewardPanel from "./components/RewardPanel";
+import CompletedPartSummary from "./components/CompletedPartSummary";
 
 // ═════════════════════════════════════════════════════════════════════════
 // MAIN APP
 // ═════════════════════════════════════════════════════════════════════════
 
 export default function App() {
+  const COMPLETION_CODE = "C1X95X6D";
   const [step, setStep] = useState(0);
   const [landingView, setLandingView] = useState("overview");
   const [consentChecked, setConsentChecked] = useState(false);
@@ -511,6 +55,7 @@ export default function App() {
   const [suspiciousPageIdx, setSuspiciousPageIdx] = useState(0);
   const [showValidation, setShowValidation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [error, setError] = useState("");
 
   // Step 0
@@ -561,6 +106,95 @@ export default function App() {
     }
   }, [shouldScrollToNewEmail]);
 
+  // ── Persistence: restore on mount ────────────────────────────────────
+  // localStorage is the fast path; if Prolific ID is present we also try the
+  // server draft and prefer whichever has more recent content. This survives
+  // accidental refreshes and (via server draft) browser/device changes.
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    const local = loadLocal();
+    if (local) applyDraft(local);
+
+    const candidatePid = local?.prolificId?.trim();
+    if (candidatePid) {
+      loadDraft(candidatePid)
+        .then((server) => {
+          if (server?.draft) applyDraft(server.draft);
+        })
+        .catch(() => {})
+        .finally(() => setRestored(true));
+    } else {
+      setRestored(true);
+    }
+  }, []);
+
+  function applyDraft(d) {
+    if (!d || typeof d !== "object") return;
+    if (typeof d.step === "number") setStep(d.step);
+    if (typeof d.landingView === "string") setLandingView(d.landingView);
+    if (typeof d.consentChecked === "boolean")
+      setConsentChecked(d.consentChecked);
+    if (typeof d.prolificId === "string") setProlificId(d.prolificId);
+    if (typeof d.jobCluster === "string") setJobCluster(d.jobCluster);
+    if (typeof d.jobTitle === "string") setJobTitle(d.jobTitle);
+    if (typeof d.dailyTasks === "string") setDailyTasks(d.dailyTasks);
+    if (Array.isArray(d.senders) && d.senders.length > 0) setSenders(d.senders);
+    if (Array.isArray(d.genericEmails) && d.genericEmails.length > 0)
+      setGenericEmails(d.genericEmails);
+    if (Array.isArray(d.suspiciousEmails) && d.suspiciousEmails.length > 0)
+      setSuspiciousEmails(d.suspiciousEmails);
+    if (typeof d.partAView === "string") setPartAView(d.partAView);
+    if (typeof d.partBView === "string") setPartBView(d.partBView);
+    if (typeof d.partCView === "string") setPartCView(d.partCView);
+    if (typeof d.senderPageIdx === "number") setSenderPageIdx(d.senderPageIdx);
+    if (typeof d.genericPageIdx === "number")
+      setGenericPageIdx(d.genericPageIdx);
+    if (typeof d.suspiciousPageIdx === "number")
+      setSuspiciousPageIdx(d.suspiciousPageIdx);
+  }
+
+  // Register the participant on the backend when they first consent + give an
+  // ID. The backend rejects (409) if they have already submitted; we surface
+  // that as a top-level error.
+  const registeredRef = useRef(false);
+  useEffect(() => {
+    if (!restored) return;
+    const pid = prolificId.trim();
+    if (!pid || !consentChecked || registeredRef.current) return;
+    registeredRef.current = true;
+    registerUser(pid).catch((err) => {
+      if (err.response?.status === 409) {
+        setError(
+          "A response with this Prolific ID has already been submitted.",
+        );
+      }
+    });
+  }, [restored, prolificId, consentChecked]);
+
+  // Bundle form state for persistence.
+  const draft = {
+    step,
+    landingView,
+    consentChecked,
+    prolificId,
+    jobCluster,
+    jobTitle,
+    dailyTasks,
+    senders,
+    genericEmails,
+    suspiciousEmails,
+    partAView,
+    partBView,
+    partCView,
+    senderPageIdx,
+    genericPageIdx,
+    suspiciousPageIdx,
+  };
+  useDraftSync({
+    prolificId: restored ? prolificId.trim() : "",
+    draft,
+  });
+
   // ── Computed counts ───────────────────────────────────────────────────
   // Derive from the actual data so that removing an email via the X button
   // immediately decreases the count (and the bonus). Using live counters
@@ -577,7 +211,20 @@ export default function App() {
   ).length;
 
   const bonusEmails = Math.max(0, totalEmailCount - MANDATORY_EMAILS);
-  const bonusPence = bonusEmails * BONUS_PER_EMAIL_PENCE;
+  const maxBonusPence = Math.round(MAX_BONUS_EMAILS * 100);
+  const bonusPenceRaw = bonusEmails * BONUS_PER_EMAIL_PENCE;
+  const bonusPence = Math.min(bonusPenceRaw, maxBonusPence);
+  const bonusMaxReached = bonusPenceRaw >= maxBonusPence;
+
+  const handleCopyCompletionCode = async () => {
+    try {
+      await navigator.clipboard.writeText(COMPLETION_CODE);
+      setCodeCopied(true);
+      window.setTimeout(() => setCodeCopied(false), 2000);
+    } catch (err) {
+      setCodeCopied(false);
+    }
+  };
 
   // ── Current sender helpers ────────────────────────────────────────────
 
@@ -654,15 +301,17 @@ export default function App() {
 
   // ── Step 2 navigation ────────────────────────────────────────────────
 
-  // To leave Part A, the user must have described at least MANDATORY_SENDERS
-  // *distinct* senders (each with ≥1 complete email). Two sender pages with
-  // the same role count as one — they are merged in the progress tracker, so
-  // the advance gate must use the same definition.
+  // To leave Part A, the user must have described at least MANDATORY_EMAILS
+  // complete emails. Sender count is tracked for analysis and used for a soft
+  // nudge below, but is no longer a hard gate — some participants legitimately
+  // receive work email from only 1–2 distinct senders.
   const uniqueCompletedSenderRoles = new Set(
     senders.filter(isSenderComplete).map((s) => s.role.trim().toLowerCase()),
   );
   const completedSendersCount = uniqueCompletedSenderRoles.size;
-  const canLeaveStep2 = completedSendersCount >= MANDATORY_SENDERS;
+  const canLeaveStep2 = totalEmailCount >= MANDATORY_EMAILS;
+  const showLowSenderDiversityNudge =
+    canLeaveStep2 && completedSendersCount < 3;
 
   // ── Page-level validation (all fields required) ───────────────────────
 
@@ -701,8 +350,9 @@ export default function App() {
 
   const canAdvance = () => {
     if (step === 0) {
-      if (landingView === "overview") return consentChecked;
-      return prolificId.trim().length > 0;
+      if (landingView === "overview")
+        return consentChecked && prolificId.trim().length > 0;
+      return true;
     }
     if (step === 1) return jobCluster && jobTitle.trim() && dailyTasks.trim();
     if (step === 3) return committedGeneric >= REQUIRED_GENERIC;
@@ -733,7 +383,7 @@ export default function App() {
           description: g.description.trim(),
         }));
 
-      await axios.post(`${API_URL}/submit`, {
+      await submitFinal({
         prolific_id: prolificId.trim(),
         job_cluster: jobCluster,
         job_title: jobTitle.trim(),
@@ -744,6 +394,7 @@ export default function App() {
           .map((s) => s.description.trim())
           .filter((s) => s.length > 0),
       });
+      clearLocal();
       setStep(5);
     } catch (err) {
       if (err.response?.status === 409) {
@@ -787,67 +438,84 @@ export default function App() {
               </p>
               <p>
                 This survey is designed for a wider screen and is{" "}
-                <strong>not supported on mobile phones or tablets</strong>. If
-                you are on a phone or tablet, please return later from a laptop
-                or desktop to complete the study.
+                <strong>not supported on mobile phones or tablets</strong>.
+                <br />
+                Completing this survey on a mobile device or tablet may lead to{" "}
+                <span className="font-semibold">
+                  cancellation of your submission and loss of compensation.
+                </span>
               </p>
             </div>
           </div>
 
-          <p className=" text-sm mb-4 leading-relaxed">
-            Thank you for participating in this research study.
-            <br />
-            We are building a library of{" "}
-            <strong>realistic workplace email types</strong> to study how
-            employees evaluate email legitimacy and make trust decisions.
+          <p className=" text-sm mb-10 leading-relaxed">
+            {/* Thank you for participating in this research study.
+            <br /> */}
+            We are creating a collection of{" "}
+            <strong>realistic workplace email types</strong> for research on{" "}
+            <span className="font-semibold">how people judge </span>
+            whether an email seems legitimate or trustworthy.
             <br />
             Your task is to describe the{" "}
-            <span className="font-semibold">types</span> of emails you typically
-            receive at work so we can make those email types as authentic as
-            possible.
+            <span className="font-semibold">types</span> of emails you usually
+            receive at work so we can make these email examples feel as
+            realistic as possible.
           </p>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800 font-semibold mb-4">
-              This survey has 3 parts:
-            </p>
+          <div className="rounded-lg p-4 mb-10 shadow-[0_0_24px_rgba(255,0.2,0,0.2)]">
+            <p className="text-sm mb-4">This survey has 3 parts:</p>
 
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-blue-800 font-semibold">
+            <div className="space-y-6">
+              <p className="text-xs text-slate-500 italic -mt-2 mb-1">
+                The examples below are for a school teacher named Claudia.
+              </p>
+
+              <div className="mt-4">
+                <p className="text-sm text-black font-semibold mt-1">
                   Part A: Job-Specific Emails
                 </p>
-                <p className="text-sm text-black-700 ml-4 mt-0.5">
-                  List <strong>at least five</strong> types of emails (not
-                  verbatim, but types) that you typically receive and that are{" "}
+                <p className="text-sm text-black-700 ml-4 mt-2">
+                  List <strong>at least five</strong> types of emails that you
+                  typically receive that are{" "}
                   <span className="font-semibold">
-                    directly related to your job role
+                    directly related to your job role.
                   </span>
-                  .
+                </p>
+                <p className="text-xs text-slate-500 italic ml-4 mt-1">
+                  e.g., Claudia receives emails from parents asking about their
+                  children’s progress, or from the principal about the next
+                  term’s curriculum.
                 </p>
               </div>
 
-              <div>
-                <p className="text-sm text-blue-800 font-semibold">
+              <div className="mt-4">
+                <p className="text-sm text-black font-semibold">
                   Part B: General Workplace Emails
                 </p>
-                <p className="text-sm text-black-700 ml-4 mt-0.5">
+                <p className="text-sm text-black-700 ml-4 mt-2">
                   List <strong>at least five</strong> types of emails that you
                   typically receive but that are{" "}
                   <span className="font-semibold">
-                    not specific to your job role
+                    not specific to your job role.
                   </span>
-                  .
+                </p>
+                <p className="text-xs text-slate-500 italic ml-4 mt-1">
+                  e.g., Claudia receives a staff-wide notice about a fire drill
+                  in her school.
                 </p>
               </div>
 
-              <div>
-                <p className="text-sm text-blue-800 font-semibold">
+              <div className="mt-4">
+                <p className="text-sm text-black font-semibold">
                   Part C: Suspicious / Hard-to-Judge Emails
                 </p>
-                <p className="text-sm text-black-700 ml-4 mt-0.5">
+                <p className="text-sm text-black-700 ml-4 mt-2">
                   List <strong>at least five</strong> types of work emails where
                   you are unsure whether they are legitimate or a scam.
+                </p>
+                <p className="text-xs text-slate-500 italic ml-4 mt-1">
+                  e.g., Claudia receives a message claiming to be from the
+                  Ministry of Education asking her to verify her login details.
                 </p>
               </div>
             </div>
@@ -864,17 +532,31 @@ export default function App() {
             </div> */}
           </div>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5">
+          <div className=" border-slate-200 rounded-lg p-4 mb-5">
             <p className="text-sm font-semibold text-slate-800 mb-2">
-              Informed consent
+              Informed consent &amp; privacy
             </p>
-            <p className="text-sm leading-relaxed mb-3">
-              Participation is voluntary. You may withdraw at any point by
-              closing the browser tab; in that case your responses will not be
-              submitted. The data you provide will be used solely for academic
-              research and stored in anonymised form (see the next page for
-              details on how we handle your Prolific ID).
-            </p>
+            <ul className="text-sm leading-relaxed list-disc list-outside ml-5 space-y-1.5 mb-3">
+              <li>
+                Participation is <strong>voluntary</strong>. You may withdraw at
+                any time by closing the tab — your responses will not be
+                submitted.
+              </li>
+              <li>
+                Your <strong>Prolific ID</strong> is collected only to pay you.
+                After the study it is{" "}
+                <strong>detached from your responses</strong>, so the data is
+                made anonymous and used solely for academic research.
+              </li>
+              <li>
+                You will type free text.{" "}
+                <strong>
+                  Do not include any personal names (yours, colleagues', or a
+                  manager's) or company names
+                </strong>{" "}
+                — we only need job roles and general email patterns.
+              </li>
+            </ul>
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -889,13 +571,24 @@ export default function App() {
             </label>
           </div>
 
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            Please enter your Prolific ID
+          </label>
+          <input
+            type="text"
+            value={prolificId}
+            onChange={(e) => setProlificId(e.target.value)}
+            placeholder="Please double-check your Prolific ID so we can verify your submission"
+            className="w-full border border-gray-300 rounded-md p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mb-5"
+          />
+
           <div className="flex justify-end">
             <button
               type="button"
               onClick={() => setLandingView("details")}
-              disabled={!consentChecked}
+              disabled={!canAdvance()}
               className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                consentChecked
+                canAdvance()
                   ? "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
@@ -910,30 +603,9 @@ export default function App() {
     if (landingView === "details") {
       return (
         <div>
-          {/* Anonymity notice */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-            <div className="text-sm  leading-relaxed">
-              <div className="uppercase tracking-wider font-semibold">
-                Help us protect your privacy
-              </div>
-              <p className="mt-2">
-                We will store your <strong>Prolific ID</strong> only to be able
-                to compensate you. At the end of the study, your Prolific ID
-                will be <strong>detached from your responses</strong> to
-                anonymise the data — we will no longer be able to match
-                responses to a particular Prolific ID.
-              </p>
-              <p className="mt-2">
-                You will be typing free text in this study.{" "}
-                <strong>Please do not mention any personal names</strong> (yours
-                or anyone else&apos;s — e.g., colleagues, secretary, manager){" "}
-                <strong>or any company names</strong> in your answers. We are
-                only interested in job roles, email types, and general workplace
-                patterns.
-              </p>
-            </div>
-          </div>
-
+          <p className="text-sm font-semibold text-slate-800 mb-4">
+            Study Information
+          </p>
           {/* Stats — flattened, no nested box */}
           <div className="bg-slate-100 rounded-lg p-4 mb-4 text-black shadow-sm">
             <div className="flex items-center justify-around">
@@ -946,7 +618,7 @@ export default function App() {
               <div className="w-px h-8 bg-slate-500" />
               <div className="text-center">
                 <p className="text-xs uppercase tracking-wider text-slate-800 mb-0.5">
-                  Base pay
+                  Base compensation
                 </p>
                 <p className="text-lg font-bold">£1.00</p>
               </div>
@@ -956,50 +628,57 @@ export default function App() {
                   Bonus
                 </p>
                 <p className="text-lg font-bold text-blue-700">
-                  Max. {MAX_BONUS_EMAILS * 100} pence
+                  Max. {MAX_BONUS_EMAILS * 100} pence (
+                  {formatBonus(BONUS_PER_EMAIL_PENCE * 10)})
                 </p>
               </div>
             </div>
           </div>
-
           {/* Bonus details — separate, not nested */}
           <div className="bg-white border border-slate-200 rounded-lg p-3 mb-6 flex items-start gap-2 ">
-            <ShieldAlert size={28} className="text-blue-800 mt-0.5 shrink-0" />
-            <p className="text-sm text-slate-800 leading-7">
-              In Part A, you need to describe emails from{" "}
-              <span className="font-bold">
-                at least {MANDATORY_SENDERS} distinct senders
-              </span>{" "}
-              (so <strong>at least {MANDATORY_EMAILS} emails</strong>). <br />
-              You can keep adding as many as you wish — each additional email
-              beyond the required {MANDATORY_EMAILS} earns you{" "}
-              <strong className="text-blue-800">
-                {BONUS_PER_EMAIL_PENCE} pence
-              </strong>{" "}
-              via Prolific.{" "}
-              <span className="font-semibold">
-                However, there is a maximum of {MAX_BONUS_EMAILS * 100} pence
-                bonus.
-              </span>
-              <br /> Parts B and C are required but{" "}
-              <span className="font-bold">do not earn bonus</span>.
-            </p>
+            <ShieldAlert size={28} className="text-blue-800 mt-0.5 shrink-0" />{" "}
+            <div className="text-sm text-slate-800 leading-7">
+              <p className="font-bold">
+                Make Sure You Understand the Bonus Criteria.
+              </p>
+              <ul className="mt-3 text-sm leading-relaxed list-disc list-outside ml-5 space-y-1.5">
+                <li>
+                  In Part A, you need to describe{" "}
+                  <span className="font-bold">
+                    more than {MANDATORY_EMAILS} emails
+                  </span>{" "}
+                  to be eligible for a bonus.
+                </li>
+                <li>
+                  You can keep adding as many emails as you wish — each
+                  additional email beyond the required {MANDATORY_EMAILS} earns
+                  you{" "}
+                  <strong className="text-blue-800">
+                    {BONUS_PER_EMAIL_PENCE} pence
+                  </strong>{" "}
+                  via Prolific.
+                </li>
+                <li>
+                  <span className="font-semibold">
+                    However, there is a maximum of {MAX_BONUS_EMAILS * 100}{" "}
+                    pence bonus.
+                  </span>
+                </li>
+                <li>
+                  If you typically receive emails from{" "}
+                  <span className="font-bold">several different senders</span>
+                  {""}, please try to cover{" "}
+                  <span className="font-semibold">a few different senders</span>{" "}
+                  (this helps us understand the variety in your inbox). If you
+                  mostly hear from one or two people, that is fine too.
+                </li>
+                <li>
+                  Parts B and C are required but{" "}
+                  <span className="font-bold">do NOT earn bonus</span>.
+                </li>
+              </ul>
+            </div>
           </div>
-
-          <label className="block text-sm font-semibold text-slate-700 mt-10">
-            Please Enter Your Prolific ID
-          </label>
-          <input
-            type="text"
-            value={prolificId}
-            onChange={(e) => setProlificId(e.target.value)}
-            placeholder="Please double-check your Prolific ID so we can verify your submission"
-            className="w-full border border-gray-300 rounded-md p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
-          />
-          {/* <p className="text-xs text-gray-400">
-          Please double-check your Prolific ID so we can verify your submission.
-        </p> */}
-
           <div className="flex items-center justify-between mt-8">
             <button
               type="button"
@@ -1036,14 +715,11 @@ export default function App() {
     const allCorrect = privacyCorrect && bonusCorrect;
     return (
       <div>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-5">
-          <p className="text-sm text-blue-900 font-semibold mb-1">
-            Quick check
-          </p>
-          <p className="text-sm text-blue-900">
+        <div className=" border-blue-200 rounded-lg p-4 mb-5">
+          <p className="text-sm text-black font-semibold mb-1">Quick check</p>
+          <p className="text-sm text-black">
             Before you start, please answer the two questions below to confirm
-            you have understood the instructions. You will not be able to
-            continue until both answers are correct.
+            you have understood the instructions.
           </p>
         </div>
 
@@ -1062,7 +738,7 @@ export default function App() {
               {
                 value: "right",
                 label:
-                  "Describe the overall content using only job roles — no personal or company names.",
+                  "Describe the overall content using only job roles (e.g. CEO) — no personal or company names.",
               },
             ].map((opt) => (
               <label
@@ -1090,8 +766,8 @@ export default function App() {
           </div>
           {attentionSubmitted && !privacyCorrect && (
             <p className="text-xs text-red-600 mt-2">
-              Not quite — please re-read the privacy notice on the previous
-              page.
+              Please go back and re-read the consent &amp; privacy notice on the
+              first page.
             </p>
           )}
         </div>
@@ -1104,7 +780,7 @@ export default function App() {
           <div className="space-y-2">
             {[
               "All three parts earn a bonus per extra email.",
-              "Only Part A earns a bonus — extra emails beyond the required minimum. Parts B and C are required but do not earn a bonus.",
+              "Only Part A earns a bonus — extra emails beyond the required minimum (5 emails). Parts B and C are required but do not earn a bonus.",
               "Only Parts B and C earn a bonus.",
             ].map((label, i) => {
               const selected = attentionBonusIdx === i;
@@ -1135,7 +811,7 @@ export default function App() {
           </div>
           {attentionSubmitted && !bonusCorrect && (
             <p className="text-xs text-red-600 mt-2">
-              Not quite — please re-read the bonus details on the previous page.
+              Please go back and re-read the bonus details on the previous page.
             </p>
           )}
         </div>
@@ -1304,7 +980,7 @@ export default function App() {
               <img
                 src={sampleEmailImg}
                 alt="Example of a filled-in email type"
-                className="w-7/8 rounded-lg border border-slate-200 mx-auto"
+                className="w-7/8 rounded-lg  mx-auto"
               />
               <ol className="text-left text-sm text-slate-700 mt-3 space-y-1 list-decimal list-inside">
                 <li>
@@ -1341,12 +1017,19 @@ export default function App() {
               </p>
               <ul className="list-disc list-inside text-sm text-blue-900 space-y-1.5">
                 <li>
-                  You need to describe emails from{" "}
-                  <strong>{MANDATORY_SENDERS} different job roles</strong> — at
-                  least {MANDATORY_EMAILS} emails in total.
+                  You need to describe{" "}
+                  <strong>at least {MANDATORY_EMAILS} email types</strong> in
+                  total.
                 </li>
                 <li>
-                  For each job role, you can add{" "}
+                  Where possible, try to cover{" "}
+                  <strong>different senders</strong> (e.g., manager, HR, IT,
+                  external clients). If you mainly hear from one or two people,
+                  that's okay — just describe the email types you actually
+                  receive.
+                </li>
+                <li>
+                  For each sender, you can add{" "}
                   <strong>as many email types as you want</strong>.
                 </li>
                 <li>
@@ -1363,7 +1046,7 @@ export default function App() {
               </ul>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-end">
               {/* <button
                 type="button"
                 onClick={() => {
@@ -1557,8 +1240,8 @@ export default function App() {
                 <Plus size={14} className="text-white" />
               </div>
               <span>
-                Add another email type from same sender ("
-                <strong>{sender.role || "this sender"}</strong>")
+                Add another email from the same sender
+                {/* ("<strong>{sender.role || "this sender"}</strong>") */}
               </span>
             </button>
 
@@ -1571,8 +1254,8 @@ export default function App() {
                 <ArrowRight size={14} className="text-white" />
               </div>
               <span>
-                That's it for "<strong>{sender.role || "this sender"}</strong>"
-                — move on to a different sender
+                {/* That's it for "<strong>{sender.role || "this sender"}</strong>" */}{" "}
+                Move on to a different sender
               </span>
               {/* {isLastSenderPage && totalEmailCount >= MANDATORY_EMAILS && (
                 <span className="text-indigo-600 font-semibold">
@@ -1584,7 +1267,7 @@ export default function App() {
         )}
 
         {/* ── Page navigation ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-end mt-6">
           {/* Back */}
           {/* <button
             type="button"
@@ -1597,16 +1280,35 @@ export default function App() {
             <ArrowLeft size={16} /> Back to Job Role
           </button>*/}
 
-          <div className="flex items-center gap-3">
-            {/* Proceed to Part B — only when 5 distinct senders are complete */}
-            {isLastSenderPage && canLeaveStep2 && (
-              <button
-                type="button"
-                onClick={tryNavigateForward}
-                className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors bg-slate-800 text-white hover:bg-slate-700 cursor-pointer"
-              >
-                I am done! Move on to Part B <ArrowRight size={16} />
-              </button>
+          <div className="flex flex-col items-stretch gap-3 w-full">
+            {/* Soft nudge — non-blocking prompt to add more sender variety */}
+            {showLowSenderDiversityNudge && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                Most participants describe emails from{" "}
+                <strong>at least 3 different senders</strong>. So far you have
+                described emails from{" "}
+                <strong>
+                  {completedSendersCount} sender
+                  {completedSendersCount === 1 ? "" : "s"}
+                </strong>
+                . If anyone else emails you for work — even occasionally —
+                please add them above. If not, you can move to next part.
+              </div>
+            )}
+
+            {canLeaveStep2 && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowValidation(false);
+                    setStep(3);
+                  }}
+                  className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-colors bg-slate-800 text-white hover:bg-slate-700 cursor-pointer"
+                >
+                  I am done! Move on to Part B <ArrowRight size={16} />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1724,8 +1426,8 @@ export default function App() {
               </p>
               <ul className="list-disc list-inside text-sm text-blue-900 space-y-1.5">
                 <li>
-                  Describe <strong>at least {REQUIRED_GENERIC}</strong> general
-                  email types.
+                  Describe <strong>at least {REQUIRED_GENERIC}</strong> such
+                  emails.
                 </li>
                 <li>
                   These should <strong>NOT</strong> be related to your specific
@@ -1747,8 +1449,8 @@ export default function App() {
               </p>
             </div> */}
 
-            <div className="flex items-center justify-between">
-              <button
+            <div className="flex items-center justify-end">
+              {/* <button
                 type="button"
                 onClick={() => {
                   setShowValidation(false);
@@ -1759,7 +1461,7 @@ export default function App() {
                 className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors"
               >
                 <ArrowLeft size={16} /> Back to Part A
-              </button>
+              </button> */}
 
               <button
                 type="button"
@@ -1796,6 +1498,13 @@ export default function App() {
             </ul>
           </div>
         )}
+
+        <div className="rounded-lg p-3 mb-4 text-sm text-black">
+          Describe emails you receive that are{" "}
+          <strong>not specific to your job role</strong> — e.g., all-staff
+          announcements, fire-drill notices, holiday updates. <br />
+          Skip anything tied to your day-to-day work tasks (those go in Part A).
+        </div>
 
         <div className="mb-5 flex items-center justify-between">
           <div className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
@@ -1860,8 +1569,8 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <button
+        <div className="flex items-center justify-end mt-6">
+          {/* <button
             type="button"
             onClick={() => {
               setShowValidation(false);
@@ -1870,22 +1579,27 @@ export default function App() {
             className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors"
           >
             <ArrowLeft size={16} /> Back
-          </button>
+          </button> */}
 
           <div className="flex items-center gap-3">
-            {isLastGenericPage && canLeaveStep3 ? (
+            {canLeaveStep3 ? (
               <>
+                {isLastGenericPage && (
+                  <button
+                    type="button"
+                    onClick={addAnotherGenericPage}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    Add more
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={addAnotherGenericPage}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  <Plus size={14} />
-                  Add more
-                </button>
-                <button
-                  type="button"
-                  onClick={tryNavigateGenericForward}
+                  onClick={() => {
+                    setShowValidation(false);
+                    setStep(4);
+                  }}
                   className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   I am done! Move on to Part C <ArrowRight size={16} />
@@ -2010,7 +1724,7 @@ export default function App() {
               <ul className="list-disc list-inside text-sm text-blue-900 space-y-1.5">
                 <li>
                   Describe <strong>at least {REQUIRED_SUSPICIOUS}</strong>{" "}
-                  suspicious or hard-to-judge email types.
+                  suspicious or hard-to-judge emails.
                 </li>
                 <li>
                   Do not mention any <strong>personal or company names</strong>{" "}
@@ -2032,8 +1746,8 @@ export default function App() {
               </p>
             </div> */}
 
-            <div className="flex items-center justify-between">
-              <button
+            <div className="flex items-center justify-end">
+              {/* <button
                 type="button"
                 onClick={() => {
                   setShowValidation(false);
@@ -2044,7 +1758,7 @@ export default function App() {
                 className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors"
               >
                 <ArrowLeft size={16} /> Back to Part B
-              </button>
+              </button> */}
 
               <button
                 type="button"
@@ -2070,10 +1784,17 @@ export default function App() {
         {showValidation && descMissing && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
             <p className="text-sm font-semibold text-red-700">
-              Please describe this email type before continuing.
+              Please complete the following before continuing.
             </p>
           </div>
         )}
+
+        <div className="rounded-lg p-3 mb-4 text-sm text-black">
+          Describe work emails where you are{" "}
+          <strong>unsure whether they are legitimate or a scam</strong> —
+          messages that look plausible but make you hesitate (e.g., unexpected
+          requests).
+        </div>
 
         <div className="mb-5 flex items-center justify-between">
           <div className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm font-semibold text-slate-700">
@@ -2096,7 +1817,8 @@ export default function App() {
                 descMissing ? "text-red-500" : "text-black"
               }`}
             >
-              Describe the type of email you found suspicious or hard to judge
+              Describe the type of email you usually find suspicious or hard to
+              judge
               {descMissing && " *"}
             </p>
             <textarea
@@ -2113,8 +1835,8 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-6">
-          <button
+        <div className="flex items-center justify-end mt-6">
+          {/* <button
             type="button"
             onClick={() => {
               setShowValidation(false);
@@ -2123,20 +1845,22 @@ export default function App() {
             className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 transition-colors"
           >
             <ArrowLeft size={16} /> Back
-          </button>
+          </button> */}
 
           <div className="flex items-center gap-3">
-            {isLastSuspiciousPage && canLeaveStep4 ? (
+            {canLeaveStep4 ? (
               <>
-                <button
-                  type="button"
-                  onClick={addAnotherSuspiciousPage}
-                  disabled={submitting}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  <Plus size={14} />
-                  Add more
-                </button>
+                {isLastSuspiciousPage && (
+                  <button
+                    type="button"
+                    onClick={addAnotherSuspiciousPage}
+                    disabled={submitting}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    Add more
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -2157,7 +1881,7 @@ export default function App() {
                 onClick={tryNavigateSuspiciousForward}
                 className="flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                Add more <ArrowRight size={16} />
+                Add next email <ArrowRight size={16} />
               </button>
             )}
           </div>
@@ -2182,20 +1906,32 @@ export default function App() {
       <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <CheckCircle className="w-10 h-10 text-emerald-600" />
       </div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-3">Thank You!</h2>
-      <p className="text-gray-600 mb-4 max-w-md mx-auto">
+      <h2 className="text-2xl font-bold text-slate-800 mb-3">
         Your response has been recorded successfully.
-      </p>
+      </h2>
+      {/* <p className="text-gray-600 mb-4 max-w-md mx-auto">
+        Your response has been recorded successfully.
+      </p> */}
 
       {bonusPence > 0 && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 max-w-md mx-auto mb-4">
-          <p className="text-sm text-emerald-800 flex items-center justify-center gap-2">
-            <Gift size={16} />
+          <p className="text-sm text-emerald-800 flex items-center text-left gap-2">
+            <Gift size={18} />
             <span>
               You described <strong>{totalEmailCount}</strong> emails in Part A
-              ({bonusEmails} additional emails). You earned a{" "}
-              <strong>{formatBonus(bonusPence)} bonus</strong>! The bonus will
-              be paid via Prolific.
+              ({bonusEmails} additional emails). <br />
+              {bonusMaxReached ? (
+                <>
+                  You earned a <strong>£0.50 bonus</strong> (the maximum set for
+                  this study)!
+                </>
+              ) : (
+                <>
+                  You earned a <strong>{formatBonus(bonusPence)} bonus</strong>!
+                </>
+              )}{" "}
+              <br />
+              The bonus will be paid via Prolific.
             </span>
           </p>
         </div>
@@ -2203,9 +1939,9 @@ export default function App() {
 
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 max-w-md mx-auto">
         <p className="text-sm text-slate-700">
-          Your insights into workplace email patterns across different
-          professions are invaluable to our research on email security. Thank
-          you for contributing to this study.
+          Your insights into workplace email types across different professions
+          are invaluable to our research on email security. Thank you for
+          contributing to this study.
         </p>
       </div>
 
@@ -2213,17 +1949,25 @@ export default function App() {
         <p className="text-sm font-semibold text-blue-900 uppercase tracking-wide mb-2">
           Your Prolific completion code
         </p>
-        <div className="bg-white border border-blue-300 rounded-md py-2 px-3 mb-3">
+        <div className="bg-white border border-blue-300 rounded-md py-2 px-3 mb-3 flex items-center justify-between gap-3">
           <p className="text-lg font-mono font-bold text-blue-900 tracking-widest">
-            C1X95X6D
+            {COMPLETION_CODE}
           </p>
+          <button
+            type="button"
+            onClick={handleCopyCompletionCode}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+          >
+            <Copy size={14} />
+            {codeCopied ? "Copied" : "Copy code"}
+          </button>
         </div>
         <p className="text-sm text-blue-900 mb-3 leading-relaxed">
           Click the link below to return to Prolific and confirm your submission
           so your payment can be released.
         </p>
         <a
-          href="https://app.prolific.com/submissions/complete?cc=C1X95X6D"
+          href={`https://app.prolific.com/submissions/complete?cc=${COMPLETION_CODE}`}
           className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
         >
           Submit on Prolific <ArrowRight size={16} />
@@ -2258,11 +2002,12 @@ export default function App() {
     const entries = Array.from(byRole.values());
     const totalA = entries.reduce((sum, r) => sum + r.emailCount, 0);
     const bonusA = Math.max(0, totalA - MANDATORY_EMAILS);
+    const bonusPenceA = Math.min(bonusA * BONUS_PER_EMAIL_PENCE, maxBonusPence);
     return {
       uniqueSenders: entries.length,
       totalEmails: totalA,
       bonusEmails: bonusA,
-      bonusPence: bonusA * BONUS_PER_EMAIL_PENCE,
+      bonusPence: bonusPenceA,
       items: entries.map((r) => ({
         label: r.role,
         suffix: `${r.emailCount} email${r.emailCount === 1 ? "" : "s"}`,

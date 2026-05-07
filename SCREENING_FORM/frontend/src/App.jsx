@@ -498,7 +498,7 @@ export default function App() {
                   Part B: General Workplace Emails
                 </p>
                 <p className="text-sm text-black-700 ml-4 mt-2">
-                  List <strong>at least five</strong> types of emails that you
+                  List <strong>at least three</strong> types of emails that you
                   typically receive but that are{" "}
                   <span className="font-semibold">
                     not specific to your job role.
@@ -1510,8 +1510,8 @@ export default function App() {
           Describe emails you receive that are{" "}
           <strong>not specific to your job role</strong> — e.g., all-staff
           announcements. <br />
-          This section should exclude your day-to-day work related emails (those
-          go in Part A).
+          This section should <strong>NOT include</strong> your day-to-day work
+          related emails (those went in Part A).
         </div>
 
         <div className="mb-5 flex items-center justify-between">

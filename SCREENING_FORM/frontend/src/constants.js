@@ -21,7 +21,7 @@ export const JOB_CLUSTERS = [
 ];
 
 export const MANDATORY_EMAILS = 5;
-export const REQUIRED_GENERIC = 5;
+export const REQUIRED_GENERIC = 3;
 export const REQUIRED_SUSPICIOUS = 5;
 export const BONUS_PER_EMAIL_PENCE = 5;
 export const MAX_BONUS_EMAILS = 0.5;

@@ -1,41 +1,53 @@
 /**
- * CYPEARL Experiment Web App - Main Application (UPDATED v6 - REVISED FLOW)
+ * CYPEARL Experiment Web App - Main Application (UPDATED v8 - JOB ROLE SELECTION)
  *
  * UPDATES IN THIS VERSION:
- * 1. Changed flow order: Prolific ID first, then Pre-Survey
- * 2. Pre-Survey now submitted with participant_id (after login)
- * 3. Flow: Prolific ID → Pre-Survey → Email Experiment → Post-Survey → Complete
+ * 1. Added scenario selector landing page (Phishing, Dark Patterns, Fake News)
+ * 2. Scenario-aware routing and database selection
+ * 3. Added job role selection stage for phishing experiment
+ * 4. Added comprehension check stage (if endpoint available)
+ * 5. Added perceived_relevance to action submissions
  *
- * FLOW:
- * 1. prolificId: Enter Prolific ID (creates participant)
- * 2. preExperiment: Single page pre-experiment questionnaire
- * 3. emailExperiment: 16 emails one by one
- * 4. postExperiment: Post-experiment state measures
- * 5. completed: Thank you screen
+ * SCENARIOS:
+ * - phishing: Email security experiment (existing)
+ * - dark-patterns: Deceptive UI/UX experiment (new)
+ * - fake-news: Misinformation detection experiment (new)
+ *
+ * FLOW (Phishing):
+ * 1. scenarioSelection: Choose experiment type
+ * 2. prolificId: Enter Prolific ID (creates participant)
+ * 3. jobRoleSelection: Select closest job cluster (screen-out if "Other")
+ * 4. preExperiment: Single page pre-experiment questionnaire
+ * 5. comprehensionCheck: Answer comprehension questions (if endpoint exists)
+ * 6. instructions: Dedicated page showing study instructions (welcome email content)
+ * 7. emailExperiment: Scenario-specific tasks (16 items)
+ * 8. postExperiment: Post-experiment state measures
+ * 9. completed: Thank you screen
  *
  * FEATURES:
- * - Complete data collection matching phishing_study_participants.csv schema
+ * - Complete data collection matching study schema
  * - Pre-experiment questionnaires capture all individual differences
+ * - Job role clustering for personalized email assignment
  * - Post-experiment measures capture state anxiety, stress, fatigue
- * - Alert shown after final email to proceed to post-survey
+ * - Alert shown after final task to proceed to post-survey
  *
- * Tracks all observational data required for phishing_study_responses.csv:
- * - response_latency_ms: Time from email open to action
- * - dwell_time_ms: Total time viewing email
- * - clicked: Whether any link was clicked (separate from action)
- * - hovered_link: Whether links were hovered
- * - inspected_sender: Whether user clicked to expand sender details
- * - confidence_rating: Self-reported confidence (1-10)
- * - suspicion_rating: Self-reported suspicion (1-10)
+ * Tracks all observational data required for study responses
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import Sidebar from "./components/Sidebar";
-import EmailList from "./components/EmailList";
-import ReadingPane from "./components/ReadingPane";
-import ActionModal from "./components/ActionModal";
-import PreExperimentSurvey from "./components/PreExperimentSurvey";
-import PostExperimentSurvey from "./components/PostExperimentSurvey";
+// Phishing experiment components
+import Sidebar from "./components/phishing/Sidebar";
+import EmailList from "./components/phishing/EmailList";
+import ReadingPane from "./components/phishing/ReadingPane";
+import ActionModal from "./components/phishing/ActionModal";
+import PreExperimentSurvey from "./components/phishing/PreExperimentSurvey";
+import PostExperimentSurvey from "./components/phishing/PostExperimentSurvey";
+// Shared components
+import ScenarioSelector from "./components/ScenarioSelector";
+// Dark patterns experiment
+import DarkPatternsExperiment from "./components/darkpatterns/DarkPatternsExperiment";
+// Fake news experiment
+import FakeNewsExperiment from "./components/fakenews/FakeNewsExperiment";
 import {
   Search,
   Check,
@@ -55,8 +67,9 @@ import axios from "axios";
 // =========================================================================
 
 const getParticipantId = () => localStorage.getItem("participant_id");
+const getScenario = () => localStorage.getItem("scenario") || null;
 const getStudyStage = () =>
-  localStorage.getItem("study_stage") || "prolificId";
+  localStorage.getItem("study_stage") || "scenarioSelection";
 const getPreSurveyData = () => {
   const data = localStorage.getItem("pre_survey_data");
   return data ? JSON.parse(data) : null;
@@ -84,18 +97,105 @@ const getClientInfo = () => ({
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 // =========================================================================
+// JOB CLUSTER CONSTANTS
+// =========================================================================
+
+const JOB_CLUSTERS = [
+  "Finance/Accounts Payable",
+  "IT Support/Helpdesk",
+  "HR/People Operations",
+  "Sales/Business Development",
+  "Operations/Logistics",
+  "Customer Service/Client Support",
+  "Marketing/Communications",
+  "Procurement/Purchasing",
+  "Administrative/Executive Support",
+  "Compliance/Risk/Audit",
+];
+
+const INDUSTRY_TO_CLUSTER = {
+  finance: "Finance/Accounts Payable",
+  banking: "Finance/Accounts Payable",
+  accounting: "Finance/Accounts Payable",
+  accounts_payable: "Finance/Accounts Payable",
+  it: "IT Support/Helpdesk",
+  technology: "IT Support/Helpdesk",
+  software: "IT Support/Helpdesk",
+  helpdesk: "IT Support/Helpdesk",
+  human_resources: "HR/People Operations",
+  hr: "HR/People Operations",
+  people_operations: "HR/People Operations",
+  sales: "Sales/Business Development",
+  business_development: "Sales/Business Development",
+  consulting: "Sales/Business Development",
+  operations: "Operations/Logistics",
+  logistics: "Operations/Logistics",
+  engineering: "Operations/Logistics",
+  manufacturing: "Operations/Logistics",
+  customer_service: "Customer Service/Client Support",
+  client_support: "Customer Service/Client Support",
+  support: "Customer Service/Client Support",
+  marketing: "Marketing/Communications",
+  communications: "Marketing/Communications",
+  public_relations: "Marketing/Communications",
+  procurement: "Procurement/Purchasing",
+  purchasing: "Procurement/Purchasing",
+  supply_chain: "Procurement/Purchasing",
+  administration: "Administrative/Executive Support",
+  executive_assistant: "Administrative/Executive Support",
+  office_management: "Administrative/Executive Support",
+  compliance: "Compliance/Risk/Audit",
+  risk: "Compliance/Risk/Audit",
+  audit: "Compliance/Risk/Audit",
+  legal: "Compliance/Risk/Audit",
+};
+
+const JOB_CLUSTER_DESCRIPTIONS = {
+  "Finance/Accounts Payable": "Financial services, accounting, auditing, banking, invoice processing, payroll",
+  "IT Support/Helpdesk": "IT support, helpdesk, system administration, technical troubleshooting",
+  "HR/People Operations": "Human resources, recruitment, onboarding, employee relations, people ops",
+  "Sales/Business Development": "Sales, business development, account management, client acquisition",
+  "Operations/Logistics": "Operations management, supply chain, logistics, warehouse, manufacturing",
+  "Customer Service/Client Support": "Customer service, client support, call centre, complaint resolution",
+  "Marketing/Communications": "Marketing, communications, PR, content creation, brand management",
+  "Procurement/Purchasing": "Procurement, purchasing, vendor management, sourcing, contract negotiation",
+  "Administrative/Executive Support": "Office administration, executive assistant, scheduling, office management",
+  "Compliance/Risk/Audit": "Compliance, risk management, internal audit, regulatory affairs, legal",
+};
+
+// Scenario metadata for tab title and favicon
+const SCENARIO_META = {
+  phishing: {
+    title: "ProMail Suite: Smart. Fast. Reliable.",
+    favicon: "/icon.png",
+  },
+  "dark-patterns": {
+    title: "Dark Patterns Study",
+    favicon: "/favicon-darkpatterns.svg",
+  },
+  "fake-news": {
+    title: "News Evaluation Study",
+    favicon: "/favicon-fakenews.svg",
+  },
+};
+
+// =========================================================================
 // MAIN APP COMPONENT
 // =========================================================================
 
 function App() {
   // =========================================================================
   // STUDY FLOW STATE
-  // Stages: preExperiment → prolificId → emailExperiment → postExperiment → completed
+  // Stages: scenarioSelection → prolificId → jobRoleSelection → preExperiment → comprehensionCheck → instructions → emailExperiment → postExperiment → completed
   // =========================================================================
   const [studyStage, setStudyStage] = useState(getStudyStage());
+  const [scenario, setScenario] = useState(getScenario());
   const [preSurveyData, setPreSurveyData] = useState(getPreSurveyData());
   const [postSurveyData, setPostSurveyData] = useState(null);
   const [bonusTotal, setBonusTotal] = useState(null);
+  const [jobCluster, setJobCluster] = useState(localStorage.getItem("job_cluster") || null);
+  const [jobNatureDescription, setJobNatureDescription] = useState("");
+  const [instructionEmail, setInstructionEmail] = useState(null);
 
   // Auth state
   const [participantId, setParticipantId] = useState(getParticipantId());
@@ -132,6 +232,7 @@ function App() {
   // Refs to prevent duplicate API calls
   const openedEmailsRef = useRef(new Set());
   const markedReadRef = useRef(new Set());
+  const welcomeAutoAdvancedRef = useRef(false);
 
   // =========================================================================
   // STAGE MANAGEMENT
@@ -140,6 +241,54 @@ function App() {
   const updateStudyStage = (newStage) => {
     localStorage.setItem("study_stage", newStage);
     setStudyStage(newStage);
+  };
+
+  // =========================================================================
+  // DYNAMIC TAB TITLE AND FAVICON BASED ON SCENARIO
+  // =========================================================================
+
+  useEffect(() => {
+    const currentScenario = scenario || getScenario();
+
+    // Default meta for scenario selector
+    const defaultMeta = {
+      title: "CYPEARL Data Collection Platform",
+      favicon: "/screenicon.png",
+    };
+
+    const meta =
+      currentScenario && SCENARIO_META[currentScenario]
+        ? SCENARIO_META[currentScenario]
+        : defaultMeta;
+
+    // Update document title
+    document.title = meta.title;
+
+    // Update favicon
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = meta.favicon;
+    link.type = meta.favicon.endsWith(".svg") ? "image/svg+xml" : "image/png";
+  }, [scenario]);
+
+  // =========================================================================
+  // SCENARIO SELECTION
+  // =========================================================================
+
+  const handleScenarioSelect = (selectedScenario) => {
+    localStorage.setItem("scenario", selectedScenario);
+    setScenario(selectedScenario);
+    updateStudyStage("prolificId");
+  };
+
+  const handleGoToScenarioSelector = () => {
+    localStorage.removeItem("scenario");
+    setScenario(null);
+    updateStudyStage("scenarioSelection");
   };
 
   // =========================================================================
@@ -167,7 +316,13 @@ function App() {
       // Continue anyway - data is in localStorage
     }
 
-    updateStudyStage("emailExperiment");
+    // Try comprehension check; if it doesn't exist, skip to instructions
+    try {
+      await axios.get(`${API_URL}/comprehension-check/${currentParticipantId}`);
+      updateStudyStage("comprehensionCheck");
+    } catch {
+      updateStudyStage("instructions");
+    }
   };
 
   // =========================================================================
@@ -180,11 +335,21 @@ function App() {
 
     // Get session ID for linking
     const sessionId = getSessionId();
+    const currentScenario = scenario || getScenario() || "phishing";
+
+    // Use the correct auth endpoint based on scenario
+    let authEndpoint = `${API_URL}/auth/login`;
+    if (currentScenario === "dark-patterns") {
+      authEndpoint = `${API_URL}/dark-patterns/auth/login`;
+    } else if (currentScenario === "fake-news") {
+      authEndpoint = `${API_URL}/fake-news/auth/login`;
+    }
 
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await axios.post(authEndpoint, {
         prolific_id: prolificIdInput.trim(),
         session_id: sessionId,
+        scenario: currentScenario,
         user_agent: navigator.userAgent,
         screen_resolution: `${window.screen.width}x${window.screen.height}`,
       });
@@ -192,7 +357,7 @@ function App() {
       const newParticipantId = response.data.participant_id;
       localStorage.setItem("participant_id", newParticipantId);
       setParticipantId(newParticipantId);
-      updateStudyStage("preExperiment"); // Now go to pre-survey
+      updateStudyStage("jobRoleSelection"); // Now go to job role selection
     } catch (error) {
       console.error("Login error:", error);
       alert("Failed to start session. Please try again.");
@@ -235,6 +400,7 @@ function App() {
   const fetchEmails = async (
     folder = activeFolder,
     targetSelectionId = null,
+    forceSelectTop = false,
   ) => {
     if (!participantId) return;
 
@@ -251,17 +417,36 @@ function App() {
         setDeletedCount(data.counts.deleted);
       }
 
-      setEmailList(emails);
+      // Filter out the welcome/instruction email (order_id=0) — it is shown
+      // on the dedicated instructions page before the email experiment starts.
+      const nonWelcome = emails.filter((e) => e.order_id !== 0);
 
-      if (targetSelectionId && emails.find((e) => e.id === targetSelectionId)) {
+      // Sort newest-first using delivery timestamp, with order_id as a stable fallback.
+      const sorted = [...nonWelcome].sort((a, b) => {
+        const aTime = new Date(a.timestamp || 0).getTime();
+        const bTime = new Date(b.timestamp || 0).getTime();
+
+        if (bTime !== aTime) {
+          return bTime - aTime;
+        }
+
+        const aOrder = typeof a.order_id === "number" ? a.order_id : -1;
+        const bOrder = typeof b.order_id === "number" ? b.order_id : -1;
+        return bOrder - aOrder;
+      });
+      setEmailList(sorted);
+
+      if (targetSelectionId && sorted.find((e) => e.id === targetSelectionId)) {
         setSelectedEmailId(targetSelectionId);
-      } else if (!selectedEmailId && emails.length > 0) {
-        setSelectedEmailId(emails[0].id);
+      } else if (forceSelectTop && sorted.length > 0) {
+        setSelectedEmailId(sorted[0].id);
+      } else if (!selectedEmailId && sorted.length > 0) {
+        setSelectedEmailId(sorted[0].id);
       } else if (
         selectedEmailId &&
-        !emails.find((e) => e.id === selectedEmailId)
+        !sorted.find((e) => e.id === selectedEmailId)
       ) {
-        setSelectedEmailId(emails.length > 0 ? emails[0].id : null);
+        setSelectedEmailId(sorted.length > 0 ? sorted[0].id : null);
       }
 
       if (data.is_finished !== undefined) {
@@ -322,33 +507,23 @@ function App() {
   // =========================================================================
 
   useEffect(() => {
-    if (
+    // Auto-advance only when the welcome email is the sole email and hasn't been auto-advanced yet
+    const hasOnlyWelcome =
       emailList.length > 0 &&
-      emailList[0].order_id === 0 &&
+      emailList.every((e) => e.order_id === 0);
+
+    if (
+      hasOnlyWelcome &&
       !finished &&
-      studyStage === "emailExperiment"
+      studyStage === "emailExperiment" &&
+      !welcomeAutoAdvancedRef.current
     ) {
       const timer = setTimeout(async () => {
+        welcomeAutoAdvancedRef.current = true;
         try {
           await axios.post(`${API_URL}/complete/${participantId}`);
-          const response = await axios.get(
-            `${API_URL}/emails/inbox/${participantId}?folder=${activeFolder}`,
-          );
-          const data = response.data;
-          const emails = data.emails || [];
-
-          if (data.counts) {
-            setUnreadCount(data.counts.unread);
-            setDeletedCount(data.counts.deleted);
-          }
-
-          setEmailList(emails);
-
-          if (data.is_finished !== undefined) {
-            setFinished(data.is_finished);
-          } else if (activeFolder === "inbox" && emails.length === 0) {
-            setFinished(true);
-          }
+          // Re-use fetchEmails with current selection as target to preserve focus
+          await fetchEmails(activeFolder, selectedEmailId);
         } catch (error) {
           console.error("Error auto-advancing:", error);
         }
@@ -475,7 +650,7 @@ function App() {
       return;
     }
 
-    if (["safe", "report", "delete", "ignore"].includes(actionType)) {
+    if (["safe", "report"].includes(actionType)) {
       setPendingAction(actionType);
       setModalOpen(true);
     }
@@ -503,7 +678,7 @@ function App() {
   // SUBMIT FINAL ACTION
   // =========================================================================
 
-  const handleSubmitAction = async ({ reason, confidence, suspicion }) => {
+  const handleSubmitAction = async ({ reason, confidence, suspicion, perceivedRelevance }) => {
     if (!selectedEmailId || !pendingAction) return;
 
     const dwellTime = emailOpenTime ? Date.now() - emailOpenTime : 0;
@@ -517,6 +692,7 @@ function App() {
         reason: reason,
         confidence: confidence,
         suspicion: suspicion,
+        perceived_relevance: perceivedRelevance,
         latency_ms: latency,
         dwell_time_ms: dwellTime,
         clicked_link: currentSessionData.linkClicked,
@@ -591,7 +767,11 @@ function App() {
       openedEmailsRef.current.clear();
       markedReadRef.current.clear();
 
-      await fetchEmails(activeFolder);
+      // Brief pause before refreshing inbox so next email appears with a delay.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Preserve current selection after advancing so newly arrived emails stay unread.
+      await fetchEmails(activeFolder, selectedEmailId);
 
       setActionsTaken(false);
       setEmailOpenTime(null);
@@ -621,16 +801,21 @@ function App() {
     ) {
       localStorage.removeItem("participant_id");
       localStorage.removeItem("study_stage");
+      localStorage.removeItem("scenario");
       localStorage.removeItem("pre_survey_data");
       localStorage.removeItem("session_id");
       localStorage.removeItem("pre_survey_responses_draft");
       localStorage.removeItem("post_survey_responses_draft");
+      localStorage.removeItem("job_cluster");
       openedEmailsRef.current.clear();
       markedReadRef.current.clear();
+      welcomeAutoAdvancedRef.current = false;
       setParticipantId(null);
-      setStudyStage("prolificId");
+      setScenario(null);
+      setStudyStage("scenarioSelection");
       setPreSurveyData(null);
       setPostSurveyData(null);
+      setJobCluster(null);
       setEmailList([]);
       setFinished(false);
       setSelectedEmailId(null);
@@ -648,16 +833,594 @@ function App() {
   const isLatest = emailList.length > 0 && selectedEmailId === emailList[0].id;
 
   // =========================================================================
-  // RENDER: PRE-EXPERIMENT SURVEY
+  // RENDER: SCENARIO SELECTION
+  // =========================================================================
+
+  if (studyStage === "scenarioSelection") {
+    return <ScenarioSelector onSelectScenario={handleScenarioSelect} />;
+  }
+
+  // =========================================================================
+  // RENDER: DARK PATTERNS EXPERIMENT (Full flow)
+  // =========================================================================
+
+  if (
+    scenario === "dark-patterns" &&
+    studyStage !== "scenarioSelection" &&
+    studyStage !== "prolificId"
+  ) {
+    return (
+      <DarkPatternsExperiment
+        participantId={participantId}
+        onComplete={() => updateStudyStage("completed")}
+        onGoToScenarioSelector={handleGoToScenarioSelector}
+      />
+    );
+  }
+
+  // =========================================================================
+  // RENDER: FAKE NEWS EXPERIMENT (Full flow)
+  // =========================================================================
+
+  if (
+    scenario === "fake-news" &&
+    studyStage !== "scenarioSelection" &&
+    studyStage !== "prolificId"
+  ) {
+    return (
+      <FakeNewsExperiment
+        participantId={participantId}
+        onComplete={() => updateStudyStage("completed")}
+        onGoToScenarioSelector={handleGoToScenarioSelector}
+      />
+    );
+  }
+
+  // =========================================================================
+  // RENDER: PRE-EXPERIMENT SURVEY (Phishing)
   // =========================================================================
 
   if (studyStage === "preExperiment") {
+    // Phishing pre-survey
     return (
-      <PreExperimentSurvey
-        onComplete={handlePreSurveyComplete}
-        onGoToEmail={() => updateStudyStage("emailExperiment")}
-      />
+      <>
+        <PreExperimentSurvey
+          onComplete={handlePreSurveyComplete}
+          onGoToEmail={() => updateStudyStage("emailExperiment")}
+        />
+        <div className="fixed bottom-0 left-0 px-4 py-2 z-50">
+          <button
+            onClick={handleGoToScenarioSelector}
+            className="px-4 py-2 text-black underline rounded hover:bg-gray-200 hover:rounded-lg text-sm font-medium"
+          >
+            ← Go to Scenario Selector
+          </button>
+        </div>
+      </>
     );
+  }
+
+  // =========================================================================
+  // RENDER: JOB ROLE SELECTION (Phishing)
+  // =========================================================================
+
+  if (studyStage === "jobRoleSelection") {
+    const [selectedCluster, setSelectedCluster] = [
+      jobCluster,
+      (val) => setJobCluster(val),
+    ];
+
+    const handleClusterSubmit = async () => {
+      if (!selectedCluster || selectedCluster === "Other") return;
+      if (!jobNatureDescription.trim()) {
+        alert("Please describe your specific job role before continuing.");
+        return;
+      }
+      const currentParticipantId = participantId || getParticipantId();
+      try {
+        const response = await axios.post(
+          `${API_URL}/assign-cluster/${currentParticipantId}`,
+          {
+            job_cluster: selectedCluster,
+            job_nature_description: jobNatureDescription.trim(),
+          },
+        );
+        localStorage.setItem("job_cluster", selectedCluster);
+        setJobCluster(selectedCluster);
+        // Store counterbalance_version if returned
+        if (response.data?.counterbalance_version) {
+          localStorage.setItem(
+            "counterbalance_version",
+            response.data.counterbalance_version,
+          );
+        }
+        // Proceed to pre-experiment survey
+        updateStudyStage("preExperiment");
+      } catch (error) {
+        console.error("Error assigning cluster:", error);
+        alert("Failed to save job category. Please try again.");
+      }
+    };
+
+    // Split clusters into two columns (alternating for proximity)
+    const leftColumn = JOB_CLUSTERS.filter((_, i) => i % 2 === 0);
+    const rightColumn = JOB_CLUSTERS.filter((_, i) => i % 2 === 1);
+
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100 font-sans">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-3xl w-full">
+          <h1 className="text-2xl font-bold mb-2 text-center text-slate-800">
+            What best describes your job?
+          </h1>
+          <p className="text-gray-500 mb-1 text-center text-sm">
+            To personalise the study emails to your professional background, please select the
+            category that is closest to your current role or daily responsibilities.
+          </p>
+          <p className="text-gray-400 mb-6 text-center text-xs">
+            Select one option below, then briefly describe what you do.
+          </p>
+
+          {/* Two-column grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+            {/* Left column */}
+            <div className="space-y-2">
+              {leftColumn.map((cluster) => (
+                <label
+                  key={cluster}
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedCluster === cluster
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="jobCluster"
+                    value={cluster}
+                    checked={selectedCluster === cluster}
+                    onChange={() => setJobCluster(cluster)}
+                    className="mt-1 accent-blue-600"
+                  />
+                  <div>
+                    <div className="font-medium text-slate-800 text-sm">
+                      {cluster}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {JOB_CLUSTER_DESCRIPTIONS[cluster]}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {/* Right column */}
+            <div className="space-y-2">
+              {rightColumn.map((cluster) => (
+                <label
+                  key={cluster}
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedCluster === cluster
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="jobCluster"
+                    value={cluster}
+                    checked={selectedCluster === cluster}
+                    onChange={() => setJobCluster(cluster)}
+                    className="mt-1 accent-blue-600"
+                  />
+                  <div>
+                    <div className="font-medium text-slate-800 text-sm">
+                      {cluster}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {JOB_CLUSTER_DESCRIPTIONS[cluster]}
+                    </div>
+                  </div>
+                </label>
+              ))}
+              {/* Other option — screen-out */}
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  selectedCluster === "Other"
+                    ? "border-orange-500 bg-orange-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="jobCluster"
+                  value="Other"
+                  checked={selectedCluster === "Other"}
+                  onChange={() => { setJobCluster("Other"); setJobNatureDescription(""); }}
+                  className="mt-1 accent-orange-600"
+                />
+                <div>
+                  <div className="font-medium text-slate-800 text-sm">
+                    Other (none of the above)
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    My job does not fit any of the categories listed
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Job nature text field — shown when a valid cluster is selected */}
+          {selectedCluster && selectedCluster !== "Other" && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Please describe your specific job role / daily responsibilities:
+              </label>
+              <textarea
+                value={jobNatureDescription}
+                onChange={(e) => setJobNatureDescription(e.target.value)}
+                placeholder="e.g. I am a payroll accountant processing invoices and managing vendor payments..."
+                rows={3}
+                className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+              />
+            </div>
+          )}
+
+          {/* Screen-out message for "Other" */}
+          {selectedCluster === "Other" && (
+            <div className="mb-6 p-4 bg-orange-50 border border-orange-300 rounded-lg text-sm text-orange-900">
+              <p className="font-semibold mb-2">Thank you for your interest!</p>
+              <p>
+                Unfortunately, this study requires participants whose job falls within one of
+                the listed categories. If your role does not match any category, you are not
+                eligible to participate in this study.
+              </p>
+              <p className="mt-2">
+                Please return your submission on Prolific. We appreciate your time!
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={handleClusterSubmit}
+            disabled={!selectedCluster || selectedCluster === "Other" || !jobNatureDescription.trim()}
+            className={`w-full py-2 px-4 rounded-md font-semibold flex items-center justify-center gap-2 transition-colors ${
+              selectedCluster && selectedCluster !== "Other" && jobNatureDescription.trim()
+                ? "bg-slate-800 text-white hover:bg-slate-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Continue
+            <ArrowRight size={18} />
+          </button>
+
+          <button
+            onClick={handleGoToScenarioSelector}
+            className="w-full mt-4 text-slate-500 hover:text-slate-700 text-sm"
+          >
+            &larr; Back to Scenario Selector
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // RENDER: COMPREHENSION CHECK (Phishing)
+  // =========================================================================
+
+  if (studyStage === "comprehensionCheck") {
+    const ComprehensionCheck = () => {
+      const [questions, setQuestions] = React.useState([]);
+      const [answers, setAnswers] = React.useState({});
+      const [attempts, setAttempts] = React.useState(0);
+      const [feedback, setFeedback] = React.useState(null);
+      const [failed, setFailed] = React.useState(false);
+      const [loadingQuestions, setLoadingQuestions] = React.useState(true);
+      const maxAttempts = 3;
+      const currentParticipantId = participantId || getParticipantId();
+
+      React.useEffect(() => {
+        const fetchQuestions = async () => {
+          try {
+            const response = await axios.get(
+              `${API_URL}/comprehension-check/${currentParticipantId}`,
+            );
+            setQuestions(response.data.questions || []);
+          } catch (error) {
+            console.error("Error fetching comprehension questions:", error);
+            // If endpoint doesn't exist, skip to instructions
+            updateStudyStage("instructions");
+          } finally {
+            setLoadingQuestions(false);
+          }
+        };
+        fetchQuestions();
+      }, []);
+
+      const handleSubmitAnswers = async () => {
+        try {
+          const response = await axios.post(
+            `${API_URL}/comprehension-check/${currentParticipantId}`,
+            { answers },
+          );
+
+          if (response.data.passed) {
+            updateStudyStage("instructions");
+          } else {
+            const newAttempts = attempts + 1;
+            setAttempts(newAttempts);
+            setFeedback(response.data);
+
+            if (newAttempts >= maxAttempts) {
+              setFailed(true);
+            }
+          }
+        } catch (error) {
+          console.error("Error submitting comprehension check:", error);
+          // If endpoint fails, proceed anyway
+          updateStudyStage("instructions");
+        }
+      };
+
+      const allAnswered =
+        questions.length > 0 &&
+        Object.keys(answers).length === questions.length;
+
+      if (loadingQuestions) {
+        return (
+          <div className="flex h-screen items-center justify-center bg-gray-100">
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <div className="text-blue-600 font-semibold">
+                Loading comprehension check...
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (failed) {
+        return (
+          <div className="flex h-screen items-center justify-center bg-gray-100 font-sans">
+            <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-red-600 text-2xl font-bold">X</span>
+              </div>
+              <h1 className="text-2xl font-bold mb-4 text-red-700">
+                Unable to Continue
+              </h1>
+              <p className="text-gray-600 mb-4">
+                You have used all {maxAttempts} attempts for the comprehension
+                check. Unfortunately, you cannot proceed with the experiment.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please return to Prolific and indicate that you were unable to
+                complete the study.
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex h-screen items-center justify-center bg-gray-100 font-sans">
+          <div className="bg-white p-8 rounded-lg shadow-md max-w-lg w-full">
+            <h1 className="text-2xl font-bold mb-2 text-center text-slate-800">
+              Comprehension Check
+            </h1>
+            <p className="text-gray-600 mb-6 text-center text-sm">
+              Please answer the following questions to confirm you understand the
+              task. Attempt {attempts + 1} of {maxAttempts}.
+            </p>
+
+            {feedback && !feedback.passed && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                Some answers were incorrect. Please review and try again.
+                {feedback.explanations &&
+                  Object.entries(feedback.explanations).map(([qId, explanation]) => (
+                    <div key={qId} className="mt-2 text-xs">
+                      {explanation}
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            <div className="space-y-6 mb-6">
+              {questions.map((q, qIndex) => (
+                <div key={q.id || qIndex}>
+                  <p className="font-medium text-slate-800 text-sm mb-2">
+                    {qIndex + 1}. {q.question}
+                  </p>
+                  <div className="space-y-1">
+                    {q.options.map((option, oIndex) => (
+                      <label
+                        key={oIndex}
+                        className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors text-sm ${
+                          answers[q.id || qIndex] === option
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`q-${q.id || qIndex}`}
+                          value={option}
+                          checked={answers[q.id || qIndex] === option}
+                          onChange={() =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [q.id || qIndex]: option,
+                            }))
+                          }
+                          className="accent-blue-600"
+                        />
+                        {option}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleSubmitAnswers}
+              disabled={!allAnswered}
+              className={`w-full py-2 px-4 rounded-md font-semibold flex items-center justify-center gap-2 transition-colors ${
+                allAnswered
+                  ? "bg-slate-800 text-white hover:bg-slate-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              Submit Answers
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    return <ComprehensionCheck />;
+  }
+
+  // =========================================================================
+  // RENDER: INSTRUCTIONS PAGE (shows welcome email content as a dedicated page)
+  // =========================================================================
+
+  if (studyStage === "instructions") {
+    const InstructionsPage = () => {
+      const [emailContent, setEmailContent] = React.useState(instructionEmail);
+      const [loadingInstructions, setLoadingInstructions] = React.useState(!instructionEmail);
+      const [starting, setStarting] = React.useState(false);
+      const currentParticipantId = participantId || getParticipantId();
+
+      React.useEffect(() => {
+        if (emailContent) return;
+        const fetchWelcomeEmail = async () => {
+          try {
+            const response = await axios.get(
+              `${API_URL}/emails/inbox/${currentParticipantId}`,
+            );
+            const emails = response.data.emails || response.data || [];
+            const welcome = emails.find((e) => e.order_id === 0);
+            if (welcome) {
+              setEmailContent(welcome);
+              setInstructionEmail(welcome);
+            }
+          } catch (error) {
+            console.error("Error fetching instruction email:", error);
+          } finally {
+            setLoadingInstructions(false);
+          }
+        };
+        fetchWelcomeEmail();
+      }, []);
+
+      const handleStartStudy = async () => {
+        setStarting(true);
+        try {
+          // Complete the welcome email so real emails load next
+          await axios.post(`${API_URL}/complete/${currentParticipantId}`);
+        } catch (error) {
+          console.error("Error completing welcome email:", error);
+        }
+        updateStudyStage("emailExperiment");
+      };
+
+      if (loadingInstructions) {
+        return (
+          <div className="flex h-screen items-center justify-center bg-gray-100">
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <div className="text-blue-600 font-semibold">Loading instructions...</div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 font-sans py-8 px-4">
+          <div className="max-w-3xl mx-auto">
+            {/* Header card */}
+            <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 overflow-hidden">
+              {/* Blue header bar */}
+              <div className="bg-[#0078d4] px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <Mail size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-white">Study Instructions</h1>
+                    <p className="text-blue-100 text-sm">Please read carefully before starting</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email-style header */}
+              {emailContent && (
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#0078d4] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                      I
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[#252423] text-base">
+                        {emailContent.sender_name}
+                      </div>
+                      <div className="text-xs text-[#605e5c] mt-0.5">
+                        {emailContent.sender_email}
+                      </div>
+                      <div className="text-sm text-[#252423] font-medium mt-2">
+                        {emailContent.subject}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Email body content */}
+            <div className="bg-white border-x border-gray-200 shadow-sm">
+              <div className="px-6 py-6">
+                {emailContent ? (
+                  <div
+                    className="prose max-w-none text-[#252423] leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: emailContent.body }}
+                  />
+                ) : (
+                  <div className="text-center text-gray-500 py-12">
+                    <p>Instructions could not be loaded. You may proceed to the study.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Start Study button */}
+            <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 border-t-0 px-6 py-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800 font-medium">
+                  Once you click "Start Study" below, you will enter the email client and begin
+                  reviewing emails. Make sure you have read and understood all the instructions above.
+                </p>
+              </div>
+              <button
+                onClick={handleStartStudy}
+                disabled={starting}
+                className={`w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors text-lg ${
+                  starting
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-[#0078d4] text-white hover:bg-[#106ebe] shadow-md hover:shadow-lg"
+                }`}
+              >
+                {starting ? "Starting..." : "Start Study"}
+                {!starting && <ArrowRight size={20} />}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    return <InstructionsPage />;
   }
 
   // =========================================================================
@@ -665,11 +1428,41 @@ function App() {
   // =========================================================================
 
   if (studyStage === "prolificId") {
+    const scenarioLabels = {
+      phishing: {
+        name: "Phishing Emails",
+        color: "text-gray-800",
+        bg: "bg-gray-50",
+      },
+      "dark-patterns": {
+        name: "Dark Patterns",
+        color: "text-gray-800",
+        bg: "bg-gray-50",
+      },
+      "fake-news": {
+        name: "Fake News",
+        color: "text-orange-800",
+        bg: "bg-gray-50",
+      },
+    };
+    const currentScenario = scenario || "phishing";
+    const scenarioInfo =
+      scenarioLabels[currentScenario] || scenarioLabels["phishing"];
+
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100 font-sans">
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <h1 className="text-2xl font-bold mb-6 text-center text-[#0078d4]">
-            Welcome to the Email Study
+          {/* Scenario Badge */}
+          <div className="flex justify-center mb-4">
+            <span
+              className={`${scenarioInfo.bg} ${scenarioInfo.color} px-3 py-1 rounded-full text-sm font-medium`}
+            >
+              {scenarioInfo.name} Study
+            </span>
+          </div>
+
+          <h1 className="text-2xl font-bold mb-6 text-center text-slate-800">
+            Welcome to the Research Study
           </h1>
           <p className="text-gray-600 mb-6 text-center">
             Thank you for participating in this research study.
@@ -694,12 +1487,24 @@ function App() {
             </div>
             <button
               type="submit"
-              className="w-full bg-[#0078d4] text-white py-2 px-4 rounded-md hover:bg-[#106ebe] transition-colors font-semibold flex items-center justify-center gap-2"
+              className="w-full bg-slate-800 text-white py-2 px-4 rounded-md hover:bg-slate-700 transition-colors font-semibold flex items-center justify-center gap-2"
             >
-              Continue to Survey
+              Continue
               <ArrowRight size={18} />
             </button>
           </form>
+
+          {/* Back to scenario selection */}
+          <button
+            onClick={() => {
+              localStorage.removeItem("scenario");
+              setScenario(null);
+              updateStudyStage("scenarioSelection");
+            }}
+            className="w-full mt-4 text-slate-500 hover:text-slate-700 text-sm"
+          >
+            ← Choose a different study
+          </button>
         </div>
       </div>
     );
@@ -711,12 +1516,22 @@ function App() {
 
   if (studyStage === "postExperiment") {
     return (
-      <PostExperimentSurvey
-        onComplete={handlePostSurveyComplete}
-        participantId={participantId}
-        bonusTotal={bonusTotal}
-        onGoToEmail={() => updateStudyStage("emailExperiment")}
-      />
+      <>
+        <PostExperimentSurvey
+          onComplete={handlePostSurveyComplete}
+          participantId={participantId}
+          bonusTotal={bonusTotal}
+          onGoToEmail={() => updateStudyStage("emailExperiment")}
+        />
+        <div className="fixed bottom-0 right-0 px-4 py-2 z-50">
+          <button
+            onClick={handleGoToScenarioSelector}
+            className="px-4 py-2 text-black underline rounded hover:bg-gray-200 hover:rounded-lg text-sm font-medium"
+          >
+            Go to Scenario Selector →
+          </button>
+        </div>
+      </>
     );
   }
 
@@ -758,6 +1573,12 @@ function App() {
           <p className="text-sm text-gray-500">
             You may now close this window or return to Prolific.
           </p>
+          <button
+            onClick={handleGoToScenarioSelector}
+            className="mt-4 text-slate-500 hover:text-slate-700 text-sm underline"
+          >
+            ← Back to Scenario Selector
+          </button>
         </div>
       </div>
     );
@@ -969,6 +1790,12 @@ function App() {
           className="px-4 py-2 text-black underline rounded hover:bg-gray-200 hover:rounded-lg text-sm font-medium pointer-events-auto"
         >
           ← Go to Pre-Experiment Survey
+        </button>
+        <button
+          onClick={handleGoToScenarioSelector}
+          className="px-4 py-2 text-black underline rounded hover:bg-gray-200 hover:rounded-lg text-sm font-medium pointer-events-auto"
+        >
+          Go to Scenario Selector
         </button>
         <button
           onClick={() => {

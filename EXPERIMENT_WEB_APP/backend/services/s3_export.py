@@ -47,7 +47,7 @@ class S3Exporter:
     def __init__(self):
         """Initialize S3 client with environment variables."""
         self.s3_client = None
-        self.bucket_name = os.getenv('S3_BUCKET_NAME', 'cypearl-research-data')
+        self.bucket_name = os.getenv('S3_BUCKET_NAME')
         self.enabled = False
         self.region = os.getenv('AWS_REGION', 'eu-west-1')
 
@@ -56,7 +56,7 @@ class S3Exporter:
         self.prefix_archive = 'archive/'      # Versioned snapshots
         self.metadata_key = '_export_metadata.json'
 
-        if os.getenv('AWS_ACCESS_KEY_ID'):
+        if os.getenv('AWS_ACCESS_KEY_ID') and self.bucket_name:
             try:
                 self.s3_client = boto3.client(
                     's3',
@@ -79,7 +79,7 @@ class S3Exporter:
             except Exception as e:
                 print(f"✗ S3 initialization failed: {e}")
         else:
-            print("⚠ S3 Export disabled: AWS_ACCESS_KEY_ID not set")
+            print("⚠ S3 Export disabled: AWS_ACCESS_KEY_ID and/or S3_BUCKET_NAME not set")
 
     # ─────────────────────────────────────────────────────────────────────────
     # Export Tracking & Deduplication
@@ -327,22 +327,22 @@ class S3Exporter:
             'state_anxiety': post_survey.get('state_anxiety'),
             'current_stress': post_survey.get('current_stress'),
             'fatigue_level': post_survey.get('fatigue_level'),
-            # Security attitudes
-            'phishing_self_efficacy': pre_survey.get('phishing_self_efficacy'),
-            'perceived_risk': pre_survey.get('perceived_risk'),
-            'security_attitudes': pre_survey.get('security_attitudes'),
+            # Security attitudes (moved to post-survey to avoid priming)
+            'phishing_self_efficacy': post_survey.get('phishing_self_efficacy'),
+            'perceived_risk': post_survey.get('perceived_risk'),
+            'security_attitudes': post_survey.get('security_attitudes'),
             'privacy_concern': pre_survey.get('privacy_concern'),
-            # Knowledge & experience
-            'phishing_knowledge': pre_survey.get('phishing_knowledge'),
+            # Knowledge & experience (moved to post-survey to avoid priming)
+            'phishing_knowledge': post_survey.get('phishing_knowledge'),
             'technical_expertise': pre_survey.get('technical_expertise'),
-            'prior_victimization': pre_survey.get('prior_victimization'),
-            'security_training': pre_survey.get('security_training'),
-            'years_email_use': pre_survey.get('years_email_use'),
+            'prior_victimization': post_survey.get('prior_victimization'),
+            'security_training': post_survey.get('security_training'),
+            'years_email_use': post_survey.get('years_email_use'),
             # Email habits
             'daily_email_volume': pre_survey.get('daily_email_volume'),
             'email_volume_numeric': pre_survey.get('email_volume_numeric'),
             'email_check_frequency': pre_survey.get('email_check_frequency'),
-            'link_click_tendency': pre_survey.get('link_click_tendency'),
+            'link_click_tendency': post_survey.get('link_click_tendency'),
             'social_media_usage': pre_survey.get('social_media_usage'),
             # Influence susceptibility
             'authority_susceptibility': pre_survey.get('authority_susceptibility'),

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#1E40AF" stroke="#1E3A8A" stroke-width="1"/>
+  <!-- Newspaper icon -->
+  <rect x="7" y="8" width="18" height="16" rx="1" fill="white" stroke="#1E3A8A" stroke-width="0.5"/>
+  <!-- Headline bar -->
+  <rect x="9" y="10" width="14" height="3" fill="#1E40AF"/>
+  <!-- Text lines -->
+  <rect x="9" y="15" width="6" height="1.5" fill="#9CA3AF"/>
+  <rect x="9" y="18" width="14" height="1" fill="#D1D5DB"/>
+  <rect x="9" y="20" width="14" height="1" fill="#D1D5DB"/>
+  <!-- Image placeholder -->
+  <rect x="16" y="14.5" width="7" height="5" fill="#E5E7EB" stroke="#9CA3AF" stroke-width="0.3"/>
+</svg>

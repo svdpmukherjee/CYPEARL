@@ -620,14 +620,14 @@ export default function App() {
                 <p className="text-xs uppercase tracking-wider text-slate-800 mb-0.5">
                   Estimated total time
                 </p>
-                <p className="text-lg font-bold">~7 mins</p>
+                <p className="text-lg font-bold">~15 mins</p>
               </div>
               <div className="w-px h-8 bg-slate-500" />
               <div className="text-center">
                 <p className="text-xs uppercase tracking-wider text-slate-800 mb-0.5">
                   Base compensation
                 </p>
-                <p className="text-lg font-bold">£1.00</p>
+                <p className="text-lg font-bold">£2.25</p>
               </div>
               <div className="w-px h-8 bg-slate-500" />
               <div className="text-center">

@@ -30,7 +30,7 @@ To make the task concrete, Part A opens with this annotated example. For each se
 <p align="center">
   <img src="frontend/src/assets/sample_email.jpg"
        alt="Annotated example of how participants describe one email in Part A"
-       width="600" />
+       width="700" />
 </p>
 
 ## What it collects

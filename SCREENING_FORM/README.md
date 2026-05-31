@@ -37,18 +37,13 @@ To make the task concrete, Part A opens with this annotated example. For each se
 
 For each participant's job cluster:
 
-- **Job role confirmation** plus a free-text description of daily responsibilities
-- **Senders:** who emails them (role, internal vs. external, frequency)
-- **Content:** typical subjects, themes, and communication patterns
-- **Generic emails:** non-job-specific mail everyone receives (IT alerts, HR notices)
-- **Suspicious emails:** workplace mail they find hard to judge
-- **Sender's job role** — who typically sends this email (no personal names).
-- **Inside / outside** your organisation.
-- **Subject line** — a short, realistic example.
-- **About** — a one-line summary of what the email is for.
-- **How often** you receive this type of email.
-- **Add another email** — describe one more email type from the same sender.
-- **Move to next sender** — start describing emails from a different job role.
+1. **Sender's job role** — who typically sends this email (no personal names).
+2. **Inside / outside** your organisation.
+3. **Subject line** — a short, realistic example.
+4. **About** — a one-line summary of what the email is for.
+5. **How often** you receive this type of email.
+6. **Add another email** — describe one more email type from the same sender.
+7. **Move to next sender** — start describing emails from a different job role.
 
 Targeting 6-7 participant responses per each of the 10 job clusters.
 

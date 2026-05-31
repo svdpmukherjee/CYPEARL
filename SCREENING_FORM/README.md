@@ -25,7 +25,13 @@ A guided, single-sitting flow (about 10 minutes). Progress is auto-saved after e
 
 To make the task concrete, Part A opens with this annotated example. For each sender, the participant gives the sender's job role (no personal names), whether they are inside or outside the organisation, then for each email a subject line, a one-line summary of what it is about, and how often it arrives. They can add more emails from the same sender or move on to a new one.
 
-![Annotated example of how participants describe one email in Part A](frontend/src/assets/sample_email.jpg)
+<!-- ![Annotated example of how participants describe one email in Part A](frontend/src/assets/sample_email.jpg) -->
+
+<p align="center">
+  <img src="frontend/src/assets/sample_email.jpg"
+       alt="Annotated example of how participants describe one email in Part A"
+       width="600" />
+</p>
 
 ## What it collects
 

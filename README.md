@@ -1,8 +1,10 @@
-# CYPEARL
+# CYPEARL (Cyber Synthetic Persona Creation and Evaluation for Adversarial Resilience)
 
-**Phishing Susceptibility as a Behavioral Function: from ecological measurement to AI-persona simulation.**
+CYPEARL is designed to span **three adversarial-resilience domains: phishing, dark patterns, and fake news**, all sharing the same persona-creation and validation approach. **The current focus is phishing**, the most mature track; dark patterns and fake news are planned extensions that will reuse the same pipeline.
 
-CYPEARL is a research program that studies _why_ people fall for phishing at work, builds a formal behavioral model of that decision, and then asks whether AI personas can stand in for real employees when testing phishing defenses.
+**ADVERSARIAL DOMAIN 1**: Phishing Susceptibility as a Behavioral Function — from ecological measurement to AI-persona simulation.
+
+CYPEARL provides a research program that studies _why_ people fall for phishing at work, builds a formal behavioral model of that decision, and then asks whether AI personas can stand in for real employees when testing phishing defenses.
 
 ## Why this project
 

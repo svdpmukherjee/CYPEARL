@@ -1,0 +1,250 @@
+{
+  "_README": [
+    "This file holds ALL the words shown to participants. You can edit any text",
+    "below and the change appears in the app after you save this file and refresh",
+    "the browser. No coding and no rebuild are needed.",
+    "",
+    "How to edit safely:",
+    "1. Only change the text INSIDE the double quotes, for example the part after",
+    "   a label like \"title\": \"...edit this...\".",
+    "2. Keep every quote, comma, colon and curly brace exactly where it is. If the",
+    "   page goes blank after an edit, you most likely deleted a quote or comma.",
+    "3. To make a word bold, wrap it in **double stars**. For italic, use *single",
+    "   stars*. Example: \"You will read **16 emails**, one at a time.\"",
+    "4. Words inside curly braces such as {role}, {name} or {total} are filled in",
+    "   automatically by the app. Leave the braces and the word inside them as is.",
+    "5. Lines starting with an underscore, like this _README, are notes for you",
+    "   and are never shown to participants.",
+    "",
+    "Compensation and timing live in instructions.compensation below.",
+    "Job area display names (for example turning 'Cust Service' into 'Customer",
+    "Service') live in clusterLabels. Each assigned role's title and description",
+    "live in the roles section."
+  ],
+
+  "app": {
+    "brand": "Email Realism Validation"
+  },
+
+  "clusterLabels": {
+    "_note": "Left side = the value stored in the database (do not change). Right side = what participants see on screen.",
+    "Cust Service": "Customer Service"
+  },
+
+  "instructions": {
+    "title": "About this study",
+    "lead": "Here is what the rest of the study involves before you agree to take part.",
+    "whatYouDoHeading": "What you will do",
+    "whatYouDo": [
+      "Enter your Prolific ID so we can credit you.",
+      "Answer two quick checks about your role.",
+      "Read **16 emails** one at a time. They vary in sender, urgency, and tone.",
+      "Rate how realistic each one is and say why. If something feels off, mark the exact part and rewrite it as you would expect."
+    ],
+    "compensation": "There are no right or wrong answers. It takes about **25 minutes** and pays **£3.75**.",
+    "consentHeading": "Consent",
+    "consentText": "Your responses are collected for academic research on how people judge the realism of workplace emails. Participation is voluntary and you may stop at any time. Responses are stored against your Prolific ID, kept confidential, and used only for research.",
+    "consentCheckbox": "I have read the above and I consent to take part in this study.",
+    "consentButton": "I consent, continue",
+    "backButton": "Back"
+  },
+
+  "clusterSelect": {
+    "title": "Email realism validation",
+    "lead": "Thank you for taking part. In this short study you will take on a work role from an area close to your own, and read a set of everyday emails written as if they landed in that role's inbox. We want your honest judgement of whether each email feels realistic for that role.",
+    "selectPrompt": "Which job area is closest to you?",
+    "selectHelp": "Pick the single area that best matches your own work experience. The emails you review will be written for a role in that area.",
+    "loading": "Loading job areas...",
+    "continueButton": "Continue"
+  },
+
+  "prolific": {
+    "title": "Your Prolific ID",
+    "lead": "Please enter your Prolific ID exactly as it appears in your Prolific account.",
+    "fieldLabel": "Prolific ID",
+    "placeholder": "e.g. 5f8a2c3b1d9e4f0a7b6c5d4e",
+    "invalidHint": "That does not look like a Prolific ID. Check for spaces or missing characters.",
+    "backButton": "Back",
+    "continueButton": "Continue"
+  },
+
+  "role": {
+    "title": "Your job role for this task",
+    "lead": "For the rest of the study, imagine you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations, procurement and more) and contacts both inside and outside it. Every email you read has landed in your inbox.",
+    "guidance": "As you read each one, judge how realistic it is: would someone in this role genuinely receive this email, from this kind of sender, at this level of urgency, in this tone?",
+    "fitHeading": "Before you continue",
+    "fitText": "We will ask your **expert opinion** on the emails a **{role}** typically receives at work. You do not need to have held this exact job, but it should be familiar enough that you can judge which of its emails are realistic.",
+    "fitQuestion": "Do you feel you know this kind of role well enough to judge which emails are realistic for it?",
+    "fitConfirmButton": "Yes, this is familiar to me, continue",
+    "fitDeclineButton": "No, I do not know this kind of role well",
+    "backButton": "Back",
+    "exitTitle": "This study may not be a good fit",
+    "exitText": "Thank you for your honesty. This study needs people who are familiar with the day-to-day emails of the role shown, so your responses would not be the right fit here. No data has been saved and you have not consented to anything.",
+    "exitProlificNote": "Please return your submission on Prolific so it can be offered to someone else.",
+    "exitProlificButton": "Take me back to my Prolific",
+    "exitProlificUrl": "https://prolific.com"
+  },
+
+  "checks": {
+    "heading": "Quick checks",
+    "intro": "Two quick questions to confirm the role is clear. The emails only make sense once you are picturing yourself in it.",
+    "_note": "For each question, 'answer' is the number of the correct option, counting the options from the top starting at 1. Keep the correct option and 'answer' in sync if you reorder them.",
+    "questions": [
+      {
+        "prompt": "For the rest of this study, who should you imagine you are?",
+        "options": [
+          "Myself, in my own current job",
+          "A {role} at a large company",
+          "A customer writing in to the company",
+          "A job applicant hoping to be hired"
+        ],
+        "answer": 2
+      },
+      {
+        "prompt": "When you rate each email, what are you mainly judging?",
+        "options": [
+          "Whether the email has spelling or grammar mistakes",
+          "Whether I personally like the sender",
+          "Whether a {role} would realistically receive an email like this",
+          "Whether the email is polite enough"
+        ],
+        "answer": 3
+      }
+    ],
+    "error": "Not quite. Think again about your role, then choose again.",
+    "submit": "Confirm and continue",
+    "backButton": "Back"
+  },
+
+  "recap": {
+    "pageTitle": "Before you begin",
+    "recapHeading": "Quick recap of the task",
+    "recapPoints": [
+      "You will read **16 emails**, one per page, each addressed to you as a **{role}**.",
+      "For each, first rate **how realistic** it is for your role.",
+      "If **anything feels off**, tell us what, then use the **Edit** buttons to rewrite just those parts.",
+      "You can add an optional comment before the next email."
+    ],
+    "nameHeading": "Pick a name for the emails",
+    "nameLead": "So the emails read naturally, each will greet you by a first name you choose (for example, *Dear Alex,*).",
+    "nameWarning": "Please do **not** use your own real name.",
+    "nameFieldLabel": "First name to use in the emails",
+    "namePlaceholder": "e.g. Alex",
+    "nameInvalidHint": "Please enter a single first name using letters only.",
+    "nameConfirmCheckbox": "I confirm this is not my own real name.",
+    "backButton": "Back",
+    "startButton": "Start reading the emails"
+  },
+
+  "email": {
+    "conditionsTitle": "What to expect in this email",
+    "conditions": {
+      "_note": "The line at the top of the email is built from these three parts, chosen by each email's conditions. Bold (**word**) marks the key idea being tested. Keep it reading as one natural sentence when the three parts are joined by commas.",
+      "dir": {
+        "higher": "This email is from a **more senior colleague**",
+        "peerlower": "This email is from a **peer or more junior colleague**"
+      },
+      "urg": {
+        "high": "asking you to act on a task **urgently**",
+        "low": "with **no urgency**"
+      },
+      "frame": {
+        "threat": "and warns of **consequences** if you do not act as asked",
+        "reward": "and offers a **benefit** for acting"
+      }
+    },
+    "subjectLabel": "Subject:",
+    "greeting": "Dear {name},",
+    "signOff": "Best regards,",
+    "mobileLabel": "Mobile",
+    "questionsIntro": "Now please answer the questions below about the email above.",
+    "q1Heading": "1. Is this email realistic for your role?",
+    "q1Sub": "As a {role}, would an email like this, from this kind of sender, put this way, realistically land in your inbox? Judge the sender, the urgency, and the framing **as a combination**, not each on its own.",
+    "realismLabels": [
+      "Not at all",
+      "Slightly",
+      "Moderately",
+      "Very",
+      "Completely"
+    ],
+    "q1Required": "Please choose a rating to continue.",
+    "reasonHeading": "In a sentence or two, why did you give that rating?",
+    "reasonSub": "Tell us what made it feel realistic or not for a **{role}**. This helps us understand your rating.",
+    "reasonPlaceholder": "For example: someone at my level would never be asked this directly by senders like CEO...",
+    "reasonRequired": "Please add a short explanation for your rating to continue.",
+    "q2Heading": "2. Some people have said an email like this does not feel quite usual. Did anything feel off or unusual?",
+    "q2Optional": "",
+    "q2Sub": "If nothing did, you can leave this blank.",
+    "offOptions": [
+      { "key": "sender", "label": "Who it is from" },
+      { "key": "urgency", "label": "How urgent it is" },
+      { "key": "tone", "label": "Its tone or wording" },
+      { "key": "task", "label": "What it asks you to do" },
+      { "key": "link", "label": "The link" },
+      { "key": "other", "label": "Something else" }
+    ],
+    "editCallout": "You flagged something. Go up to the email and use the **Edit** button next to the section you would change, then rewrite it the way you would expect to see it.",
+    "linkTextLabel": "Link text as you would expect it",
+    "linkUrlLabel": "Where it should point (address)",
+    "editButton": "Edit",
+    "editAgainButton": "Edited - edit again",
+    "doneButton": "Done",
+    "resetButton": "Reset",
+    "commentHeading": "Anything else about this email you would like to highlight? (optional)",
+    "commentPlaceholder": "Free text",
+    "backButton": "Back",
+    "nextButton": "Next email",
+    "finishButton": "Finish"
+  },
+
+  "done": {
+    "title": "Thank you",
+    "lead": "Your responses for all 16 emails have been recorded. You can now return to Prolific to complete your submission.",
+    "prolificLabel": "Prolific ID on file:",
+    "restartButton": "Start over"
+  },
+
+  "roles": {
+    "_note": "Each key is the job area as stored in the database. 'title' is the assigned role name and 'description' is the short blurb shown on the role and recap pages.",
+    "Finance": {
+      "title": "Financial Accountant",
+      "description": "Mid-level finance. Sits below the Controller and Director, above junior payroll and admin staff."
+    },
+    "IT": {
+      "title": "IT Support Analyst",
+      "description": "Front-line IT helpdesk. Most work arrives from managers above, IT peers, and internal requesters."
+    },
+    "HR": {
+      "title": "Recruitment Coordinator",
+      "description": "Coordinates hiring end to end. Balanced traffic from managers above, HR and payroll peers, and junior HR and health staff below."
+    },
+    "Sales": {
+      "title": "Sales Executive",
+      "description": "Mid-level B2B account manager. Traffic from the sales manager and head of sales above, account-manager and sales-executive peers alongside, and payroll and HR below."
+    },
+    "Operations": {
+      "title": "Operations Manager",
+      "description": "Runs day-to-day business operations. A little traffic from operations and finance leadership above, fellow operations and facilities managers as peers, and operations coordinators, administrators and compliance support below."
+    },
+    "Cust Service": {
+      "title": "Customer Support Specialist",
+      "description": "Handles corporate customer accounts, orders and complaints. Traffic from customer service team leaders and managers above, and lateral internal functions (billing, order fulfilment, HR, quality, e-commerce operations) as peers. No junior senders in the data."
+    },
+    "Marketing": {
+      "title": "Marketing Manager",
+      "description": "Owns campaigns and budgets. Traffic from marketing and sales leadership above, finance, sales, customer-service and marketing peers laterally, and marketing executives, coordinators and assistants below."
+    },
+    "Procurement": {
+      "title": "Procurement Specialist",
+      "description": "Sits below the Head of Procurement and Procurement Director. Traffic from procurement, commercial and purchasing managers above; logistics, supply-planning, R&D, legal and sales peers laterally; junior buyers, accounts payable and junior analysts below."
+    },
+    "Admin": {
+      "title": "Executive Assistant",
+      "description": "Supports senior leadership with scheduling, travel, correspondence and office coordination. Heavy traffic from the MD, CEO, board and directors above; HR, IT, finance, recruitment and travel-desk peers laterally; and account managers, support and freight coordinators below."
+    },
+    "Compliance": {
+      "title": "Compliance Officer",
+      "description": "Handles KYC/CDD checks, transaction-monitoring alerts and case escalations. Traffic from the Head of Compliance, MLRO, financial-crime and risk managers above; IT support, recruitment and fellow analysts laterally; and junior auditors, IT service desk and coordinators below."
+    }
+  }
+}

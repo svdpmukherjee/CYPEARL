@@ -1,0 +1,16 @@
+{
+  "name": "cypearl-validation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vercel project root: builds the frontend and hosts the Express API as a serverless function.",
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongodb": "^6.8.0"
+  }
+}

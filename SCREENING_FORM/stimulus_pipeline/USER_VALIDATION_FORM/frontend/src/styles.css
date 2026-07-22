@@ -1,0 +1,783 @@
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --ink: #1c2230;
+  --muted: #5c6577;
+  --line: #e4e7ee;
+  --accent: #3730a3;
+  --accent-soft: #eef0fb;
+  --error: #be123c;
+  --chip: #eef1f6;
+  --shadow: 0 1px 2px rgba(20, 25, 40, 0.06), 0 6px 20px rgba(20, 25, 40, 0.06);
+  /* the email itself renders in a single near-black ink on paper */
+  --mail-paper: #ffffff;
+  --mail-ink: #111214;
+  --mail-line: #e2e2e4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1420;
+    --panel: #171d2b;
+    --ink: #e8ecf4;
+    --muted: #98a2b8;
+    --line: #28303f;
+    --accent: #a5b4fc;
+    --accent-soft: #1e2540;
+    --error: #fb7185;
+    --chip: #1e2636;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --mail-paper: #f4f4f5;
+    --mail-ink: #111214;
+    --mail-line: #d9d9dc;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font:
+    15px/1.55 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+/* ---- top bar + progress ---- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 20px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.brand {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+.progresswrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+.pbar {
+  flex: 1;
+  height: 7px;
+  background: var(--chip);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.pbar > i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s;
+}
+.plabel {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.errbar {
+  background: color-mix(in srgb, var(--error) 12%, var(--panel));
+  color: var(--ink);
+  border-bottom: 1px solid var(--error);
+  padding: 8px 20px;
+  font-size: 13px;
+}
+.errbar button {
+  margin-left: 10px;
+}
+
+.stage {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 26px 20px 140px;
+}
+
+/* ---- generic cards ---- */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 26px 28px;
+  box-shadow: var(--shadow);
+}
+.card.wide {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 34px 38px;
+}
+.card.center {
+  text-align: center;
+}
+
+/* Screening pages (job area, role, instructions, Prolific ID, checks, recap)
+   share .card.wide. Give them a calmer vertical rhythm so the sections do not
+   read as congested. Scoped here so the email pages are untouched. */
+.card.wide h1 {
+  margin: 0 0 18px;
+}
+.card.wide h2 {
+  margin: 34px 0 12px;
+}
+.card.wide .lead {
+  line-height: 1.6;
+  margin: 0 0 18px;
+}
+.card.wide > p {
+  margin: 0 0 16px;
+}
+.card.wide > p.muted {
+  margin-bottom: 20px;
+}
+.card.wide .rolepanel {
+  margin: 20px 0 24px;
+}
+.card.wide .notice {
+  margin: 18px 0 8px;
+}
+.card.wide .consentbox {
+  margin-top: 12px;
+}
+.card.wide .field {
+  margin: 20px 0;
+}
+.card.wide .fitchoice {
+  margin: 14px 0 6px;
+}
+.card.wide .checkq {
+  margin: 24px 0;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-size: 15px;
+  margin: 22px 0 8px;
+}
+.lead {
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 12.5px;
+}
+.error {
+  color: var(--error);
+}
+.noteline {
+  margin-top: 12px;
+}
+
+.steps {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.steps li {
+  margin: 7px 0;
+}
+
+.consentbox {
+  background: var(--chip);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 8px;
+}
+.consentbox p {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.check input {
+  margin-top: 3px;
+}
+
+.warn {
+  background: color-mix(in srgb, var(--error) 9%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--error) 45%, var(--line));
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  margin: 10px 0;
+}
+
+/* attention-drawing callout (for example the compensation line) */
+.notice {
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 15px;
+  font-size: 14px;
+  margin: 14px 0 4px;
+}
+
+/* ---- attention-check questions (role page) ---- */
+.checkq {
+  margin: 16px 0;
+}
+.checkq .qh {
+  margin-bottom: 10px;
+}
+.optlist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.optbtn {
+  cursor: pointer;
+  text-align: left;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.optbtn:hover {
+  border-color: var(--muted);
+}
+.optbtn.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.reasonwrap {
+  margin-top: 26px;
+}
+.reasonwrap .qh {
+  margin-bottom: 4px;
+}
+
+/* ---- fields ---- */
+.field {
+  display: flex;
+  flex-direction: column;
+  margin: 14px 0;
+}
+.field label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+input[type="text"],
+textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+}
+textarea {
+  resize: vertical;
+}
+.hint {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+/* ---- cluster grid ---- */
+.clustergrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0 4px;
+}
+.clustercard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 15px;
+  color: var(--ink);
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.clustercard:hover {
+  border-color: var(--muted);
+}
+.clustercard.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.clustercard .cname {
+  font-weight: 700;
+  font-size: 15px;
+}
+.clustercard .crole {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ---- role panel ---- */
+.rolepanel {
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 14px 0;
+}
+.rolearea {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.roletitle {
+  font-size: 20px;
+  font-weight: 750;
+  margin: 2px 0 6px;
+}
+.rolenote {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.recap {
+  background: var(--chip);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.recap h2 {
+  margin-top: 0;
+}
+.recap ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.recap li {
+  margin: 6px 0;
+}
+
+/* ---- email page ---- */
+.emailpage {
+  max-width: 920px;
+  margin: 0 auto;
+}
+.emailhead {
+  margin-bottom: 10px;
+}
+.emailhead .idx {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.conditions {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.condtitle {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.condlist {
+  margin: 0;
+  padding-left: 20px;
+}
+.condlist li {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 4px 0;
+}
+.condlist li strong {
+  font-weight: 700;
+}
+
+/* the email: a distinct sheet of paper, elevated so it clearly reads as the
+   object under review, separate from the surrounding panels */
+.mailcard {
+  background: color-mix(in srgb, var(--mail-paper) 97%, #c9a86a 3%);
+  color: var(--mail-ink);
+  border: 1px solid var(--mail-line);
+  border-radius: 16px;
+  padding: 26px 30px;
+  box-shadow: 0 8px 30px rgba(20, 25, 40, 0.13);
+  margin-bottom: 22px;
+}
+.mailcard * {
+  color: var(--mail-ink);
+}
+
+/* the "what to expect" summary, sitting at the top of the email sheet */
+.condbanner {
+  border-bottom: 1px solid var(--mail-line);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+.condbanner .condtitle {
+  color: var(--mail-ink);
+  opacity: 0.55;
+  margin-bottom: 6px;
+}
+.condbanner .condsentence {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--mail-ink);
+  margin: 0;
+}
+.condbanner .condsentence strong {
+  font-weight: 700;
+}
+
+.secrow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 3px 0;
+}
+.secrow .seccontent {
+  flex: 1;
+  min-width: 0;
+}
+.secrow.edited .seccontent {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+}
+.secrow.subjectrow {
+  border-bottom: 1px solid var(--mail-line);
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.msubject {
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.mfieldkey {
+  font-weight: 700;
+  color: var(--mail-ink);
+  opacity: 0.55;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 2px;
+}
+.mgreet {
+  margin: 12px 0 8px;
+}
+.mline {
+  margin: 10px 0;
+  line-height: 1.55;
+}
+.mlink {
+  color: var(--mail-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.msign {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--mail-line);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.msign .signname {
+  font-weight: 700;
+}
+.msign .signcontact {
+  color: var(--mail-ink);
+  opacity: 0.75;
+  font-size: 12.5px;
+}
+
+.secactions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.editbtn {
+  cursor: pointer;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid var(--mail-line);
+  background: transparent;
+  color: var(--mail-ink);
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.editbtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.editbtn.done {
+  border-color: var(--mail-ink);
+  font-weight: 700;
+}
+.editbtn.reset {
+  opacity: 0.7;
+}
+
+.editarea,
+.editfields input {
+  width: 100%;
+  font: inherit;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--mail-line);
+  background: #fff;
+  color: var(--mail-ink);
+}
+.editfields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.editfields label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* ---- question blocks ---- */
+/* the three questions live in one panel, separated by generous spacing */
+.questions {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.questionsintro {
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.questions .qblock {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+.questions .qblock + .qblock {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+.qh {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+.qh.small {
+  font-size: 15px;
+}
+.qsub {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.scale {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.scaleopt {
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: 92px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.scaleopt .n {
+  font-weight: 750;
+  font-size: 16px;
+}
+.scaleopt .t {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+.scaleopt.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.scaleopt.on .t {
+  color: var(--ink);
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.flag {
+  cursor: pointer;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.flag.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.editcallout {
+  margin-top: 12px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13px;
+}
+
+.commentarea {
+  width: 100%;
+  min-height: 60px;
+}
+
+/* ---- nav ---- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 22px;
+  gap: 12px;
+}
+.navbar.center {
+  justify-content: center;
+}
+.navbar.sticky {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding: 12px 0;
+  margin-top: 16px;
+}
+.btn {
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 10px 18px;
+  border-radius: 10px;
+  /* .btn is also used on <a> (for example the exit-page Prolific link) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.btn:hover {
+  border-color: var(--muted);
+}
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn.primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn.subtle {
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+}
+.btn.subtle:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+
+/* familiarity (fit) gate on the role page */
+.fitchoice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 4px;
+}

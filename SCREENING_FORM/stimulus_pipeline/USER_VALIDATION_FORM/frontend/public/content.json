@@ -17,9 +17,9 @@
     "   and are never shown to participants.",
     "",
     "Compensation and timing live in instructions.compensation below.",
-    "Job area display names (for example turning 'Cust Service' into 'Customer",
-    "Service') live in clusterLabels. Each assigned role's title and description",
-    "live in the roles section."
+    "Job areas are stored with readable names, so they show as-is. Optional",
+    "on-screen renames live in clusterLabels. Each assigned role's title and",
+    "description live in the roles section, keyed by the job area name."
   ],
 
   "app": {
@@ -27,8 +27,7 @@
   },
 
   "clusterLabels": {
-    "_note": "Left side = the value stored in the database (do not change). Right side = what participants see on screen.",
-    "Cust Service": "Customer Service"
+    "_note": "Optional display overrides. Left side = the exact value stored in the database, right side = what participants see on screen. The job areas are already stored with readable names, so no overrides are needed. Add an entry here only if you ever want to show a different label for one."
   },
 
   "instructions": {
@@ -70,8 +69,8 @@
 
   "role": {
     "title": "Your job role for this task",
-    "lead": "For the rest of the study, imagine you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations, procurement and more) and contacts both inside and outside it. Every email you read has landed in your inbox.",
-    "guidance": "As you read each one, judge how realistic it is: would someone in this role genuinely receive this email, from this kind of sender, at this level of urgency, in this tone?",
+    "lead": "For the rest of the study, imagine you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations, procurement and more). You receive **work-related emails** from them.",
+    "rolePrefix": "You are",
     "fitHeading": "Before you continue",
     "fitText": "We will ask your **expert opinion** on the emails a **{role}** typically receives at work. You do not need to have held this exact job, but it should be familiar enough that you can judge which of its emails are realistic.",
     "fitQuestion": "Do you feel you know this kind of role well enough to judge which emails are realistic for it?",
@@ -133,24 +132,48 @@
     "nameInvalidHint": "Please enter a single first name using letters only.",
     "nameConfirmCheckbox": "I confirm this is not my own real name.",
     "backButton": "Back",
-    "startButton": "Start reading the emails"
+    "startButton": "Continue"
+  },
+
+  "priorJudgments": {
+    "_note": [
+      "Shown once, right after the recap and before the 16 emails. Participants give their general expectation for eight everyday email situations BEFORE they have seen any of our example emails, so these are their un-primed judgments. The eight items are the 2x2x2 combinations of sender (more senior vs peer or junior), urgency (right away vs no rush) and framing (a problem to avoid vs a benefit to gain). Keep the wording plain and do NOT name those three factors on screen. The order is shuffled per participant automatically. 'key' is stored in the data and must not be changed; edit only the 'text'."
+    ],
+    "pageTitle": "Before you begin reading",
+    "lead": "Before you read any of the emails, we would like your **general expectation**. Below are eight everyday situations. For each, tell us how believable it is that you, as a **{role}**, would receive an email like that at work. There are no right answers, and you have not seen our emails yet, so just go with your honest sense.",
+    "scaleLabels": ["Not at all believable", "Slightly believable", "Moderately believable", "Very believable", "Completely believable"],
+    "requiredHint": "Please rate all eight situations before you continue.",
+    "backButton": "Back",
+    "startButton": "Start reading the emails",
+    "items": [
+      { "key": "higher_high_threat",    "text": "A **senior** colleague asks you to do a task **with a priority**, mentioning a **potential consequence** if you do not do it." },
+      { "key": "higher_high_reward",    "text": "A **senior** colleague asks you to do a task **with a priority**, mentioning a **reward** if you do it." },
+      { "key": "higher_low_threat",     "text": "A **senior** colleague asks you to do a task **with no rush**, mentioning a **potential consequence** if you do not do it." },
+      { "key": "higher_low_reward",     "text": "A **senior** colleague asks you to do a task **with no rush**, mentioning a **reward** if you do it." },
+      { "key": "peerlower_high_threat", "text": "A **peer or junior** colleague asks you to do a task **with a priority**, mentioning a **potential consequence** if you do not do it." },
+      { "key": "peerlower_high_reward", "text": "A **peer or junior** colleague asks you to do a task **with a priority**, mentioning a **reward** if you do it." },
+      { "key": "peerlower_low_threat",  "text": "A **peer or junior** colleague asks you to do a task **with no rush**, mentioning a **potential consequence** if you do not do it." },
+      { "key": "peerlower_low_reward",  "text": "A **peer or junior** colleague asks you to do a task **with no rush**, mentioning a **reward** if you do it." }
+    ]
   },
 
   "email": {
     "conditionsTitle": "What to expect in this email",
+    "conditionsSentence": "This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.",
+    "conditionsLead": "Read it as if it just arrived in your inbox, then answer the questions below.",
     "conditions": {
-      "_note": "The line at the top of the email is built from these three parts, chosen by each email's conditions. Bold (**word**) marks the key idea being tested. Keep it reading as one natural sentence when the three parts are joined by commas.",
+      "_note": "The summary line at the top of each email is built from these parts and is worded to match the eight situations on the 'Before you begin reading' page. The template is conditionsSentence above: 'This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.' Keep the **bold** on the sender, the urgency phrase and the reward/consequence.",
       "dir": {
-        "higher": "This email is from a **more senior colleague**",
-        "peerlower": "This email is from a **peer or more junior colleague**"
+        "higher": "a **senior** colleague",
+        "peerlower": "a **peer or junior** colleague"
       },
       "urg": {
-        "high": "asking you to act on a task **urgently**",
-        "low": "with **no urgency**"
+        "high": "**with a priority**",
+        "low": "**with no rush**"
       },
       "frame": {
-        "threat": "and warns of **consequences** if you do not act as asked",
-        "reward": "and offers a **benefit** for acting"
+        "threat": "a **potential consequence** if you do not do it",
+        "reward": "a **reward** if you do it"
       }
     },
     "subjectLabel": "Subject:",
@@ -158,40 +181,30 @@
     "signOff": "Best regards,",
     "mobileLabel": "Mobile",
     "questionsIntro": "Now please answer the questions below about the email above.",
+    "stepLabel": "Question {n} of 3",
     "q1Heading": "1. Is this email realistic for your role?",
     "q1Sub": "As a {role}, would an email like this, from this kind of sender, put this way, realistically land in your inbox? Judge the sender, the urgency, and the framing **as a combination**, not each on its own.",
     "realismLabels": [
-      "Not at all",
-      "Slightly",
-      "Moderately",
-      "Very",
-      "Completely"
+      "Not at all realistic",
+      "Slightly realistic",
+      "Moderately realistic",
+      "Very realistic",
+      "Completely realistic"
     ],
     "q1Required": "Please choose a rating to continue.",
-    "reasonHeading": "In a sentence or two, why did you give that rating?",
-    "reasonSub": "Tell us what made it feel realistic or not for a **{role}**. This helps us understand your rating.",
-    "reasonPlaceholder": "For example: someone at my level would never be asked this directly by senders like CEO...",
-    "reasonRequired": "Please add a short explanation for your rating to continue.",
-    "q2Heading": "2. Some people have said an email like this does not feel quite usual. Did anything feel off or unusual?",
-    "q2Optional": "",
-    "q2Sub": "If nothing did, you can leave this blank.",
-    "offOptions": [
-      { "key": "sender", "label": "Who it is from" },
-      { "key": "urgency", "label": "How urgent it is" },
-      { "key": "tone", "label": "Its tone or wording" },
-      { "key": "task", "label": "What it asks you to do" },
-      { "key": "link", "label": "The link" },
-      { "key": "other", "label": "Something else" }
-    ],
-    "editCallout": "You flagged something. Go up to the email and use the **Edit** button next to the section you would change, then rewrite it the way you would expect to see it.",
-    "linkTextLabel": "Link text as you would expect it",
-    "linkUrlLabel": "Where it should point (address)",
-    "editButton": "Edit",
-    "editAgainButton": "Edited - edit again",
-    "doneButton": "Done",
-    "resetButton": "Reset",
-    "commentHeading": "Anything else about this email you would like to highlight? (optional)",
-    "commentPlaceholder": "Free text",
+    "q2Heading": "2. In a sentence or two, why did you give that rating?",
+    "q2Sub": "Tell us what made it feel realistic or not for a **{role}**. This helps us understand your rating.",
+    "q2Placeholder": "For example: someone at my level would never be asked this directly by a sender like a CEO.",
+    "q2Required": "Please add a short explanation for your rating to continue.",
+    "q3Heading": "3. Would you change anything to make it more realistic for your role?",
+    "q3Sub": "Optional. If anything felt unrealistic for a **{role}**, feel free to edit the email directly to show what you would change. You can also add a short note below. If it all seems realistic, you can leave it as it is.",
+    "q3EditButton": "Edit the email",
+    "q3EditHint": "You can now edit the subject and the message text above. The sender, the link, and the signature stay as they are. Click Done editing when you have finished.",
+    "q3DoneButton": "Done editing",
+    "q3ResetButton": "Undo my edits",
+    "q3NoteHeading": "Anything you want to add? (optional)",
+    "q3NotePlaceholder": "For example: a request like this would come from my line manager, not the CEO, and there would be no same-day deadline.",
+    "continueButton": "Continue",
     "backButton": "Back",
     "nextButton": "Next email",
     "finishButton": "Finish"
@@ -208,43 +221,43 @@
     "_note": "Each key is the job area as stored in the database. 'title' is the assigned role name and 'description' is the short blurb shown on the role and recap pages.",
     "Finance": {
       "title": "Financial Accountant",
-      "description": "Mid-level finance. Sits below the Controller and Director, above junior payroll and admin staff."
+      "description": "Mid-level finance role, below the Controller and Director and above junior payroll and admin staff."
     },
-    "IT": {
+    "IT Support": {
       "title": "IT Support Analyst",
-      "description": "Front-line IT helpdesk. Most work arrives from managers above, IT peers, and internal requesters."
+      "description": "Front-line IT helpdesk, handling requests from managers, IT colleagues and internal staff."
     },
     "HR": {
       "title": "Recruitment Coordinator",
-      "description": "Coordinates hiring end to end. Balanced traffic from managers above, HR and payroll peers, and junior HR and health staff below."
+      "description": "Coordinates hiring end to end, working with managers and HR and payroll colleagues."
     },
     "Sales": {
       "title": "Sales Executive",
-      "description": "Mid-level B2B account manager. Traffic from the sales manager and head of sales above, account-manager and sales-executive peers alongside, and payroll and HR below."
+      "description": "Mid-level B2B account manager, below the sales manager and head of sales."
     },
     "Operations": {
       "title": "Operations Manager",
-      "description": "Runs day-to-day business operations. A little traffic from operations and finance leadership above, fellow operations and facilities managers as peers, and operations coordinators, administrators and compliance support below."
+      "description": "Runs day-to-day business operations, working with operations and facilities colleagues."
     },
-    "Cust Service": {
+    "Customer Service": {
       "title": "Customer Support Specialist",
-      "description": "Handles corporate customer accounts, orders and complaints. Traffic from customer service team leaders and managers above, and lateral internal functions (billing, order fulfilment, HR, quality, e-commerce operations) as peers. No junior senders in the data."
+      "description": "Handles corporate customer accounts, orders and complaints."
     },
     "Marketing": {
       "title": "Marketing Manager",
-      "description": "Owns campaigns and budgets. Traffic from marketing and sales leadership above, finance, sales, customer-service and marketing peers laterally, and marketing executives, coordinators and assistants below."
+      "description": "Owns marketing campaigns and budgets, working with sales, finance and marketing colleagues."
     },
     "Procurement": {
       "title": "Procurement Specialist",
-      "description": "Sits below the Head of Procurement and Procurement Director. Traffic from procurement, commercial and purchasing managers above; logistics, supply-planning, R&D, legal and sales peers laterally; junior buyers, accounts payable and junior analysts below."
+      "description": "Handles company purchasing, below the Head of Procurement and Procurement Director."
     },
-    "Admin": {
+    "Administrative Support": {
       "title": "Executive Assistant",
-      "description": "Supports senior leadership with scheduling, travel, correspondence and office coordination. Heavy traffic from the MD, CEO, board and directors above; HR, IT, finance, recruitment and travel-desk peers laterally; and account managers, support and freight coordinators below."
+      "description": "Supports senior leadership with scheduling, travel, correspondence and office coordination."
     },
     "Compliance": {
       "title": "Compliance Officer",
-      "description": "Handles KYC/CDD checks, transaction-monitoring alerts and case escalations. Traffic from the Head of Compliance, MLRO, financial-crime and risk managers above; IT support, recruitment and fellow analysts laterally; and junior auditors, IT service desk and coordinators below."
+      "description": "Handles KYC/CDD checks, transaction-monitoring alerts and case escalations."
     }
   }
 }

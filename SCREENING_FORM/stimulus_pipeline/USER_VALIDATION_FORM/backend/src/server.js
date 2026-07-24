@@ -90,6 +90,7 @@ app.post(
       personalizationName,
       consent,
       roleCheckAttempts,
+      priorJudgments,
     } = req.body || {};
 
     if (!prolificId || !String(prolificId).trim())
@@ -109,6 +110,8 @@ app.post(
           personalizationName: (personalizationName || "").trim(),
           consent: !!consent,
           roleCheckAttempts: Number.isFinite(roleCheckAttempts) ? roleCheckAttempts : null,
+          priorJudgments:
+            priorJudgments && typeof priorJudgments === "object" ? priorJudgments : {},
           updatedAt: now,
         },
         $setOnInsert: { prolificId: pid, startedAt: now, status: "in_progress" },
@@ -149,9 +152,8 @@ app.post(
       conditions,
       realism,
       realismReason,
-      offItems,
-      sectionEdits,
-      comment,
+      changeText,
+      editedEmail,
     } = req.body || {};
 
     if (!prolificId || !src)
@@ -167,9 +169,11 @@ app.post(
           conditions: conditions || {},
           realism: realism ?? null,          // 1..5 or null
           realismReason: (realismReason || "").trim(),
-          offItems: Array.isArray(offItems) ? offItems : [],
-          sectionEdits: sectionEdits || {},  // { sectionId: newValue }
-          comment: (comment || "").trim(),
+          changeText: (changeText || "").trim(), // free-text "what would you change"
+          // the participant's in-place edit of the subject + body, or null if
+          // they left the email as it was ({ subject, body: [..] })
+          editedEmail:
+            editedEmail && typeof editedEmail === "object" ? editedEmail : null,
           updatedAt: new Date(),
         },
         $setOnInsert: { prolificId: pid, src, createdAt: new Date() },

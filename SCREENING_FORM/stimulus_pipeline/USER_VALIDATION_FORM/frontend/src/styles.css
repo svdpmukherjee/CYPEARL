@@ -357,6 +357,17 @@ textarea {
   color: var(--muted);
 }
 
+/* the assigned-role + fit gate revealed under the job-area grid on the landing
+   page, separated from the selection above it */
+.rolereveal {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.rolereveal > h2:first-child {
+  margin-top: 0;
+}
+
 /* ---- role panel ---- */
 .rolepanel {
   border: 1.5px solid var(--accent);
@@ -475,6 +486,17 @@ textarea {
 }
 .condbanner .condsentence strong {
   font-weight: 700;
+}
+.condbanner .condlead {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--mail-ink);
+  opacity: 0.6;
+  margin: 8px 0 0;
+}
+.condbanner .condlead strong {
+  font-weight: 700;
+  opacity: 1;
 }
 
 .secrow {
@@ -649,27 +671,28 @@ textarea {
 }
 .scaleopt {
   cursor: pointer;
-  flex: 0 0 auto;
-  width: 92px;
+  flex: 1 1 118px;
+  min-width: 118px;
+  max-width: 170px;
   border: 1.5px solid var(--line);
   border-radius: 10px;
-  padding: 10px 8px;
+  padding: 12px 10px;
   background: var(--bg);
   color: var(--ink);
   font: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
-}
-.scaleopt .n {
-  font-weight: 750;
-  font-size: 16px;
+  min-height: 56px;
 }
 .scaleopt .t {
-  font-size: 11px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: var(--muted);
   text-align: center;
+  line-height: 1.35;
 }
 .scaleopt.on {
   border-color: var(--accent);
@@ -677,6 +700,45 @@ textarea {
 }
 .scaleopt.on .t {
   color: var(--ink);
+}
+
+/* ---- prior judgments page (the eight un-primed situations) ---- */
+.judgeitem {
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+}
+.judgeitem:first-of-type {
+  border-top: none;
+}
+.judgeprompt {
+  font-size: 15px;
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+.jnum {
+  font-weight: 700;
+  color: var(--muted);
+  margin-right: 6px;
+}
+.likert {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.likertopt {
+  cursor: pointer;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+.likertopt.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
 }
 
 .flags {
@@ -712,6 +774,51 @@ textarea {
 .commentarea {
   width: 100%;
   min-height: 60px;
+}
+
+/* the "Question n of 3" marker above the single question on show */
+.substepmeta {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* Q3 edit-the-email controls */
+.edittoolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.edithint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+/* while editing, the email sheet shows its editable state clearly */
+.mailcard.editing {
+  outline: 2px dashed color-mix(in srgb, var(--mail-ink) 30%, transparent);
+  outline-offset: 4px;
+}
+.editarea.mline {
+  min-height: 48px;
+  margin: 8px 0;
+  line-height: 1.55;
+  resize: vertical;
+}
+.subjectedit {
+  width: 100%;
+  margin-top: 6px;
+  font-weight: 700;
 }
 
 /* ---- nav ---- */

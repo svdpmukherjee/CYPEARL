@@ -4,18 +4,18 @@ import { loadContent } from "./content.jsx";
 import Instructions from "./steps/Instructions.jsx";
 import ClusterSelect from "./steps/ClusterSelect.jsx";
 import ProlificId from "./steps/ProlificId.jsx";
-import RoleAssign from "./steps/RoleAssign.jsx";
 import Checks from "./steps/Checks.jsx";
 import RecapName from "./steps/RecapName.jsx";
+import PriorJudgments from "./steps/PriorJudgments.jsx";
 import EmailPage from "./steps/EmailPage.jsx";
 import Done from "./steps/Done.jsx";
 
 const STORAGE_KEY = "cypearl_user_validation_v1";
 
-// Ordered list of the fixed steps before the per-email loop. Job area and role
-// (with a familiarity gate) come first, so a poor-fit participant can leave
-// before consenting or reading the full instructions.
-const PRE = ["cluster", "role", "instructions", "prolific", "checks", "recap"];
+// Ordered list of the fixed steps before the per-email loop. The landing page
+// ("cluster") now also carries the assigned role and its familiarity gate, so a
+// poor-fit participant leaves before consenting or reading the instructions.
+const PRE = ["cluster", "instructions", "prolific", "checks", "recap", "judgments"];
 const TOTAL_EMAILS = 16;
 
 const emptyState = () => ({
@@ -28,13 +28,20 @@ const emptyState = () => ({
   prolificId: "",
   name: "",
   roleCheckAttempts: null, // attempts taken to pass the role attention check
+  priorJudgments: {}, // un-primed believability of the 8 situations, keyed by combo
   responses: {}, // keyed by email src
 });
 
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...emptyState(), ...JSON.parse(raw) };
+    if (raw) {
+      const saved = { ...emptyState(), ...JSON.parse(raw) };
+      // The standalone "role" step was folded into the landing page. Any saved
+      // progress that paused there resumes on the landing instead.
+      if (saved.step === "role") saved.step = "cluster";
+      return saved;
+    }
   } catch (_) {}
   return emptyState();
 }
@@ -92,27 +99,31 @@ export default function App() {
     }));
 
   // --- navigation --------------------------------------------------------
+  // The landing page now confirms the role fit before returning here, so we go
+  // straight to the instructions.
   const goCluster = (cluster, recipientRole, note) =>
-    patch({ cluster, recipientRole, note, step: "role" });
+    patch({ cluster, recipientRole, note, step: "instructions" });
 
   const goProlific = (prolificId) => patch({ prolificId, step: "checks" });
 
-  const startEmails = async (name) => {
-    // persist participant meta before the email loop begins
+  const startEmails = async (priorJudgments) => {
+    // persist participant meta (now including the un-primed prior judgments)
+    // before the email loop begins
     try {
       await api.saveParticipant({
         prolificId: s.prolificId,
         cluster: s.cluster,
         recipientRole: s.recipientRole,
-        personalizationName: name,
+        personalizationName: s.name,
         consent: s.consent,
         roleCheckAttempts: s.roleCheckAttempts,
+        priorJudgments,
       });
     } catch (e) {
       setError(e.message);
       return;
     }
-    patch({ name, step: "email", emailIdx: 0 });
+    patch({ priorJudgments, step: "email", emailIdx: 0 });
   };
 
   const saveAndNext = async (src, resp) => {
@@ -127,9 +138,8 @@ export default function App() {
         conditions: email?.conditions,
         realism: resp.realism,
         realismReason: resp.realismReason,
-        offItems: resp.offItems,
-        sectionEdits: resp.sectionEdits,
-        comment: resp.comment,
+        changeText: resp.changeText,
+        editedEmail: resp.editedEmail,
       });
     } catch (e) {
       setError(e.message);
@@ -146,7 +156,7 @@ export default function App() {
   };
 
   const prevEmail = () => {
-    if (s.emailIdx === 0) patch({ step: "recap" });
+    if (s.emailIdx === 0) patch({ step: "judgments" });
     else patch({ emailIdx: s.emailIdx - 1 });
   };
 
@@ -204,23 +214,12 @@ export default function App() {
               />
             )}
 
-            {s.step === "role" && (
-              <RoleAssign
-                content={content}
-                cluster={s.cluster}
-                recipientRole={s.recipientRole}
-                note={s.note}
-                onBack={() => patch({ step: "cluster" })}
-                onNext={() => patch({ step: "instructions" })}
-              />
-            )}
-
             {s.step === "instructions" && (
               <Instructions
                 content={content}
                 consent={s.consent}
                 onConsent={(v) => patch({ consent: v })}
-                onBack={() => patch({ step: "role" })}
+                onBack={() => patch({ step: "cluster" })}
                 onNext={() => patch({ step: "prolific" })}
               />
             )}
@@ -252,6 +251,18 @@ export default function App() {
                 cluster={s.cluster}
                 initialName={s.name}
                 onBack={() => patch({ step: "checks" })}
+                onNext={(name) => patch({ name, step: "judgments" })}
+              />
+            )}
+
+            {s.step === "judgments" && (
+              <PriorJudgments
+                content={content}
+                recipientRole={s.recipientRole}
+                cluster={s.cluster}
+                prolificId={s.prolificId}
+                initial={s.priorJudgments}
+                onBack={() => patch({ step: "recap" })}
                 onNext={startEmails}
               />
             )}

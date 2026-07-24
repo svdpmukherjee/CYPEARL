@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { rich, fmt } from "../content.jsx";
+import RatingSlider from "../RatingSlider.jsx";
 
 // One email page. The email stays visible at the top the whole time. Below it
 // the participant answers three questions, ONE at a time, each replacing the
@@ -24,7 +25,7 @@ export default function EmailPage({
   const REALISM_LABELS = t.realismLabels;
 
   const [subStep, setSubStep] = useState(1); // 1 = rating, 2 = reason, 3 = change
-  const [realism, setRealism] = useState(saved?.realism ?? null);
+  const [realism, setRealism] = useState(saved?.realism ?? 5); // slider starts at the midpoint
   const [reason, setReason] = useState(saved?.realismReason ?? "");
   const [changeText, setChangeText] = useState(saved?.changeText ?? "");
   const [tried, setTried] = useState(false);
@@ -189,18 +190,18 @@ export default function EmailPage({
             <div className="qsub">
               {rich(t.q1Sub, { role: email.recipient_role })}
             </div>
-            <div className="scale">
-              {[1, 2, 3, 4, 5].map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={"scaleopt" + (realism === v ? " on" : "")}
-                  onClick={() => setRealism(v)}
-                >
-                  <span className="t">{REALISM_LABELS[v - 1]}</span>
-                </button>
-              ))}
-            </div>
+            <RatingSlider
+              value={realism}
+              onChange={(v) => {
+                setRealism(v);
+                setTried(false);
+              }}
+              min={1}
+              max={10}
+              minLabel={REALISM_LABELS[0]}
+              maxLabel={REALISM_LABELS[REALISM_LABELS.length - 1]}
+              ariaLabel="How realistic this email is for your role"
+            />
             {tried && realism == null && (
               <div className="error small">{t.q1Required}</div>
             )}

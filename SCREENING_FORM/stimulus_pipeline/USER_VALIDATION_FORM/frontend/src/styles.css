@@ -5,6 +5,7 @@
   --muted: #5c6577;
   --line: #e4e7ee;
   --accent: #3730a3;
+  --accent-slider: #077332;
   --accent-soft: #eef0fb;
   --error: #be123c;
   --chip: #eef1f6;
@@ -739,6 +740,89 @@ textarea {
   border-color: var(--accent);
   background: var(--accent-soft);
   font-weight: 600;
+}
+
+/* ---- 1..10 rating slider (believability + realism) ---- */
+.ratingslider {
+  padding: 4px 2px 2px;
+}
+/* the track lives in its own positioned row so the value bubble can be placed
+   absolutely above the thumb and move with it */
+.rstrack {
+  position: relative;
+  padding-top: 34px;
+}
+.rsbubble {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  min-width: 14px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: var(--accent-slider);
+  color: var(--panel);
+  font-size: 12px;
+  font-weight: 300;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.rsrange {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--accent-slider) 0 var(--rs-pct),
+    var(--line) var(--rs-pct) 100%
+  );
+}
+.rsrange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-slider);
+  border: 3px solid var(--bg);
+  box-shadow: 0 1px 3px rgba(99, 117, 255, 0.347);
+  cursor: pointer;
+}
+.rsrange::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-slider);
+  border: 3px solid var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.rsrange:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--accent-slider);
+  outline-offset: 2px;
+}
+.rsrange:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--accent-slider);
+  outline-offset: 2px;
+}
+.rsends {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.rsends span {
+  max-width: 45%;
+}
+.rsends span:last-child {
+  text-align: right;
 }
 
 .flags {

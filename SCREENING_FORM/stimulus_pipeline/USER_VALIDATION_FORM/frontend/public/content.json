@@ -36,8 +36,8 @@
     "whatYouDoHeading": "What you will do",
     "whatYouDo": [
       "Enter your Prolific ID so we can credit you.",
-      "Answer two quick checks about your role.",
-      "Read **16 emails** one at a time. They vary in sender, urgency, and tone.",
+      "Answer two quick questions about your assigned role.",
+      "Read **16 emails** one at a time. They vary in who sends them (a **senior** colleague, or a **peer or junior** one), whether the task is asked **with a priority** or **with no rush**, and what is said about it (a **reward** for doing it, or a **consequence** for not).",
       "Rate how realistic each one is and say why. If something feels off, mark the exact part and rewrite it as you would expect."
     ],
     "compensation": "There are no right or wrong answers. It takes about **25 minutes** and pays **£3.75**.",
@@ -69,7 +69,7 @@
 
   "role": {
     "title": "Your job role for this task",
-    "lead": "For the rest of the study, imagine you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations, procurement and more). You receive **work-related emails** from them.",
+    "lead": "For the rest of the study, **imagine** you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations, procurement and more). You receive **work-related emails** from them.",
     "rolePrefix": "You are",
     "fitHeading": "Before you continue",
     "fitText": "We will ask your **expert opinion** on the emails a **{role}** typically receives at work. You do not need to have held this exact job, but it should be familiar enough that you can judge which of its emails are realistic.",
@@ -141,19 +141,49 @@
     ],
     "pageTitle": "Before you begin reading",
     "lead": "Before you read any of the emails, we would like your **general expectation**. Below are eight everyday situations. For each, tell us how believable it is that you, as a **{role}**, would receive an email like that at work. There are no right answers, and you have not seen our emails yet, so just go with your honest sense.",
-    "scaleLabels": ["Not at all believable", "Slightly believable", "Moderately believable", "Very believable", "Completely believable"],
+    "scaleLabels": [
+      "Not at all believable",
+      "Slightly believable",
+      "Moderately believable",
+      "Very believable",
+      "Completely believable"
+    ],
     "requiredHint": "Please rate all eight situations before you continue.",
     "backButton": "Back",
     "startButton": "Start reading the emails",
     "items": [
-      { "key": "higher_high_threat",    "text": "A **senior** colleague asks you to do a task **with a priority**, mentioning a **potential consequence** if you do not do it." },
-      { "key": "higher_high_reward",    "text": "A **senior** colleague asks you to do a task **with a priority**, mentioning a **reward** if you do it." },
-      { "key": "higher_low_threat",     "text": "A **senior** colleague asks you to do a task **with no rush**, mentioning a **potential consequence** if you do not do it." },
-      { "key": "higher_low_reward",     "text": "A **senior** colleague asks you to do a task **with no rush**, mentioning a **reward** if you do it." },
-      { "key": "peerlower_high_threat", "text": "A **peer or junior** colleague asks you to do a task **with a priority**, mentioning a **potential consequence** if you do not do it." },
-      { "key": "peerlower_high_reward", "text": "A **peer or junior** colleague asks you to do a task **with a priority**, mentioning a **reward** if you do it." },
-      { "key": "peerlower_low_threat",  "text": "A **peer or junior** colleague asks you to do a task **with no rush**, mentioning a **potential consequence** if you do not do it." },
-      { "key": "peerlower_low_reward",  "text": "A **peer or junior** colleague asks you to do a task **with no rush**, mentioning a **reward** if you do it." }
+      {
+        "key": "higher_high_threat",
+        "text": "A **senior** colleague asks you to do a task **with a priority**, mentioning a **potential consequence** if you do not do it."
+      },
+      {
+        "key": "higher_high_reward",
+        "text": "A **senior** colleague asks you to do a task **with a priority**, mentioning a **reward** if you do it."
+      },
+      {
+        "key": "higher_low_threat",
+        "text": "A **senior** colleague asks you to do a task **with no rush**, mentioning a **potential consequence** if you do not do it."
+      },
+      {
+        "key": "higher_low_reward",
+        "text": "A **senior** colleague asks you to do a task **with no rush**, mentioning a **reward** if you do it."
+      },
+      {
+        "key": "peerlower_high_threat",
+        "text": "A **peer or junior** colleague asks you to do a task **with a priority**, mentioning a **potential consequence** if you do not do it."
+      },
+      {
+        "key": "peerlower_high_reward",
+        "text": "A **peer or junior** colleague asks you to do a task **with a priority**, mentioning a **reward** if you do it."
+      },
+      {
+        "key": "peerlower_low_threat",
+        "text": "A **peer or junior** colleague asks you to do a task **with no rush**, mentioning a **potential consequence** if you do not do it."
+      },
+      {
+        "key": "peerlower_low_reward",
+        "text": "A **peer or junior** colleague asks you to do a task **with no rush**, mentioning a **reward** if you do it."
+      }
     ]
   },
 
@@ -221,7 +251,7 @@
     "_note": "Each key is the job area as stored in the database. 'title' is the assigned role name and 'description' is the short blurb shown on the role and recap pages.",
     "Finance": {
       "title": "Financial Accountant",
-      "description": "Mid-level finance role, below the Controller and Director and above junior payroll and admin staff."
+      "description": "Handles company accounts, ledgers, reconciliations and financial reporting."
     },
     "IT Support": {
       "title": "IT Support Analyst",
@@ -233,7 +263,7 @@
     },
     "Sales": {
       "title": "Sales Executive",
-      "description": "Mid-level B2B account manager, below the sales manager and head of sales."
+      "description": "Manages business customer accounts, quotes, deals and follow-ups."
     },
     "Operations": {
       "title": "Operations Manager",
@@ -249,7 +279,7 @@
     },
     "Procurement": {
       "title": "Procurement Specialist",
-      "description": "Handles company purchasing, below the Head of Procurement and Procurement Director."
+      "description": "Handles company purchasing, supplier quotes, orders and contracts."
     },
     "Administrative Support": {
       "title": "Executive Assistant",

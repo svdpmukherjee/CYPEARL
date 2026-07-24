@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { rich } from "../content.jsx";
+import RatingSlider from "../RatingSlider.jsx";
 
 // A tiny deterministic PRNG + Fisher-Yates shuffle. Seeded from the Prolific ID
 // so each participant sees the eight scenarios in a stable but individual order:
@@ -46,12 +47,23 @@ export default function PriorJudgments({
   const role = roleInfo.title || recipientRole;
 
   const items = t.items || [];
+  const labels = t.scaleLabels || [];
+  const minLabel = labels[0];
+  const maxLabel = labels[labels.length - 1];
   const order = useMemo(
     () => seededShuffle(items, prolificId || "seed"),
     [items, prolificId],
   );
 
-  const [ratings, setRatings] = useState(initial || {});
+  // Every situation starts at the midpoint (5); participants slide from there.
+  // Seed any unrated item to 5 so an untouched slider still records a value.
+  const [ratings, setRatings] = useState(() => {
+    const base = {};
+    items.forEach((it) => {
+      base[it.key] = 5;
+    });
+    return { ...base, ...(initial || {}) };
+  });
   const [tried, setTried] = useState(false);
 
   const allRated = items.every((it) => ratings[it.key] != null);
@@ -82,21 +94,15 @@ export default function PriorJudgments({
           <div className="judgeprompt">
             <span className="jnum">{idx + 1}.</span> {rich(it.text, { role })}
           </div>
-          <div className="likert">
-            {t.scaleLabels.map((lbl, i) => {
-              const v = i + 1; // stored value stays 1..5 for analysis
-              return (
-                <button
-                  key={v}
-                  type="button"
-                  className={"likertopt" + (ratings[it.key] === v ? " on" : "")}
-                  onClick={() => setRating(it.key, v)}
-                >
-                  {lbl}
-                </button>
-              );
-            })}
-          </div>
+          <RatingSlider
+            value={ratings[it.key] ?? null}
+            onChange={(v) => setRating(it.key, v)}
+            min={1}
+            max={10}
+            minLabel={minLabel}
+            maxLabel={maxLabel}
+            ariaLabel={"Believability rating, situation " + (idx + 1)}
+          />{/* stored value is now 1..10 (a slider), not the old 1..5 buttons */}
         </div>
       ))}
 

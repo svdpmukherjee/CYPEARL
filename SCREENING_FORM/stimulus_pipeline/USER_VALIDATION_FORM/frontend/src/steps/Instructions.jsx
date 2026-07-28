@@ -1,25 +1,64 @@
 import React from "react";
 import { rich } from "../content.jsx";
 
-export default function Instructions({ content, consent, onConsent, onBack, onNext }) {
+export default function Instructions({ content, recipientRole, cluster, consent, onConsent, onBack, onNext }) {
   const t = content.instructions;
+  const roleInfo = (content.roles && content.roles[cluster]) || {};
+  const role = roleInfo.title || recipientRole;
 
   return (
     <div className="card wide">
       <h1>{t.title}</h1>
-      <p className="lead">{rich(t.lead)}</p>
+      <p className="lead">{rich(t.lead, { role })}</p>
 
       <h2>{t.whatYouDoHeading}</h2>
-      <ol className="steps">
-        {t.whatYouDo.map((item, i) => (
-          <li key={i}>{rich(item)}</li>
-        ))}
+      <ol className="steps stages">
+        {t.whatYouDo.map((item, i) => {
+          const main = typeof item === "string" ? item : item.main;
+          const sub = typeof item === "string" ? null : item.sub;
+          return (
+            <li key={i}>
+              {rich(main, { role })}
+              {Array.isArray(sub) && sub.length > 0 && (
+                <ul className="substeps">
+                  {sub.map((s, j) => (
+                    <li key={j}>{rich(s, { role })}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ol>
-      <div className="notice">{rich(t.compensation)}</div>
+      {typeof t.compensation === "string" ? (
+        <div className="notice">{rich(t.compensation)}</div>
+      ) : (
+        <div className="payhighlight">
+          <p className="payline">{rich(t.compensation.note)}</p>
+          <div className="paystats">
+            <div className="paystat">
+              <span className="paystat-value">{t.compensation.timeValue}</span>
+              <span className="paystat-label">{t.compensation.timeLabel}</span>
+            </div>
+            <div className="paystat">
+              <span className="paystat-value">{t.compensation.payValue}</span>
+              <span className="paystat-label">{t.compensation.payLabel}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <h2>{t.consentHeading}</h2>
       <div className="consentbox">
-        <p>{rich(t.consentText)}</p>
+        {Array.isArray(t.consentText) ? (
+          <ul className="bullets">
+            {t.consentText.map((point, i) => (
+              <li key={i}>{rich(point, { role })}</li>
+            ))}
+          </ul>
+        ) : (
+          <p>{rich(t.consentText, { role })}</p>
+        )}
         <label className="check">
           <input
             type="checkbox"

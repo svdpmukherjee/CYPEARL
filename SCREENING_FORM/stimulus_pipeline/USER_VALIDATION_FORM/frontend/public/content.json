@@ -13,6 +13,8 @@
     "   stars*. Example: \"You will read **16 emails**, one at a time.\"",
     "4. Words inside curly braces such as {role}, {name} or {total} are filled in",
     "   automatically by the app. Leave the braces and the word inside them as is.",
+    "   Write {article} (or {Article} at the start of a sentence) for the 'a'/'an'",
+    "   before {role}; the app picks the right one, e.g. 'an Executive Assistant'.",
     "5. Lines starting with an underscore, like this _README, are notes for you",
     "   and are never shown to participants.",
     "",
@@ -32,29 +34,63 @@
 
   "instructions": {
     "title": "About this study",
-    "lead": "Here is what the rest of the study involves before you agree to take part.",
     "whatYouDoHeading": "What you will do",
+    "_whatYouDoNote": "Each item can be a plain string, or an object with a 'main' line and a 'sub' list of nested points. Edit the text inside the quotes only; keep the braces { } and words like {role} as they are. Use {article} for the 'a'/'an' before {role} (it is filled in automatically as 'a Sales Executive' or 'an Executive Assistant').",
     "whatYouDo": [
-      "Enter your Prolific ID so we can credit you.",
-      "Answer two quick questions about your assigned role.",
-      "Read **16 emails** one at a time. They vary in who sends them (a **senior** colleague, or a **peer or junior** one), whether the task is asked **with a priority** or **with no rush**, and what is said about it (a **reward** for doing it, or a **consequence** for not).",
-      "Rate how realistic each one is and say why. If something feels off, mark the exact part and rewrite it as you would expect."
+      {
+        "main": "Being {article} {role}, you will look at **eight work email scenarios**. Each one varies in three ways:",
+        "sub": [
+          "**Who sends it**: a senior colleague, or a peer or junior one.",
+          "**How urgent it is**: with a priority, or with no rush.",
+          "**What is at stake**: a reward for doing the task, or a consequence for not doing it."
+        ]
+      },
+      {
+        "main": "For each scenario, rate **how realistic** it is for {article} {role}. That means judging whether:",
+        "sub": [
+          "the sender would realistically ask {article} {role} to do such a task,",
+          "the level of urgency is typical for that kind of request, and",
+          "a sender would really mention a reward or consequence like this."
+        ]
+      },
+      {
+        "main": "Then read **16 emails**, one at a time: two written for each of the eight scenarios above. For every email you will:",
+        "sub": [
+          "rate **how realistic** it is, and say why in a sentence or two,",
+          "if a part feels off, mark it and rewrite **just that part** the way you would expect (the sender, link and signature stay fixed)."
+        ]
+      }
     ],
-    "compensation": "There are no right or wrong answers. It takes about **25 minutes** and pays **£3.75**.",
-    "consentHeading": "Consent",
-    "consentText": "Your responses are collected for academic research on how people judge the realism of workplace emails. Participation is voluntary and you may stop at any time. Responses are stored against your Prolific ID, kept confidential, and used only for research.",
-    "consentCheckbox": "I have read the above and I consent to take part in this study.",
+    "compensation": {
+      "_note": "Shown as a highlighted strip on the About page: a reassurance line on the left, then two stat tiles (time and pay). Edit only the text inside the quotes.",
+      "note": "There are no right or wrong answers, just your honest judgement.",
+      "timeValue": "~25 min",
+      "timeLabel": "to complete",
+      "payValue": "£3.75",
+      "payLabel": "compensation"
+    },
+    "consentHeading": "Informed consent & privacy",
+    "consentText": [
+      "Participation is **voluntary**. You may withdraw at any time by closing the tab, and your responses will not be submitted.",
+      "Your **Prolific ID** is collected only to pay you. After the study it is **detached from your responses**, so the data is made anonymous and used solely for academic research.",
+      "You will type free text when you rate and rewrite the emails. **Do not include any personal names (yours, colleagues', or a manager's) or company names**."
+    ],
+    "consentCheckbox": "I have read the information above and I consent to take part in this study.",
     "consentButton": "I consent, continue",
     "backButton": "Back"
   },
 
   "clusterSelect": {
     "title": "Email realism validation",
-    "lead": "Thank you for taking part. In this short study you will take on a work role from an area close to your own, and read a set of everyday emails written as if they landed in that role's inbox. We want your honest judgement of whether each email feels realistic for that role.",
-    "selectPrompt": "Which job area is closest to you?",
-    "selectHelp": "Pick the single area that best matches your own work experience. The emails you review will be written for a role in that area.",
+    "lead": "Thank you for taking part. You will take on a work role close to your own and judge how realistic a set of work emails feels for that role.",
+    "selectPrompt": "Which job area is closest to yours?",
+    "selectHelp": "Pick the area that best matches your own work experience.",
     "loading": "Loading job areas...",
-    "continueButton": "Continue"
+    "continueButton": "Continue",
+    "ownRoleHeading": "What is your job title?",
+
+    "ownRolePlaceholder": "Type here...",
+    "ownRoleContinue": "Continue"
   },
 
   "prolific": {
@@ -68,11 +104,29 @@
   },
 
   "role": {
-    "title": "Your job role for this task",
-    "lead": "For the rest of the study, **imagine** you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations, procurement and more). You receive **work-related emails** from them.",
+    "title": "You are assigned with a job role for this task",
+    "lead": "For the rest of the study, please **imagine** you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations and more).",
     "rolePrefix": "You are",
+    "relHeading": "How does your own job role (**{ownRole}**) compare to the assigned role (**{role}**)?",
+    "relPlaceholder": "Select one...",
+    "relOptions": [
+      { "value": "same", "label": "They are the same" },
+      {
+        "value": "above",
+        "label": "Above it: more senior than {article} {role}"
+      },
+      {
+        "value": "peer",
+        "label": "About the same level: a peer of {article} {role}"
+      },
+      {
+        "value": "below",
+        "label": "Below it: more junior than {article} {role}"
+      },
+      { "value": "not_sure", "label": "Not sure" }
+    ],
     "fitHeading": "Before you continue",
-    "fitText": "We will ask your **expert opinion** on the emails a **{role}** typically receives at work. You do not need to have held this exact job, but it should be familiar enough that you can judge which of its emails are realistic.",
+    "fitText": "We will ask your **expert opinion** on the work-related emails {article} **{role}** typically receives. You do not need to have held this exact job, but it should be familiar enough to judge.",
     "fitQuestion": "Do you feel you know this kind of role well enough to judge which emails are realistic for it?",
     "fitConfirmButton": "Yes, this is familiar to me, continue",
     "fitDeclineButton": "No, I do not know this kind of role well",
@@ -93,7 +147,7 @@
         "prompt": "For the rest of this study, who should you imagine you are?",
         "options": [
           "Myself, in my own current job",
-          "A {role} at a large company",
+          "{Article} {role} at a large company",
           "A customer writing in to the company",
           "A job applicant hoping to be hired"
         ],
@@ -104,7 +158,7 @@
         "options": [
           "Whether the email has spelling or grammar mistakes",
           "Whether I personally like the sender",
-          "Whether a {role} would realistically receive an email like this",
+          "Whether {article} {role} would realistically receive an email like this",
           "Whether the email is polite enough"
         ],
         "answer": 3
@@ -119,10 +173,10 @@
     "pageTitle": "Before you begin",
     "recapHeading": "Quick recap of the task",
     "recapPoints": [
-      "You will read **16 emails**, one per page, each addressed to you as a **{role}**.",
-      "For each, first rate **how realistic** it is for your role.",
-      "If **anything feels off**, tell us what, then use the **Edit** buttons to rewrite just those parts.",
-      "You can add an optional comment before the next email."
+      "First, rate **how realistic** eight work email scenarios are for {article} **{role}**.",
+      "Then read **16 emails**, one per page, each addressed to you as {article} **{role}**, and rate **how realistic** each one is.",
+      "If **anything feels off**, use the **Edit** buttons to rewrite just those parts.",
+      "You can add an optional comment for each email."
     ],
     "nameHeading": "Pick a name for the emails",
     "nameLead": "So the emails read naturally, each will greet you by a first name you choose (for example, *Dear Alex,*).",
@@ -140,15 +194,22 @@
       "Shown once, right after the recap and before the 16 emails. Participants give their general expectation for eight everyday email situations BEFORE they have seen any of our example emails, so these are their un-primed judgments. The eight items are the 2x2x2 combinations of sender (more senior vs peer or junior), urgency (right away vs no rush) and framing (a problem to avoid vs a benefit to gain). Keep the wording plain and do NOT name those three factors on screen. The order is shuffled per participant automatically. 'key' is stored in the data and must not be changed; edit only the 'text'."
     ],
     "pageTitle": "Before you begin reading",
-    "lead": "Before you read any of the emails, we would like your **general expectation**. Below are eight everyday situations. For each, tell us how believable it is that you, as a **{role}**, would receive an email like that at work. There are no right answers, and you have not seen our emails yet, so just go with your honest sense.",
+    "lead": "Before you read any of the emails, we would like your **general expectation**. Below are eight everyday situations. For each, **tell us how realistic** it is that you, as {article} **{role}**, would receive an email like that at work. There are no right answers, and you have not seen our emails yet, so just go with your honest sense.",
     "scaleLabels": [
-      "Not at all believable",
-      "Slightly believable",
-      "Moderately believable",
-      "Very believable",
-      "Completely believable"
+      "Not at all realistic",
+      "Slightly realistic",
+      "Moderately realistic",
+      "Very realistic",
+      "Completely realistic"
     ],
     "requiredHint": "Please rate all eight situations before you continue.",
+    "closingHeading": "What happens next",
+    "closingLead": "For each of these eight situations you will now see **two emails**, **16 in total**. For every email you will:",
+    "closingPoints": [
+      "Rate **how realistic** it is for {article} **{role}**.",
+      "Say **why** in a sentence or two.",
+      "Optionally, **edit** anything that feels off to make it more realistic."
+    ],
     "backButton": "Back",
     "startButton": "Start reading the emails",
     "items": [
@@ -190,7 +251,9 @@
   "email": {
     "conditionsTitle": "What to expect in this email",
     "conditionsSentence": "This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.",
-    "conditionsLead": "Read it as if it just arrived in your inbox, then answer the questions below.",
+    "editBannerTitle": "Keep your edits true to this email",
+    "editBannerSentence": "Keep your changes in line with this email's situation: it is from {dir}, it asks you to act {urg}, and mentions {frame}.",
+    "editBannerLead": "Only reword what makes it feel more realistic. Do not change it into a different kind of email.",
     "conditions": {
       "_note": "The summary line at the top of each email is built from these parts and is worded to match the eight situations on the 'Before you begin reading' page. The template is conditionsSentence above: 'This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.' Keep the **bold** on the sender, the urgency phrase and the reward/consequence.",
       "dir": {
@@ -210,10 +273,10 @@
     "greeting": "Dear {name},",
     "signOff": "Best regards,",
     "mobileLabel": "Mobile",
-    "questionsIntro": "Now please answer the questions below about the email above.",
+    "questionsIntro": "Now please answer the questions below about the email.",
     "stepLabel": "Question {n} of 3",
     "q1Heading": "1. Is this email realistic for your role?",
-    "q1Sub": "As a {role}, would an email like this, from this kind of sender, put this way, realistically land in your inbox? Judge the sender, the urgency, and the framing **as a combination**, not each on its own.",
+    "q1Sub": "As {article} {role}, would an email like this, from this kind of sender, put this way, realistically land in your inbox? Judge the sender, the urgency, and the framing **as a combination**, not each on its own.",
     "realismLabels": [
       "Not at all realistic",
       "Slightly realistic",
@@ -223,17 +286,17 @@
     ],
     "q1Required": "Please choose a rating to continue.",
     "q2Heading": "2. In a sentence or two, why did you give that rating?",
-    "q2Sub": "Tell us what made it feel realistic or not for a **{role}**. This helps us understand your rating.",
-    "q2Placeholder": "For example: someone at my level would never be asked this directly by a sender like a CEO.",
+    "q2Sub": "Tell us what made it feel realistic or not for {article} **{role}**. This helps us understand your rating.",
+    "q2Placeholder": "Type here...",
     "q2Required": "Please add a short explanation for your rating to continue.",
-    "q3Heading": "3. Would you change anything to make it more realistic for your role?",
-    "q3Sub": "Optional. If anything felt unrealistic for a **{role}**, feel free to edit the email directly to show what you would change. You can also add a short note below. If it all seems realistic, you can leave it as it is.",
-    "q3EditButton": "Edit the email",
-    "q3EditHint": "You can now edit the subject and the message text above. The sender, the link, and the signature stay as they are. Click Done editing when you have finished.",
+    "q3Heading": "3. Would you like to change anything to make it more realistic for **{role}**?",
+    "q3Sub": "Optional. If something felt unrealistic for {article} **{role}**, use the edit option to reword it, but keep it the **same kind of email** (same sender, urgency and framing). Otherwise, leave it as it is.",
+    "q3EditButton": "Improve the email",
+    "q3EditHint": "You can now edit the subject and the message text above. The sender, the link, and the signature stay as they are. Click **Done editing** when you have finished.",
     "q3DoneButton": "Done editing",
     "q3ResetButton": "Undo my edits",
     "q3NoteHeading": "Anything you want to add? (optional)",
-    "q3NotePlaceholder": "For example: a request like this would come from my line manager, not the CEO, and there would be no same-day deadline.",
+    "q3NotePlaceholder": "Type here...",
     "continueButton": "Continue",
     "backButton": "Back",
     "nextButton": "Next email",
@@ -244,6 +307,12 @@
     "title": "Thank you",
     "lead": "Your responses for all 16 emails have been recorded. You can now return to Prolific to complete your submission.",
     "prolificLabel": "Prolific ID on file:",
+    "completionHeading": "Your completion code",
+    "completionHelp": "Copy this code and paste it into Prolific, or use the button below to return to Prolific and submit it automatically.",
+    "copyButton": "Copy code",
+    "copiedLabel": "Copied",
+    "submitButton": "Return to Prolific to submit",
+    "completionMissing": "Please return to Prolific to complete your submission.",
     "restartButton": "Start over"
   },
 

@@ -86,25 +86,42 @@ export default function PriorJudgments({
       <h1>{t.pageTitle}</h1>
       <p className="lead">{rich(t.lead, { role })}</p>
 
-      {order.map((it, idx) => (
-        <div
-          className={"judgeitem" + (ratings[it.key] != null ? " done" : "")}
-          key={it.key}
-        >
-          <div className="judgeprompt">
-            <span className="jnum">{idx + 1}.</span> {rich(it.text, { role })}
+      <div className="judgelist">
+        {order.map((it, idx) => (
+          <div
+            className={"judgeitem" + (ratings[it.key] != null ? " done" : "")}
+            key={it.key}
+          >
+            <div className="judgeprompt">
+              <span className="jnum">{idx + 1}</span>
+              <span className="jtext">{rich(it.text, { role })}</span>
+            </div>
+            <RatingSlider
+              value={ratings[it.key] ?? null}
+              onChange={(v) => setRating(it.key, v)}
+              min={1}
+              max={10}
+              minLabel={minLabel}
+              maxLabel={maxLabel}
+              ariaLabel={"Believability rating, situation " + (idx + 1)}
+            />{/* stored value is now 1..10 (a slider), not the old 1..5 buttons */}
           </div>
-          <RatingSlider
-            value={ratings[it.key] ?? null}
-            onChange={(v) => setRating(it.key, v)}
-            min={1}
-            max={10}
-            minLabel={minLabel}
-            maxLabel={maxLabel}
-            ariaLabel={"Believability rating, situation " + (idx + 1)}
-          />{/* stored value is now 1..10 (a slider), not the old 1..5 buttons */}
+        ))}
+      </div>
+
+      {t.closingLead && (
+        <div className="nextsteps">
+          {t.closingHeading && <h2>{t.closingHeading}</h2>}
+          <p className="lead">{rich(t.closingLead, { role })}</p>
+          {Array.isArray(t.closingPoints) && (
+            <ol className="steps">
+              {t.closingPoints.map((p, i) => (
+                <li key={i}>{rich(p, { role })}</li>
+              ))}
+            </ol>
+          )}
         </div>
-      ))}
+      )}
 
       {tried && !allRated && <div className="warn">{rich(t.requiredHint)}</div>}
 

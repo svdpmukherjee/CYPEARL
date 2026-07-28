@@ -122,18 +122,24 @@ export default function EmailPage({
 
       {/* the email: single ink, full signature, editable subject + body on Q3 */}
       <div className={"mailcard" + (editing ? " editing" : "")}>
-        <div className="condbanner">
-          <div className="condtitle">{t.conditionsTitle}</div>
+        <div className={"condbanner" + (editing ? " editmode" : "")}>
+          <div className="condtitle">
+            {editing ? t.editBannerTitle : t.conditionsTitle}
+          </div>
           <p className="condsentence">
-            {rich(t.conditionsSentence, {
+            {rich(editing ? t.editBannerSentence : t.conditionsSentence, {
               dir: dirFrag,
               urg: urgFrag,
               frame: frameFrag,
             })}
           </p>
-          {t.conditionsLead && (
-            <p className="condlead">{rich(t.conditionsLead)}</p>
-          )}
+          {editing
+            ? t.editBannerLead && (
+                <p className="condlead">{rich(t.editBannerLead)}</p>
+              )
+            : t.conditionsLead && (
+                <p className="condlead">{rich(t.conditionsLead)}</p>
+              )}
         </div>
 
         <div className="secrow subjectrow">
@@ -228,7 +234,9 @@ export default function EmailPage({
 
         {subStep === 3 && (
           <div className="qblock">
-            <div className="qh">{t.q3Heading}</div>
+            <div className="qh">
+              {rich(t.q3Heading, { role: email.recipient_role })}
+            </div>
             <div className="qsub">
               {rich(t.q3Sub, { role: email.recipient_role })}
             </div>
@@ -237,7 +245,7 @@ export default function EmailPage({
               {!editing ? (
                 <button
                   type="button"
-                  className="editbtn"
+                  className="editbtn trigger"
                   onClick={() => setEditing(true)}
                 >
                   {t.q3EditButton}
@@ -261,7 +269,15 @@ export default function EmailPage({
                 </>
               )}
             </div>
-            {editing && <div className="edithint">{rich(t.q3EditHint)}</div>}
+            {editing && (
+              <div className="edithint">
+                {rich(t.q3EditHint, {
+                  dir: dirFrag,
+                  urg: urgFrag,
+                  frame: frameFrag,
+                })}
+              </div>
+            )}
 
             <div className="reasonwrap">
               <div className="qh small">{t.q3NoteHeading}</div>

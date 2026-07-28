@@ -12,6 +12,13 @@ import Done from "./steps/Done.jsx";
 
 const STORAGE_KEY = "cypearl_user_validation_v1";
 
+// Prolific completion code shown on the Thank-you page. Overridable at build
+// time (VITE_PROLIFIC_COMPLETION_CODE) and, at runtime, by the backend
+// /api/config response. This literal is the study default so the page works
+// even without either. Not a secret: participants see it and it is in the URL.
+const FALLBACK_COMPLETION_CODE =
+  import.meta.env.VITE_PROLIFIC_COMPLETION_CODE || "C145A0QK";
+
 // Ordered list of the fixed steps before the per-email loop. The landing page
 // ("cluster") now also carries the assigned role and its familiarity gate, so a
 // poor-fit participant leaves before consenting or reading the instructions.
@@ -25,6 +32,8 @@ const emptyState = () => ({
   cluster: null,
   recipientRole: null,
   note: null,
+  ownRole: "", // the participant's own real job role, in their words
+  roleRelation: null, // how their own role sits vs the assigned one: above|peer|below|not_sure
   prolificId: "",
   name: "",
   roleCheckAttempts: null, // attempts taken to pass the role attention check
@@ -52,12 +61,36 @@ export default function App() {
   const [loadingEmails, setLoadingEmails] = useState(false);
   const [error, setError] = useState("");
   const [content, setContent] = useState(null);
+  // Prolific completion code + redirect URL. The backend (/api/config) is the
+  // source of truth via a Vercel env var, but we seed a build-time fallback so
+  // the Thank-you page always shows the code even if that request is
+  // unavailable (backend down, env var unset). The code is not a secret: it is
+  // handed to every participant and appears in the redirect URL, so shipping it
+  // in the bundle is fine. The backend value overrides this when present.
+  const [config, setConfig] = useState({
+    completionCode: FALLBACK_COMPLETION_CODE,
+    completionUrl: FALLBACK_COMPLETION_CODE
+      ? `https://app.prolific.com/submissions/complete?cc=${encodeURIComponent(FALLBACK_COMPLETION_CODE)}`
+      : "",
+  });
 
   // load the editable copy deck once on startup
   useEffect(() => {
     loadContent()
       .then(setContent)
       .catch((e) => setError(e.message));
+  }, []);
+
+  // load the runtime config (Prolific completion code) once on startup
+  useEffect(() => {
+    api
+      .config()
+      // only let the backend override when it actually returns a code, so an
+      // unset env var never blanks out the build-time fallback above
+      .then((c) => {
+        if (c && c.completionCode) setConfig(c);
+      })
+      .catch(() => {}); // non-fatal: the build-time fallback stays in place
   }, []);
 
   // persist locally so a refresh does not lose progress
@@ -101,8 +134,8 @@ export default function App() {
   // --- navigation --------------------------------------------------------
   // The landing page now confirms the role fit before returning here, so we go
   // straight to the instructions.
-  const goCluster = (cluster, recipientRole, note) =>
-    patch({ cluster, recipientRole, note, step: "instructions" });
+  const goCluster = ({ cluster, recipientRole, note, ownRole, roleRelation }) =>
+    patch({ cluster, recipientRole, note, ownRole, roleRelation, step: "instructions" });
 
   const goProlific = (prolificId) => patch({ prolificId, step: "checks" });
 
@@ -114,6 +147,8 @@ export default function App() {
         prolificId: s.prolificId,
         cluster: s.cluster,
         recipientRole: s.recipientRole,
+        ownRole: s.ownRole,
+        roleRelation: s.roleRelation,
         personalizationName: s.name,
         consent: s.consent,
         roleCheckAttempts: s.roleCheckAttempts,
@@ -160,13 +195,6 @@ export default function App() {
     else patch({ emailIdx: s.emailIdx - 1 });
   };
 
-  const restart = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setS(emptyState());
-    setEmails([]);
-    setError("");
-  };
-
   const progress = useMemo(() => {
     // One continuous scale across all steps: the pre-email steps followed by the
     // 16 emails. Only the label changes between the two phases, not the maths,
@@ -210,6 +238,8 @@ export default function App() {
               <ClusterSelect
                 content={content}
                 selected={s.cluster}
+                initialOwnRole={s.ownRole}
+                initialRelation={s.roleRelation}
                 onNext={goCluster}
               />
             )}
@@ -217,6 +247,8 @@ export default function App() {
             {s.step === "instructions" && (
               <Instructions
                 content={content}
+                recipientRole={s.recipientRole}
+                cluster={s.cluster}
                 consent={s.consent}
                 onConsent={(v) => patch({ consent: v })}
                 onBack={() => patch({ step: "cluster" })}
@@ -285,7 +317,11 @@ export default function App() {
               ))}
 
             {s.step === "done" && (
-              <Done content={content} prolificId={s.prolificId} onRestart={restart} />
+              <Done
+                content={content}
+                completionCode={config.completionCode}
+                completionUrl={config.completionUrl}
+              />
             )}
           </>
         )}

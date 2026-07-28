@@ -33,6 +33,21 @@ const wrap = (fn) => (req, res) =>
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
+// --- runtime config for the client (Prolific completion code) ------------
+// The completion code is study-specific and is set as an environment variable
+// (PROLIFIC_COMPLETION_CODE) in Vercel, so it is never committed to source or
+// baked into the client bundle. Read at request time, so changing the Vercel
+// env var takes effect without a rebuild. The redirect URL is derived from it.
+app.get("/api/config", (req, res) => {
+  const code = (process.env.PROLIFIC_COMPLETION_CODE || "").trim();
+  res.json({
+    completionCode: code,
+    completionUrl: code
+      ? `https://app.prolific.com/submissions/complete?cc=${encodeURIComponent(code)}`
+      : "",
+  });
+});
+
 // --- clusters: the list a participant picks from -------------------------
 app.get(
   "/api/clusters",
@@ -87,6 +102,8 @@ app.post(
       prolificId,
       cluster,
       recipientRole,
+      ownRole,
+      roleRelation,
       personalizationName,
       consent,
       roleCheckAttempts,
@@ -107,6 +124,8 @@ app.post(
         $set: {
           cluster: cluster || null,
           recipientRole: recipientRole || null,
+          ownRole: (ownRole || "").trim(),
+          roleRelation: roleRelation || null,
           personalizationName: (personalizationName || "").trim(),
           consent: !!consent,
           roleCheckAttempts: Number.isFinite(roleCheckAttempts) ? roleCheckAttempts : null,

@@ -18,6 +18,7 @@ async function req(path, options = {}) {
 }
 
 export const api = {
+  config: () => req("/api/config"),
   clusters: () => req("/api/clusters"),
   emails: (cluster) => req(`/api/emails/${encodeURIComponent(cluster)}`),
   saveParticipant: (body) =>

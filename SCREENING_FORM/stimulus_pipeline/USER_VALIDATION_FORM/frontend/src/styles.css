@@ -5,11 +5,27 @@
   --muted: #5c6577;
   --line: #e4e7ee;
   --accent: #3730a3;
-  --accent-slider: #077332;
-  --accent-soft: #eef0fb;
+  --accent-slider: #929090;
+  --accent-soft: #f7dbe1;
+  /* One shared "soft panel" fill, used borderless across the app so every soft
+     callout and highlighted surface looks the same. Change it here once and it
+     updates everywhere. Built from --accent-soft, so it follows the theme. */
+  --soft-panel: linear-gradient(
+    135deg,
+    var(--accent-soft),
+    color-mix(in srgb, var(--accent-soft) 45%, var(--panel))
+  );
   --error: #be123c;
   --chip: #eef1f6;
   --shadow: 0 1px 2px rgba(20, 25, 40, 0.06), 0 6px 20px rgba(20, 25, 40, 0.06);
+  /* Two-font system. --font-serif (Source Serif 4, self-hosted below) is the
+     default reading face for all survey prose and headings. --font-sans is the
+     neutral system stack, kept for form controls, the top bar, and crucially
+     the email sheet itself, so the stimuli still read like real office email. */
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   /* the email itself renders in a single near-black ink on paper */
   --mail-paper: #ffffff;
   --mail-ink: #111214;
@@ -23,7 +39,7 @@
     --muted: #98a2b8;
     --line: #28303f;
     --accent: #a5b4fc;
-    --accent-soft: #1e2540;
+    --accent-soft: #3a2530;
     --error: #fb7185;
     --chip: #1e2636;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -33,6 +49,37 @@
   }
 }
 
+/* Source Serif 4, self-hosted (latin subset) so no third-party request is made
+   at page load. Files live in public/fonts/ and are copied to /fonts/ on build. */
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/source-serif-4-700.woff2") format("woff2");
+}
+
 * {
   box-sizing: border-box;
 }
@@ -40,14 +87,36 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font:
-    15px/1.55 -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  /* serif is the default so all reading prose picks it up; controls, chrome and
+     the email sheet are returned to --font-sans in the rules below. */
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Keep interactive controls and app chrome in the neutral sans, where a serif
+   would feel out of place and hurt scannability. */
+button,
+.btn,
+a.btn,
+input,
+select,
+textarea,
+.topbar,
+.brand,
+.plabel,
+.errbar {
+  font-family: var(--font-sans);
+}
+
+/* Email realism guard: the stimulus sheet and everything inside it stays in a
+   plain sans, because real corporate email is not set in a serif. Do not remove
+   this without a reason, it protects the validity of the realism ratings. */
+.mailcard,
+.mailcard * {
+  font-family: var(--font-sans);
 }
 
 .app {
@@ -125,7 +194,7 @@ body {
   box-shadow: var(--shadow);
 }
 .card.wide {
-  max-width: 920px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 34px 38px;
 }
@@ -172,13 +241,15 @@ body {
 }
 
 h1 {
-  font-size: 22px;
+  font-size: 25px;
+  line-height: 1.25;
   margin: 0 0 12px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 h2 {
-  font-size: 15px;
+  font-size: 16px;
   margin: 22px 0 8px;
+  letter-spacing: 0;
 }
 .lead {
   color: var(--ink);
@@ -204,6 +275,22 @@ h2 {
 .steps li {
   margin: 7px 0;
 }
+/* On the instructions page each numbered step carries its own sub-list, so give
+   the top-level items room to breathe and read as three distinct stages. */
+.steps.stages > li {
+  margin: 20px 0;
+}
+.steps.stages > li:first-child {
+  margin-top: 10px;
+}
+.steps .substeps {
+  list-style: disc;
+  margin: 8px 0 2px 8px;
+  padding-left: 28px;
+}
+.steps .substeps li {
+  margin: 3px 0;
+}
 
 .consentbox {
   background: var(--chip);
@@ -214,6 +301,14 @@ h2 {
 .consentbox p {
   margin: 0 0 12px;
   font-size: 13.5px;
+}
+.consentbox .bullets {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 13.5px;
+}
+.consentbox .bullets li {
+  margin: 6px 0;
 }
 
 .check {
@@ -238,13 +333,64 @@ h2 {
 
 /* attention-drawing callout (for example the compensation line) */
 .notice {
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
-  border-left: 4px solid var(--accent);
+  background: var(--soft-panel);
+  border: 0;
   border-radius: 10px;
   padding: 12px 15px;
   font-size: 14px;
   margin: 14px 0 4px;
+}
+
+/* Compensation strip: a reassurance line on the left and two stat tiles on the
+   right, so the time and pay stand out as the key facts a participant weighs. */
+.payhighlight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 22px;
+  margin: 18px 0 6px;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--soft-panel);
+}
+.payline {
+  flex: 1 1 220px;
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.paystats {
+  display: flex;
+  gap: 10px;
+}
+.paystat {
+  min-width: 104px;
+  text-align: center;
+  padding: 9px 14px;
+  border-radius: 11px;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  box-shadow: 0 1px 2px rgba(20, 25, 40, 0.05);
+}
+.paystat-value {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.paystat-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 /* ---- attention-check questions (role page) ---- */
@@ -277,8 +423,8 @@ h2 {
   border-color: var(--muted);
 }
 .optbtn.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: transparent;
+  background: var(--soft-panel);
   font-weight: 600;
 }
 
@@ -314,6 +460,18 @@ textarea {
 textarea {
   resize: vertical;
 }
+
+/* Active-field cue: the element currently awaiting input gets a clear accent
+   (blue) border and a soft ring, so the participant always sees where to act
+   next. Also applied when the app moves focus to a newly revealed field. */
+input[type="text"]:focus,
+textarea:focus,
+.roleselect:focus,
+.roleselect:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
 .hint {
   font-size: 12px;
   margin-top: 5px;
@@ -346,8 +504,8 @@ textarea {
   border-color: var(--muted);
 }
 .clustercard.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: transparent;
+  background: var(--soft-panel);
 }
 .clustercard .cname {
   font-weight: 700;
@@ -369,10 +527,42 @@ textarea {
   margin-top: 0;
 }
 
+/* each revealed sub-section (own role -> assigned role -> fit gate) is set off
+   from the one above it, so the landing page reads as an ordered sequence */
+.rolestep {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.rolestep > h2:first-child {
+  margin-top: 0;
+}
+
+/* When the app auto-scrolls a revealed section to the top of the viewport, keep
+   its heading clear of the sticky top bar rather than tucked behind it. */
+.rolereveal > h2:first-child,
+.rolestep > h2:first-child {
+  scroll-margin-top: 84px;
+}
+
+/* the "how does your own role compare" dropdown */
+.roleselect {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+  max-width: 460px;
+  margin: 8px 0 4px;
+  cursor: pointer;
+}
+
 /* ---- role panel ---- */
 .rolepanel {
-  border: 1.5px solid var(--accent);
-  background: var(--accent-soft);
+  border: 0;
+  background: var(--soft-panel);
   border-radius: 14px;
   padding: 18px 20px;
   margin: 14px 0;
@@ -399,7 +589,9 @@ textarea {
   border-radius: 12px;
   padding: 14px 18px;
 }
-.recap h2 {
+/* Higher specificity than .card.wide h2 (which sets a 34px top margin), so the
+   heading sits snug against the chip's top padding and the box reads evenly. */
+.card.wide .recap h2 {
   margin-top: 0;
 }
 .recap ul {
@@ -408,6 +600,29 @@ textarea {
 }
 .recap li {
   margin: 6px 0;
+}
+
+/* ---- completion (Done) page: the Prolific code + copy control ---- */
+.ccodebox {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 10px 0 18px;
+}
+.ccode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: var(--ink);
+  /* one click selects the whole code, so a manual copy is easy too */
+  user-select: all;
 }
 
 /* ---- email page ---- */
@@ -497,6 +712,27 @@ textarea {
 }
 .condbanner .condlead strong {
   font-weight: 700;
+  opacity: 1;
+}
+/* while editing, the banner turns into a highlighted guidance callout that stays
+   pinned at the top of the email sheet, so the scenario to preserve (sender,
+   urgency, framing) is always in view as the participant rewrites the text. */
+.condbanner.editmode {
+  background: var(--soft-panel);
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 18px;
+}
+.condbanner.editmode .condtitle {
+  color: var(--accent);
+  opacity: 1;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.condbanner.editmode .condsentence,
+.condbanner.editmode .condlead {
+  color: var(--ink);
   opacity: 1;
 }
 
@@ -594,6 +830,26 @@ textarea {
 }
 .editbtn.reset {
   opacity: 0.7;
+}
+
+/* The primary "edit this email" trigger: filled, larger and with a pencil so
+   participants notice they can rewrite the email, not just leave a note. */
+.editbtn.trigger {
+  font-size: 13px;
+  padding: 8px 16px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 9px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.editbtn.trigger::before {
+  content: "\270E";
+  margin-right: 7px;
+  font-size: 14px;
+}
+.editbtn.trigger:hover {
+  background: color-mix(in srgb, var(--accent) 88%, #000);
 }
 
 .editarea,
@@ -696,30 +952,72 @@ textarea {
   line-height: 1.35;
 }
 .scaleopt.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: transparent;
+  background: var(--soft-panel);
 }
 .scaleopt.on .t {
   color: var(--ink);
 }
 
 /* ---- prior judgments page (the eight un-primed situations) ---- */
-.judgeitem {
-  border-top: 1px solid var(--line);
-  padding: 16px 0;
+/* Each situation is its own compartment, generously spaced, so eight sliders in
+   a row read as a calm stack of cards rather than one dense wall. */
+.judgelist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 22px;
 }
-.judgeitem:first-of-type {
-  border-top: none;
+.judgeitem {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.judgeitem:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .judgeprompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   font-size: 15px;
   line-height: 1.55;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 .jnum {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #616161;
+  color: #fff;
   font-weight: 700;
-  color: var(--muted);
-  margin-right: 6px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.jtext {
+  flex: 1;
+}
+/* closing "what happens next" recap under the eight situations */
+.nextsteps {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.nextsteps > h2:first-child {
+  margin-top: 0;
+}
+.nextsteps .steps {
+  margin-top: 10px;
 }
 .likert {
   display: flex;
@@ -737,8 +1035,8 @@ textarea {
   font-size: 13px;
 }
 .likertopt.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: transparent;
+  background: var(--soft-panel);
   font-weight: 600;
 }
 
@@ -841,15 +1139,15 @@ textarea {
   font-size: 13px;
 }
 .flag.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: transparent;
+  background: var(--soft-panel);
   font-weight: 600;
 }
 
 .editcallout {
   margin-top: 12px;
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: var(--soft-panel);
+  border: 0;
   border-radius: 10px;
   padding: 11px 14px;
   font-size: 13px;
@@ -881,8 +1179,8 @@ textarea {
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--muted);
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  background: var(--soft-panel);
+  border: 0;
   border-radius: 10px;
   padding: 10px 12px;
   margin-bottom: 14px;

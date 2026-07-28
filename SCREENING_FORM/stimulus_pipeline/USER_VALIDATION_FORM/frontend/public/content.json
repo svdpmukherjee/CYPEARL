@@ -98,9 +98,16 @@
     "lead": "Please enter your Prolific ID exactly as it appears in your Prolific account.",
     "fieldLabel": "Prolific ID",
     "placeholder": "e.g. 5f8a2c3b1d9e4f0a7b6c5d4e",
-    "invalidHint": "That does not look like a Prolific ID. Check for spaces or missing characters.",
     "backButton": "Back",
     "continueButton": "Continue"
+  },
+
+  "blocked": {
+    "completedTitle": "You have already completed this study",
+    "completedBody": "Our records show that this Prolific ID has already finished the study. Each person can take part only once, so there is nothing more for you to do here. If you believe this is a mistake, please message us through Prolific.",
+    "clusterTitle": "This Prolific ID is registered for a different job area",
+    "clusterBody": "This Prolific ID is already registered for the **{cluster}** job area. To keep the study valid, each participant stays with the job area they first chose. Please start again and select **{cluster}** to carry on where you left off.",
+    "startOverButton": "Start over"
   },
 
   "role": {

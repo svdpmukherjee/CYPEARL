@@ -9,6 +9,7 @@ import RecapName from "./steps/RecapName.jsx";
 import PriorJudgments from "./steps/PriorJudgments.jsx";
 import EmailPage from "./steps/EmailPage.jsx";
 import Done from "./steps/Done.jsx";
+import Blocked from "./steps/Blocked.jsx";
 
 const STORAGE_KEY = "cypearl_user_validation_v1";
 
@@ -39,6 +40,7 @@ const emptyState = () => ({
   roleCheckAttempts: null, // attempts taken to pass the role attention check
   priorJudgments: {}, // un-primed believability of the 8 situations, keyed by combo
   responses: {}, // keyed by email src
+  blocked: null, // { code, cluster, recipientRole } when re-entry is refused
 });
 
 function load() {
@@ -100,6 +102,16 @@ export default function App() {
     } catch (_) {}
   }, [s]);
 
+  // Persist the last page reached to the participant doc so an unfinished
+  // participant can resume on any device. Skipped for the pre-registration
+  // steps (no participant row exists yet) and the blocked screen. The server
+  // ignores this for completed participants.
+  useEffect(() => {
+    if (!s.prolificId) return;
+    if (["cluster", "instructions", "prolific", "blocked"].includes(s.step)) return;
+    api.saveProgress(s.prolificId, { step: s.step, emailIdx: s.emailIdx }).catch(() => {});
+  }, [s.step, s.emailIdx, s.prolificId]);
+
   const patch = (p) => setS((prev) => ({ ...prev, ...p }));
 
   // load the 16 emails whenever a cluster is chosen
@@ -137,7 +149,77 @@ export default function App() {
   const goCluster = ({ cluster, recipientRole, note, ownRole, roleRelation }) =>
     patch({ cluster, recipientRole, note, ownRole, roleRelation, step: "instructions" });
 
-  const goProlific = (prolificId) => patch({ prolificId, step: "checks" });
+  // Submit the Prolific ID. This is where the one-ID-one-area rule is applied:
+  // register locks (id, cluster) on first sight; a returning ID either resumes
+  // (same cluster, unfinished) or is blocked (already completed, or a different
+  // cluster than the one it is locked to).
+  const goProlific = async (prolificId) => {
+    const pid = String(prolificId).trim();
+    try {
+      const r = await api.registerParticipant({
+        prolificId: pid,
+        cluster: s.cluster,
+        recipientRole: s.recipientRole,
+        ownRole: s.ownRole,
+        roleRelation: s.roleRelation,
+      });
+      if (r.resume) {
+        await resumeParticipant(pid, r);
+      } else {
+        patch({ prolificId: pid, step: "checks" });
+      }
+    } catch (err) {
+      if (err.code === "ALREADY_COMPLETED" || err.code === "CLUSTER_LOCKED") {
+        patch({
+          prolificId: pid,
+          step: "blocked",
+          blocked: {
+            code: err.code,
+            cluster: err.cluster || null,
+            recipientRole: err.recipientRole || null,
+          },
+        });
+      } else {
+        setError(err.message);
+      }
+    }
+  };
+
+  // Rehydrate an unfinished participant from the server (works on any device,
+  // not just the browser that holds the localStorage copy) and jump to the last
+  // saved page.
+  const resumeParticipant = async (pid, reg) => {
+    try {
+      const data = await api.getParticipant(pid);
+      const p = data.participant || {};
+      const responses = {};
+      for (const row of data.responses || []) {
+        responses[row.src] = {
+          realism: row.realism ?? null,
+          realismReason: row.realismReason || "",
+          changeText: row.changeText || "",
+          editedEmail: row.editedEmail || null,
+        };
+      }
+      patch({
+        prolificId: pid,
+        cluster: p.cluster || reg.cluster,
+        recipientRole: p.recipientRole || null,
+        ownRole: p.ownRole || "",
+        roleRelation: p.roleRelation || null,
+        name: p.personalizationName || "",
+        consent: !!p.consent,
+        roleCheckAttempts: p.roleCheckAttempts ?? null,
+        priorJudgments: p.priorJudgments || {},
+        responses,
+        emailIdx: Number.isFinite(reg.emailIdx) ? reg.emailIdx : p.emailIdx ?? 0,
+        step: reg.step || p.step || "checks",
+        blocked: null,
+      });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const startEmails = async (priorJudgments) => {
     // persist participant meta (now including the un-primed prior judgments)
@@ -321,6 +403,15 @@ export default function App() {
                 content={content}
                 completionCode={config.completionCode}
                 completionUrl={config.completionUrl}
+              />
+            )}
+
+            {s.step === "blocked" && (
+              <Blocked
+                content={content}
+                code={s.blocked?.code}
+                cluster={s.blocked?.cluster}
+                onRestart={() => setS(emptyState())}
               />
             )}
           </>

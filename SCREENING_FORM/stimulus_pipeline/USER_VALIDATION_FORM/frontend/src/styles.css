@@ -113,10 +113,14 @@ textarea,
 
 /* Email realism guard: the stimulus sheet and everything inside it stays in a
    plain sans, because real corporate email is not set in a serif. Do not remove
-   this without a reason, it protects the validity of the realism ratings. */
+   this without a reason, it protects the validity of the realism ratings.
+   The stack prefers the actual Outlook faces (Aptos on new Outlook, Calibri on
+   classic) so Office users see the real thing, then falls back to a neutral
+   system sans so every other participant still gets a consistent office look. */
 .mailcard,
 .mailcard * {
-  font-family: var(--font-sans);
+  font-family: "Aptos", "Calibri", "Segoe UI", -apple-system,
+    BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 }
 
 .app {
@@ -678,6 +682,10 @@ textarea:focus,
   padding: 26px 30px;
   box-shadow: 0 8px 30px rgba(20, 25, 40, 0.13);
   margin-bottom: 22px;
+  /* 14.5px ~= Outlook's default 11pt body, so the message body and greeting
+     read at a real office-email size. Subject, signature and field labels keep
+     their own explicit sizes below. */
+  font-size: 14.5px;
 }
 .mailcard * {
   color: var(--mail-ink);
@@ -734,6 +742,30 @@ textarea:focus,
 .condbanner.editmode .condlead {
   color: var(--ink);
   opacity: 1;
+}
+/* The rewrite rule, reword freely but keep it the same kind of email from the
+   same sender, gets its own emphasised callout on a solid panel so it stands
+   out clearly against the soft edit banner and cannot be missed while editing. */
+.condbanner.editmode .condwarn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+  border-left: 4px solid var(--accent);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.condbanner.editmode .condwarn::before {
+  content: "\24D8"; /* circled information i */
+  color: var(--accent);
+  font-size: 15px;
+  line-height: 1.3;
+  flex: none;
 }
 
 .secrow {

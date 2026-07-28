@@ -140,7 +140,7 @@
 
   "checks": {
     "heading": "Quick checks",
-    "intro": "Two quick questions to confirm the role is clear. The emails only make sense once you are picturing yourself in it.",
+    "intro": "A few quick questions to confirm the task is clear. The emails only make sense once you are picturing yourself in the role.",
     "_note": "For each question, 'answer' is the number of the correct option, counting the options from the top starting at 1. Keep the correct option and 'answer' in sync if you reorder them.",
     "questions": [
       {
@@ -162,6 +162,16 @@
           "Whether the email is polite enough"
         ],
         "answer": 3
+      },
+      {
+        "prompt": "To judge whether an email is realistic for your role, you weigh up whether a sender at that level, with their authority, would...",
+        "options": [
+          "be the one sending you the email in the first place",
+          "send the email with the mentioned level of urgency",
+          "offer any reward, or hold out consequences for not doing it",
+          "All of the above, weighed together"
+        ],
+        "answer": 4
       }
     ],
     "error": "Not quite. Think again about your role, then choose again.",
@@ -253,7 +263,7 @@
     "conditionsSentence": "This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.",
     "editBannerTitle": "Keep your edits true to this email",
     "editBannerSentence": "Keep your changes in line with this email's situation: it is from {dir}, it asks you to act {urg}, and mentions {frame}.",
-    "editBannerLead": "Only reword what makes it feel more realistic. Do not change it into a different kind of email.",
+    "editBannerWarn": "The sender stays as shown. You can rephrase the request, its urgency and its framing so they fit what a sender at this level could realistically send. Just do not turn it into a different kind of email.",
     "conditions": {
       "_note": "The summary line at the top of each email is built from these parts and is worded to match the eight situations on the 'Before you begin reading' page. The template is conditionsSentence above: 'This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.' Keep the **bold** on the sender, the urgency phrase and the reward/consequence.",
       "dir": {

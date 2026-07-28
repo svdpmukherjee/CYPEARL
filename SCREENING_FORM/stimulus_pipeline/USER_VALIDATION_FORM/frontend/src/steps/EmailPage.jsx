@@ -75,7 +75,10 @@ export default function EmailPage({
       setTried(false);
       return setSubStep(3);
     }
-    // subStep 3: finish this email
+    // subStep 3: finish this email. The working copy (editSubject / editBody) is
+    // updated on every keystroke, so we save it here whether or not the
+    // participant clicked "Done editing" first: leaving edit mode open and
+    // pressing "Next email" still carries their edited version to the database.
     const changed =
       editSubject !== email.subject ||
       editBody.some((b, i) => b !== email.body[i]);
@@ -140,6 +143,9 @@ export default function EmailPage({
             : t.conditionsLead && (
                 <p className="condlead">{rich(t.conditionsLead)}</p>
               )}
+          {editing && t.editBannerWarn && (
+            <p className="condwarn">{rich(t.editBannerWarn)}</p>
+          )}
         </div>
 
         <div className="secrow subjectrow">

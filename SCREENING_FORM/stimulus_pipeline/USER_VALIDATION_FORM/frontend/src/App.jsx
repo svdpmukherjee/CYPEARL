@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "./api.js";
-import { loadContent } from "./content.jsx";
+import { loadContent, fmt } from "./content.jsx";
 import Instructions from "./steps/Instructions.jsx";
 import ClusterSelect from "./steps/ClusterSelect.jsx";
 import ProlificId from "./steps/ProlificId.jsx";
@@ -282,14 +282,28 @@ export default function App() {
     // 16 emails. Only the label changes between the two phases, not the maths,
     // so the bar fills smoothly from start to finish.
     const totalSteps = PRE.length + TOTAL_EMAILS;
-    if (s.step === "done") return { label: "Complete", pct: 100 };
+    const p = content?.app?.progress || {};
+    if (s.step === "done") return { label: p.complete || "Complete", pct: 100 };
     if (s.step === "email") {
       const done = PRE.length + s.emailIdx;
-      return { label: `Email ${s.emailIdx + 1} of ${TOTAL_EMAILS}`, pct: (done / totalSteps) * 100 };
+      return {
+        label: fmt(p.email || "Email {n} of {total}", {
+          n: s.emailIdx + 1,
+          total: TOTAL_EMAILS,
+        }),
+        pct: (done / totalSteps) * 100,
+      };
     }
     const i = PRE.indexOf(s.step);
-    return { label: "Getting started", pct: i >= 0 ? (i / totalSteps) * 100 : 0 };
-  }, [s.step, s.emailIdx]);
+    // The eight-scenarios page is the first half of the actual task, so it gets
+    // its own label rather than sharing "Getting started" with the screening
+    // pages, which told participants the real work had not started yet.
+    const label =
+      s.step === "judgments"
+        ? p.scenarios || "Task 1: the scenarios"
+        : p.screening || "Getting started";
+    return { label, pct: i >= 0 ? (i / totalSteps) * 100 : 0 };
+  }, [s.step, s.emailIdx, content]);
 
   const currentEmail = emails[s.emailIdx];
 

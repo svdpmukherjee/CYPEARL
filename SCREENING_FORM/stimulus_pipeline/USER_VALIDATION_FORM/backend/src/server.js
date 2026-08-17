@@ -332,7 +332,7 @@ app.post(
           cluster: cluster || null,
           n: n ?? null,
           conditions: conditions || {},
-          realism: realism ?? null,          // 1..5 or null
+          realism: realism ?? null,          // 1..10 or null (null = not answered)
           realismReason: (realismReason || "").trim(),
           changeText: (changeText || "").trim(), // free-text "what would you change"
           // the participant's in-place edit of the subject + body, or null if

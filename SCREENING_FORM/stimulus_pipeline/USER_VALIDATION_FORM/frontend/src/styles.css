@@ -6,7 +6,7 @@
   --line: #e4e7ee;
   --accent: #3730a3;
   --accent-slider: #929090;
-  --accent-soft: #f7dbe1;
+  --accent-soft: #b2e4ff;
   /* One shared "soft panel" fill, used borderless across the app so every soft
      callout and highlighted surface looks the same. Change it here once and it
      updates everywhere. Built from --accent-soft, so it follows the theme. */
@@ -16,6 +16,8 @@
     color-mix(in srgb, var(--accent-soft) 45%, var(--panel))
   );
   --error: #be123c;
+  /* counterpart to --error: the tick on a correctly answered check */
+  --ok: #15803d;
   --chip: #eef1f6;
   --shadow: 0 1px 2px rgba(20, 25, 40, 0.06), 0 6px 20px rgba(20, 25, 40, 0.06);
   /* Two-font system. --font-serif (Source Serif 4, self-hosted below) is the
@@ -30,6 +32,34 @@
   --mail-paper: #ffffff;
   --mail-ink: #111214;
   --mail-line: #e2e2e4;
+
+  /* ---- type scale ----
+     One ladder for every survey page, so a section is never set a half-step
+     away from the one above it. Reading text uses --fs-body, and only genuinely
+     secondary copy (help lines, role blurbs, the questions inside the objective
+     callout) drops to --fs-sub. Fine print is --fs-meta and uppercase eyebrows
+     and field labels are --fs-label. Nothing in between: the screening pages
+     used to mix 13, 13.5, 14, 15 and 16px prose in a single column, which is
+     what made the sections look inconsistent rather than deliberate. */
+  --fs-h1: 26px;
+  --fs-h2: 19px;
+  --fs-h3: 17px;
+  --fs-body: 16px;
+  --fs-sub: 15px;
+  --fs-meta: 13.5px;
+  --fs-label: 11px;
+
+  /* ---- vertical rhythm ----
+     Four gaps, in descending order of separation: between the revealed steps of
+     a page, between blocks inside a step, between a block and the control it
+     introduces, and between a heading and its own first line. Every margin on
+     the screening pages comes from one of these, so the spacing is generous
+     without being different in each section. */
+  --sp-step: 40px; /* above a step divider */
+  --sp-step-inner: 32px; /* below that divider, before the step's content */
+  --sp-block: 28px;
+  --sp-group: 18px;
+  --sp-tight: 10px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -41,6 +71,7 @@
     --accent: #a5b4fc;
     --accent-soft: #3a2530;
     --error: #fb7185;
+    --ok: #4ade80;
     --chip: #1e2636;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
     --mail-paper: #f4f4f5;
@@ -119,8 +150,15 @@ textarea,
    system sans so every other participant still gets a consistent office look. */
 .mailcard,
 .mailcard * {
-  font-family: "Aptos", "Calibri", "Segoe UI", -apple-system,
-    BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "Aptos",
+    "Calibri",
+    "Segoe UI",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
 }
 
 .app {
@@ -208,50 +246,65 @@ textarea,
 
 /* Screening pages (job area, role, instructions, Prolific ID, checks, recap)
    share .card.wide. Give them a calmer vertical rhythm so the sections do not
-   read as congested. Scoped here so the email pages are untouched. */
+   read as congested. Scoped here so the email pages are untouched.
+   Every margin below is one of the four rhythm tokens, so the distance between
+   two sections is the same wherever it appears on the page. */
 .card.wide h1 {
-  margin: 0 0 18px;
+  margin: 0 0 var(--sp-group);
 }
 .card.wide h2 {
-  margin: 34px 0 12px;
+  margin: var(--sp-block) 0 var(--sp-tight);
 }
 .card.wide .lead {
+  font-size: var(--fs-body);
   line-height: 1.6;
-  margin: 0 0 18px;
+  margin: 0 0 var(--sp-group);
 }
-.card.wide > p {
-  margin: 0 0 16px;
-}
-.card.wide > p.muted {
-  margin-bottom: 20px;
+/* ".focusblock" is included because the landing page wraps each of its steps in
+   one, so its paragraphs are grandchildren of the card rather than children. It
+   is matched inside :where() so it adds no specificity: these rules keep the
+   exact weight they had before the wrapper existed, and .card.wide .lead below
+   still wins for lead paragraphs. */
+/* ".focusblock" is matched at any depth because the landing page nests its later
+   steps inside .rolereveal, so their paragraphs are great-grandchildren of the
+   card. Without this they fell back to the browser default margin and the lower
+   half of the page was spaced differently from the top. Matched inside :where()
+   so it adds no specificity and .card.wide .lead above still wins. */
+.card.wide > p,
+.card.wide :where(.focusblock) > p {
+  margin: 0 0 var(--sp-group);
 }
 .card.wide .rolepanel {
-  margin: 20px 0 24px;
+  margin: var(--sp-group) 0 var(--sp-block);
 }
 .card.wide .notice {
-  margin: 18px 0 8px;
+  margin: var(--sp-group) 0 var(--sp-tight);
 }
 .card.wide .consentbox {
-  margin-top: 12px;
+  margin-top: var(--sp-tight);
 }
 .card.wide .field {
-  margin: 20px 0;
+  margin: var(--sp-group) 0;
 }
 .card.wide .fitchoice {
-  margin: 14px 0 6px;
+  margin: var(--sp-block) 0 0;
 }
 .card.wide .checkq {
-  margin: 24px 0;
+  margin: var(--sp-block) 0;
+}
+.card.wide .navbar {
+  margin-top: var(--sp-block);
 }
 
 h1 {
-  font-size: 25px;
+  font-size: var(--fs-h1);
   line-height: 1.25;
   margin: 0 0 12px;
   letter-spacing: 0;
 }
 h2 {
-  font-size: 16px;
+  font-size: var(--fs-h2);
+  line-height: 1.35;
   margin: 22px 0 8px;
   letter-spacing: 0;
 }
@@ -295,6 +348,11 @@ h2 {
 .steps .substeps li {
   margin: 3px 0;
 }
+/* the line closing a step, under its sub-list: it carries the instruction the
+   bullets above are in service of, so it stays full strength, not muted */
+.steps .steptail {
+  margin: 9px 0 0;
+}
 
 .consentbox {
   background: var(--chip);
@@ -304,12 +362,12 @@ h2 {
 }
 .consentbox p {
   margin: 0 0 12px;
-  font-size: 13.5px;
+  font-size: var(--fs-sub);
 }
 .consentbox .bullets {
   margin: 0 0 12px;
   padding-left: 20px;
-  font-size: 13.5px;
+  font-size: var(--fs-sub);
 }
 .consentbox .bullets li {
   margin: 6px 0;
@@ -330,9 +388,9 @@ h2 {
   background: color-mix(in srgb, var(--error) 9%, var(--panel));
   border: 1px solid color-mix(in srgb, var(--error) 45%, var(--line));
   border-radius: 10px;
-  padding: 11px 14px;
-  font-size: 13.5px;
-  margin: 10px 0;
+  padding: 12px 15px;
+  font-size: var(--fs-sub);
+  margin: var(--sp-group) 0;
 }
 
 /* attention-drawing callout (for example the compensation line) */
@@ -341,8 +399,8 @@ h2 {
   border: 0;
   border-radius: 10px;
   padding: 12px 15px;
-  font-size: 14px;
-  margin: 14px 0 4px;
+  font-size: var(--fs-sub);
+  margin: var(--sp-group) 0 0;
 }
 
 /* Compensation strip: a reassurance line on the left and two stat tiles on the
@@ -414,11 +472,11 @@ h2 {
   text-align: left;
   border: 1.5px solid var(--line);
   border-radius: 10px;
-  padding: 11px 14px;
+  padding: 12px 15px;
   background: var(--bg);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-sub);
   transition:
     border-color 0.15s,
     background 0.15s;
@@ -429,6 +487,45 @@ h2 {
 .optbtn.on {
   border-color: transparent;
   background: var(--soft-panel);
+  font-weight: 600;
+}
+
+/* ---- quick-checks feedback ----
+   After a failed attempt the option the participant chose is marked with a tick
+   or a cross, so a retry costs them only the questions they got wrong. The
+   questions themselves carry no mark: the answer is where the verdict belongs.
+   These rules come AFTER .optbtn.on deliberately, since the marked state has to
+   win over the plain "selected" fill. */
+.optbtn.ok {
+  border-color: color-mix(in srgb, var(--ok) 55%, var(--line));
+  background: color-mix(in srgb, var(--ok) 8%, var(--bg));
+  font-weight: 600;
+}
+.optbtn.bad {
+  border-color: color-mix(in srgb, var(--error) 55%, var(--line));
+  background: color-mix(in srgb, var(--error) 7%, var(--bg));
+  font-weight: 600;
+}
+.optbtn.ok::after,
+.optbtn.bad::after {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  margin-left: 8px;
+}
+.optbtn.ok::after {
+  content: "\2713";
+  color: var(--ok);
+}
+.optbtn.bad::after {
+  content: "\2715";
+  color: var(--error);
+}
+
+/* Plain red sentence, no panel or border: at this point the crosses on the
+   questions already carry the message, so the line only needs to explain them. */
+.checkerror {
+  margin: 20px 0 0;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -446,7 +543,7 @@ h2 {
   margin: 14px 0;
 }
 .field label {
-  font-size: 11px;
+  font-size: var(--fs-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -477,8 +574,8 @@ textarea:focus,
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .hint {
-  font-size: 12px;
-  margin-top: 5px;
+  font-size: var(--fs-meta);
+  margin-top: 6px;
 }
 
 /* ---- cluster grid ---- */
@@ -486,7 +583,7 @@ textarea:focus,
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
-  margin: 16px 0 4px;
+  margin: var(--sp-group) 0 0;
 }
 .clustercard {
   display: flex;
@@ -513,40 +610,189 @@ textarea:focus,
 }
 .clustercard .cname {
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 .clustercard .crole {
-  font-size: 12.5px;
+  font-size: var(--fs-meta);
   color: var(--muted);
+}
+
+/* ---- reading focus ----
+   One step of a multi-step page. src/readingFocus.js sets the inline opacity
+   from how far the block sits from the middle of the viewport, so the step being
+   read stays at full strength and the others recede. The transition is what
+   turns the auto-scroll after each choice into a hand-off rather than a jump;
+   it is short so the fade still tracks the scroll closely.
+   Two escape hatches, both !important so they beat the inline opacity: pointing
+   at a faded step or tabbing into one brings it straight back, so a faded
+   section can never become a control you cannot see yourself using. */
+.focusblock {
+  transition: opacity 0.18s linear;
+}
+.focusblock:hover,
+.focusblock:focus-within {
+  opacity: 1 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .focusblock {
+    opacity: 1 !important;
+    transition: none;
+  }
 }
 
 /* the assigned-role + fit gate revealed under the job-area grid on the landing
    page, separated from the selection above it */
-.rolereveal {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
-}
-.rolereveal > h2:first-child {
-  margin-top: 0;
-}
-
-/* each revealed sub-section (own role -> assigned role -> fit gate) is set off
-   from the one above it, so the landing page reads as an ordered sequence */
+/* Every step boundary on the landing page (job area -> own role -> assigned
+   role -> fit gate) uses the same divider: --sp-step of air above the rule and
+   --sp-step-inner below it. They used to differ (28/24 here, 44/24 below),
+   which made the page look as if the sections were spaced by accident. */
+.rolereveal,
 .rolestep {
-  margin-top: 28px;
-  padding-top: 24px;
+  margin-top: var(--sp-step);
+  padding-top: var(--sp-step-inner);
   border-top: 1px solid var(--line);
 }
-.rolestep > h2:first-child {
+/* the first element of a step sits against the divider, whatever it is: a
+   heading on most steps, the objective callout on the fit gate */
+.rolereveal > .focusblock > h2:first-child,
+.rolestep > h2:first-child,
+.rolestep > .objective:first-child {
   margin-top: 0;
 }
 
 /* When the app auto-scrolls a revealed section to the top of the viewport, keep
-   its heading clear of the sticky top bar rather than tucked behind it. */
-.rolereveal > h2:first-child,
+   it clear of the sticky top bar rather than tucked behind it. The fit gate
+   scrolls by its wrapper, since it may open straight into the callout. */
+.rolereveal > .focusblock > h2:first-child,
+.rolestep,
 .rolestep > h2:first-child {
   scroll-margin-top: 84px;
+}
+
+/* ---- study objective callout (landing page, just above the fit question) ----
+   A pilot showed participants rated the CONTENT of the emails instead of
+   whether the sender could plausibly send that kind of message to their role.
+   This block explains the real task before consent, so it is deliberately the
+   loudest thing on the page: a filled accent header band, an accent-tinted
+   border and its own elevation, so it cannot be read as ordinary body copy. */
+.objective {
+  margin: var(--sp-block) 0;
+  border: 0px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  border-radius: 0px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.objectiveband {
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 22px;
+}
+/* the accent is a light lavender in dark mode, so flip the band text to dark */
+@media (prefers-color-scheme: dark) {
+  .objectiveband {
+    color: #10131c;
+  }
+}
+.objectivebody {
+  background: var(--panel);
+  padding: var(--sp-group) 22px 22px;
+}
+.objectiveheading {
+  margin: 0 0 var(--sp-tight);
+  font-size: var(--fs-h3);
+  line-height: 1.35;
+}
+.objectivelead {
+  margin: 0 0 var(--sp-group);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+
+/* The wrong question, then the right one. Two rows on one shared surface, the
+   second marked with the accent so the eye lands on it last and stays there.
+   No red or green: the "Not" row is a common reading of the task, not a
+   mistake to be told off for. */
+.contrast {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 0 0 var(--sp-group);
+}
+.contrastrow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: var(--bg);
+  padding: 12px 14px;
+}
+.contrastrow:last-child {
+  background: var(--soft-panel);
+}
+.contrastlabel {
+  flex: none;
+  min-width: 34px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.contrastrow:last-child .contrastlabel {
+  color: var(--accent);
+}
+.contrasttext {
+  margin: 0;
+  font-size: var(--fs-sub);
+  line-height: 1.5;
+}
+/* The three things to weigh (sender, urgency, stakes). All three tiles are
+   styled identically and neutrally: no tick or cross, no red or green, because
+   any valence here would tell participants which combinations to call
+   unrealistic and they would stop judging for themselves. */
+.weighgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+.weighcard {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid color-mix(in srgb, var(--accent) 55%, var(--line));
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.weighlabel {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.weighq {
+  margin: 6px 0 0;
+  font-size: var(--fs-sub);
+  line-height: 1.5;
+}
+.objectiveclosing {
+  margin: var(--sp-group) 0 0;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+}
+.objectivenote {
+  margin: var(--sp-tight) 0 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 /* the "how does your own role compare" dropdown */
@@ -559,7 +805,7 @@ textarea:focus,
   color: var(--ink);
   width: 100%;
   max-width: 460px;
-  margin: 8px 0 4px;
+  margin: var(--sp-tight) 0 0;
   cursor: pointer;
 }
 
@@ -568,23 +814,25 @@ textarea:focus,
   border: 0;
   background: var(--soft-panel);
   border-radius: 14px;
-  padding: 18px 20px;
-  margin: 14px 0;
+  padding: var(--sp-group) 20px;
+  margin: var(--sp-group) 0;
 }
 .rolearea {
-  font-size: 12px;
+  font-size: var(--fs-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
 }
 .roletitle {
-  font-size: 20px;
+  font-size: var(--fs-h2);
   font-weight: 750;
-  margin: 2px 0 6px;
+  line-height: 1.35;
+  margin: 0 0 6px;
 }
 .rolenote {
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--fs-sub);
+  line-height: 1.55;
   color: var(--ink);
 }
 
@@ -997,7 +1245,7 @@ textarea:focus,
 .judgelist {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 40px;
   margin-top: 22px;
 }
 .judgeitem {
@@ -1016,25 +1264,21 @@ textarea:focus,
 .judgeprompt {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  /* tight, so "1." reads as part of the sentence rather than a separate column */
+  gap: 7px;
   font-size: 15px;
   line-height: 1.55;
   margin-bottom: 20px;
 }
+/* Plain "1." in the body ink, not a filled circle: the situations read as an
+   ordinary numbered list, so the number stays out of the way of the sentence.
+   Size and face are inherited from .judgeprompt so it sits on the same
+   baseline as the text it numbers. */
 .jnum {
   flex: none;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #616161;
-  color: #fff;
+  color: var(--ink);
   font-weight: 700;
-  font-size: 13px;
   font-variant-numeric: tabular-nums;
-  margin-top: 1px;
 }
 .jtext {
   flex: 1;
@@ -1072,7 +1316,149 @@ textarea:focus,
   font-weight: 600;
 }
 
-/* ---- 1..10 rating slider (believability + realism) ---- */
+/* ---- 1..10 rating boxes (believability; see RatingBoxes.jsx) ----
+   Ten equal boxes on one row, centred in the card, with the end labels sitting
+   under the first and last box so the ends of the scale are unmistakable. The
+   row is a 10-column grid rather than centred flex items, which is what keeps
+   "Not at all realistic" aligned under box 1 at every width. */
+/* One row: the "not at all" label, the ten boxes, the "completely" label. The
+   labels sit BESIDE the boxes rather than beneath them, because a label is
+   wider than the single box it refers to and underneath it always looked like
+   it spanned boxes 1 and 2 (or 9 and 10). */
+.rbscale {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.rbend {
+  flex: 0 1 auto;
+  max-width: 130px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--muted);
+}
+/* each label points at the end it belongs to: the left one ends against box 1,
+   the right one starts against box 10 */
+.rbend:first-child {
+  text-align: right;
+}
+.rbend:last-child {
+  text-align: left;
+}
+.rbrow {
+  flex: 1 1 auto;
+  min-width: 0; /* let the row shrink inside the flex line instead of overflowing */
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+}
+.rbbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  min-width: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+/* the real radio, stretched invisibly across its box so the whole box is the
+   hit target while keyboard and screen-reader behaviour stay native */
+.rbbox input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rbbox:hover {
+  border-color: var(--muted);
+}
+.rbbox.on {
+  border-color: transparent;
+  background: var(--soft-panel);
+  color: var(--ink);
+  font-weight: 700;
+}
+.rbbox:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+/* On a phone there is no room for labels beside the boxes: they would squeeze
+   the row to nothing. Drop them below instead, one at each end of the row, by
+   re-laying the same three elements as a two-column grid. */
+@media (max-width: 640px) {
+  .rbscale {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+  }
+  .rbrow {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    gap: 4px;
+  }
+  .rbbox {
+    min-height: 38px;
+    font-size: 12.5px;
+    border-radius: 8px;
+  }
+  .rbend {
+    max-width: none;
+    grid-row: 2;
+  }
+  .rbend:first-child {
+    grid-column: 1;
+    text-align: left;
+  }
+  .rbend:last-child {
+    grid-column: 2;
+    text-align: right;
+  }
+}
+
+/* Answered situations settle back visually, so what is left to do stands out on
+   a page of eight. "missing" is only applied after a failed Continue, never
+   before: flagging untouched items on arrival would look like eight errors. */
+.judgeitem.done {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+}
+.judgeitem.missing {
+  border-color: color-mix(in srgb, var(--error) 45%, var(--line));
+  background: color-mix(in srgb, var(--error) 5%, var(--bg));
+}
+
+/* Visible to screen readers only. Used for the rating boxes, where the visible
+   label is a bare number that would be meaningless read aloud on its own. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- 1..10 rating slider (still used by the email pages) ---- */
 .ratingslider {
   padding: 4px 2px 2px;
 }

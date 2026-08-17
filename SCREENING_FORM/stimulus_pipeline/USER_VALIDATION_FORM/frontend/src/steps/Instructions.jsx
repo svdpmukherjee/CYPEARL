@@ -9,13 +9,19 @@ export default function Instructions({ content, recipientRole, cluster, consent,
   return (
     <div className="card wide">
       <h1>{t.title}</h1>
-      <p className="lead">{rich(t.lead, { role })}</p>
+      {/* the lead is optional: an empty string in content.json should leave no
+          gap behind, so the heading sits straight above the first section */}
+      {t.lead && <p className="lead">{rich(t.lead, { role })}</p>}
 
       <h2>{t.whatYouDoHeading}</h2>
       <ol className="steps stages">
         {t.whatYouDo.map((item, i) => {
           const main = typeof item === "string" ? item : item.main;
           const sub = typeof item === "string" ? null : item.sub;
+          // Optional line closing a step, after its sub-list. It lets one step
+          // say "here are the three parts... and this is what you do with
+          // them", instead of a second step repeating the same three parts.
+          const tail = typeof item === "string" ? null : item.tail;
           return (
             <li key={i}>
               {rich(main, { role })}
@@ -26,6 +32,7 @@ export default function Instructions({ content, recipientRole, cluster, consent,
                   ))}
                 </ul>
               )}
+              {tail && <p className="steptail">{rich(tail, { role })}</p>}
             </li>
           );
         })}

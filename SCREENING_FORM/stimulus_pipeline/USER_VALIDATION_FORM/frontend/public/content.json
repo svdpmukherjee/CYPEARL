@@ -25,7 +25,14 @@
   ],
 
   "app": {
-    "brand": "Email Realism Validation"
+    "brand": "Email Realism Validation",
+    "_progressNote": "The small label next to the progress bar at the top of every page. 'screening' covers the pages up to the recap. 'scenarios' is the eight-situations page: it gets its own label because that page is the first half of the paid task, and labelling it 'Getting started' told participants the real work had not begun. In 'email', {n} and {total} are filled in automatically.",
+    "progress": {
+      "screening": "Getting started",
+      "scenarios": "Task 1: the scenarios",
+      "email": "Email {n} of {total}",
+      "complete": "Complete"
+    }
   },
 
   "clusterLabels": {
@@ -34,30 +41,24 @@
 
   "instructions": {
     "title": "About this study",
+    "lead": "",
     "whatYouDoHeading": "What you will do",
-    "_whatYouDoNote": "Each item can be a plain string, or an object with a 'main' line and a 'sub' list of nested points. Edit the text inside the quotes only; keep the braces { } and words like {role} as they are. Use {article} for the 'a'/'an' before {role} (it is filled in automatically as 'a Sales Executive' or 'an Executive Assistant').",
+    "_whatYouDoNote": "Each item can be a plain string, or an object with a 'main' line, a 'sub' list of nested points, and an optional 'tail' line shown after that list. Edit the text inside the quotes only; keep the braces { } and words like {role} as they are. Use {article} for the 'a'/'an' before {role} (it is filled in automatically as 'a Sales Executive' or 'an Executive Assistant'). Name the three factors ONCE, in the sub-list of the first step, and use its 'tail' to say what to do with them. Listing them a second time as 'what you are judging' only reads as repetition, since the participant has already met them on the landing page.",
     "whatYouDo": [
       {
-        "main": "Being {article} {role}, you will look at **eight work email scenarios**. Each one varies in three ways:",
+        "main": "Being {article} {role}, you will look at **eight work email scenarios**. Each one is a different combination of three things:",
         "sub": [
           "**Who sends it**: a senior colleague, or a peer or junior one.",
           "**How urgent it is**: with a priority, or with no rush.",
           "**What is at stake**: a reward for doing the task, or a consequence for not doing it."
-        ]
+        ],
+        "tail": "For each scenario you rate **how realistic** that combination is for {article} **{role}**, weighing the three together rather than one at a time. The question is always whether **that sender** is in a position to send you that message, not whether the email is well written."
       },
       {
-        "main": "For each scenario, rate **how realistic** it is for {article} {role}. That means judging whether:",
-        "sub": [
-          "the sender would realistically ask {article} {role} to do such a task,",
-          "the level of urgency is typical for that kind of request, and",
-          "a sender would really mention a reward or consequence like this."
-        ]
-      },
-      {
-        "main": "Then read **16 emails**, one at a time: two written for each of the eight scenarios above. For every email you will:",
+        "main": "Then read **16 emails**, one at a time: two written for each of those eight scenarios. For every email you will:",
         "sub": [
           "rate **how realistic** it is, and say why in a sentence or two,",
-          "if a part feels off, mark it and rewrite **just that part** the way you would expect (the sender, link and signature stay fixed)."
+          "if something does not feel right, edit the email in place to make it more realistic."
         ]
       }
     ],
@@ -82,13 +83,14 @@
 
   "clusterSelect": {
     "title": "Email realism validation",
-    "lead": "Thank you for taking part. You will take on a work role close to your own and judge how realistic a set of work emails feels for that role.",
+    "lead": "Thank you for taking part. You will take on a work role close to your own and judge whether the emails that role receives could realistically come from the people who send them.",
     "selectPrompt": "Which job area is closest to yours?",
     "selectHelp": "Pick the area that best matches your own work experience.",
     "loading": "Loading job areas...",
     "continueButton": "Continue",
     "ownRoleHeading": "What is your job title?",
-
+    "ownRoleHelp": "",
+    "ownRoleLabel": "",
     "ownRolePlaceholder": "Type here...",
     "ownRoleContinue": "Continue"
   },
@@ -113,14 +115,15 @@
   "role": {
     "title": "You are assigned with a job role for this task",
     "lead": "For the rest of the study, please **imagine** you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations and more).",
-    "rolePrefix": "You are",
+    "_rolePrefixNote": "Goes in front of the assigned role in the highlighted panel, giving 'Imagine you are an Executive Assistant'. Keep the 'imagine' in it: this line is the one thing a participant who skims the page is certain to read, and without it the line states that they ARE that role rather than asking them to play it.",
+    "rolePrefix": "Imagine you are",
     "relHeading": "How does your own job role (**{ownRole}**) compare to the assigned role (**{role}**)?",
     "relPlaceholder": "Select one...",
     "relOptions": [
       { "value": "same", "label": "They are the same" },
       {
         "value": "above",
-        "label": "Above it: more senior than {article} {role}"
+        "label": "More senior than {article} {role}"
       },
       {
         "value": "peer",
@@ -128,18 +131,52 @@
       },
       {
         "value": "below",
-        "label": "Below it: more junior than {article} {role}"
+        "label": "More junior than {article} {role}"
       },
       { "value": "not_sure", "label": "Not sure" }
     ],
-    "fitHeading": "Before you continue",
-    "fitText": "We will ask your **expert opinion** on the work-related emails {article} **{role}** typically receives. You do not need to have held this exact job, but it should be familiar enough to judge.",
-    "fitQuestion": "Do you feel you know this kind of role well enough to judge which emails are realistic for it?",
-    "fitConfirmButton": "Yes, this is familiar to me, continue",
-    "fitDeclineButton": "No, I do not know this kind of role well",
+    "fitHeading": "",
+    "fitText": "",
+    "_taskExplainerNote": "The most important block on the landing page. A pilot showed participants judged the CONTENT of the emails (whether the task made sense, how it was written) instead of whether that sender, pressing that hard, holding out that reward or consequence, is in a position to send such an email to that role. The block therefore names the WRONG thing to judge before it names the right one ('contrast' below: a Not row and a But row), because people who have already started reading for content need that misreading interrupted, not just a positive instruction. Two rules when editing: (1) NEVER add worked examples or say which combinations are realistic. Telling people that, say, a junior would not warn you about a consequence teaches them a rule and they stop judging: a junior can legitimately warn that something will be escalated and hit you both. The 'factors' below are deliberately written as QUESTIONS about the sender's standing, never as answers. (2) Keep it short, or people skip it.",
+    "taskExplainer": {
+      "eyebrow": "Please read this before you continue",
+      "heading": "What we mean by a realistic email",
+      "lead": "The emails are already written, and we are not checking spelling, wording, or whether the task itself is a sensible piece of work. What we need your judgment on is whether the sender, given their position relative to {article} **{role}**, could realistically send that message at all.",
+      "_contrastNote": "Two rows shown side by side, the wrong question first and the right one second. Keep them as a pair: the first row is what pilot participants did by default, and seeing it named is what makes the second row land.",
+      "contrast": [
+        {
+          "label": "Not",
+          "text": "Is this a well written email, and is what it asks for reasonable?"
+        },
+        {
+          "label": "But",
+          "text": "Is **this sender** in a position to ask me this, to press me like that, and to put that at stake?"
+        }
+      ],
+      "factors": [
+        {
+          "label": "The sender",
+          "text": "Would a person at their level be the one sending this to {article} **{role}**?"
+        },
+        {
+          "label": "The urgency",
+          "text": "Would they press for it that hard, or put it that casually?"
+        },
+        {
+          "label": "What is at stake",
+          "text": "Would they hold out a reward, or point to a consequence, in that way?"
+        }
+      ],
+      "closing": "Take the three as one picture, not one at a time: **could this particular sender really send me this type of email?**",
+      "note": "There is no right answer. Some combinations will feel perfectly normal to you and others will not, and we want your honest read either way."
+    },
+    "fitTail": "We are asking for your **expert opinion** on who sends what to {article} **{role}**, and on what terms. You do not need to have held this exact job, but it should be familiar enough for you to judge that.",
+    "fitQuestion": "Do you feel you know this kind of role well enough to judge who could realistically send it these emails, and in what way?",
+    "fitConfirmButton": "Yes, I understand the task and know this role",
+    "fitDeclineButton": "No, this is not a good fit for me",
     "backButton": "Back",
     "exitTitle": "This study may not be a good fit",
-    "exitText": "Thank you for your honesty. This study needs people who are familiar with the day-to-day emails of the role shown, so your responses would not be the right fit here. No data has been saved and you have not consented to anything.",
+    "exitText": "Thank you for your honesty. This study needs people who can judge, from their own working experience, who would realistically send these emails to the role shown and how. No data has been saved and you have not consented to anything.",
     "exitProlificNote": "Please return your submission on Prolific so it can be offered to someone else.",
     "exitProlificButton": "Take me back to my Prolific",
     "exitProlificUrl": "https://prolific.com"
@@ -164,8 +201,8 @@
         "prompt": "When you rate each email, what are you mainly judging?",
         "options": [
           "Whether the email has spelling or grammar mistakes",
-          "Whether I personally like the sender",
-          "Whether {article} {role} would realistically receive an email like this",
+          "Whether the task it asks for is a sensible piece of work",
+          "Whether a sender at that level could realistically send an email like this to {article} {role}",
           "Whether the email is polite enough"
         ],
         "answer": 3
@@ -181,7 +218,10 @@
         "answer": 4
       }
     ],
+    "_feedbackNote": "After a failed attempt, the answer the participant chose is marked with a green tick or a red cross. Only their own answer is marked: the correct option is never revealed on a wrong one, or the retry would stop being a comprehension check. correctLabel and incorrectLabel are not shown on screen: they are read out by screen readers, so the marks are not colour alone.",
     "error": "Not quite. Think again about your role, then choose again.",
+    "correctLabel": "Correct",
+    "incorrectLabel": "Not correct, choose again",
     "submit": "Confirm and continue",
     "backButton": "Back"
   },
@@ -208,10 +248,11 @@
 
   "priorJudgments": {
     "_note": [
-      "Shown once, right after the recap and before the 16 emails. Participants give their general expectation for eight everyday email situations BEFORE they have seen any of our example emails, so these are their un-primed judgments. The eight items are the 2x2x2 combinations of sender (more senior vs peer or junior), urgency (right away vs no rush) and framing (a problem to avoid vs a benefit to gain). Keep the wording plain and do NOT name those three factors on screen. The order is shuffled per participant automatically. 'key' is stored in the data and must not be changed; edit only the 'text'."
+      "Shown once, right after the recap and before the 16 emails. Participants give their general expectation for eight everyday email situations BEFORE they have seen any of our example emails, so these are their un-primed judgments. The eight items are the 2x2x2 combinations of sender (more senior vs peer or junior), urgency (right away vs no rush) and framing (a problem to avoid vs a benefit to gain). Keep the wording plain and do NOT name those three factors on screen. The order is shuffled per participant automatically. 'key' is stored in the data and must not be changed; edit only the 'text'.",
+      "The title calls this the FIRST TASK on purpose. These ratings are study data, not a warm-up, and an earlier title ('Before you begin reading') made the page read as something to get past before the real work, which invites rushed answers. Keep the lead's 'before you read any of the emails' framing, since that is what makes these judgments un-primed, but do not retitle the page as a preamble."
     ],
-    "pageTitle": "Before you begin reading",
-    "lead": "Before you read any of the emails, we would like your **general expectation**. Below are eight everyday situations. For each, **tell us how realistic** it is that you, as {article} **{role}**, would receive an email like that at work. There are no right answers, and you have not seen our emails yet, so just go with your honest sense.",
+    "pageTitle": "Your first task: the eight scenarios",
+    "lead": "Before you read any of the emails, we would like your **general expectation**. Below are eight everyday situations. For each, **tell us how realistic** it is that you, as {article} **{role}**, would receive an email like that at work **from the colleague described**. There are no right answers, and you have not seen our emails yet, so answer from your own experience of the role.",
     "scaleLabels": [
       "Not at all realistic",
       "Slightly realistic",
@@ -220,7 +261,7 @@
       "Completely realistic"
     ],
     "requiredHint": "Please rate all eight situations before you continue.",
-    "closingHeading": "What happens next",
+    "closingHeading": "Your second task: the 16 emails",
     "closingLead": "For each of these eight situations you will now see **two emails**, **16 in total**. For every email you will:",
     "closingPoints": [
       "Rate **how realistic** it is for {article} **{role}**.",
@@ -267,10 +308,12 @@
 
   "email": {
     "conditionsTitle": "What to expect in this email",
+    "_conditionsSentenceNote": "IMPORTANT: the sentence shown under 'What to expect in this email' is NOT taken from here. It is copied word for word from the matching situation in priorJudgments.items above, looked up by this email's combination of sender, urgency and framing, so the participant reads the identical wording for the scenario they rated on the first-task page. To change that wording, edit priorJudgments.items. The template below is only a fallback, used if a combination has no matching situation there.",
     "conditionsSentence": "This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.",
     "editBannerTitle": "Keep your edits true to this email",
-    "editBannerSentence": "Keep your changes in line with this email's situation: it is from {dir}, it asks you to act {urg}, and mentions {frame}.",
-    "editBannerWarn": "The sender stays as shown. You can rephrase the request, its urgency and its framing so they fit what a sender at this level could realistically send. Just do not turn it into a different kind of email.",
+    "_editBannerSentenceNote": "{situation} is filled in with the same word-for-word situation described above, so the reminder shown while editing matches what the participant read before editing.",
+    "editBannerSentence": "Keep your changes in line with this email's situation: {situation}",
+    "editBannerWarn": "The sender stays as shown. You can rephrase the request, its urgency and its framing so they fit what a sender at this level could realistically send. Please DO NOT turn it into a different kind of email.",
     "conditions": {
       "_note": "The summary line at the top of each email is built from these parts and is worded to match the eight situations on the 'Before you begin reading' page. The template is conditionsSentence above: 'This email is from {dir}. It asks you to do a task {urg}, and mentions {frame}.' Keep the **bold** on the sender, the urgency phrase and the reward/consequence.",
       "dir": {
@@ -293,7 +336,7 @@
     "questionsIntro": "Now please answer the questions below about the email.",
     "stepLabel": "Question {n} of 3",
     "q1Heading": "1. Is this email realistic for your role?",
-    "q1Sub": "As {article} {role}, would an email like this, from this kind of sender, put this way, realistically land in your inbox? Judge the sender, the urgency, and the framing **as a combination**, not each on its own.",
+    "q1Sub": "Is **this sender**, at their level in relation to {article} **{role}**, in a position to send you this, to press you like that, and to put that at stake? Judge the three **together**, not one at a time.",
     "realismLabels": [
       "Not at all realistic",
       "Slightly realistic",
@@ -303,11 +346,11 @@
     ],
     "q1Required": "Please choose a rating to continue.",
     "q2Heading": "2. In a sentence or two, why did you give that rating?",
-    "q2Sub": "Tell us what made it feel realistic or not for {article} **{role}**. This helps us understand your rating.",
+    "q2Sub": "Tell us what made it feel realistic or not for {article} **{role}**, and say something about **the sender**: what someone at their level could or could not credibly ask, promise, or warn you about.",
     "q2Placeholder": "Type here...",
     "q2Required": "Please add a short explanation for your rating to continue.",
     "q3Heading": "3. Would you like to change anything to make it more realistic for **{role}**?",
-    "q3Sub": "Optional. If something felt unrealistic for {article} **{role}**, use the edit option to reword it, but keep it the **same kind of email** (same sender, urgency and framing). Otherwise, leave it as it is.",
+    "q3Sub": "**Optional**. If something felt unrealistic for {article} **{role}**, use the edit option to reword it.",
     "q3EditButton": "Improve the email",
     "q3EditHint": "You can now edit the subject and the message text above. The sender, the link, and the signature stay as they are. Click **Done editing** when you have finished.",
     "q3DoneButton": "Done editing",

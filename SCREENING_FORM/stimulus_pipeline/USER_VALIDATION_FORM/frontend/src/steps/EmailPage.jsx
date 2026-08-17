@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { rich, fmt } from "../content.jsx";
-import RatingSlider from "../RatingSlider.jsx";
+import RatingBoxes from "../RatingBoxes.jsx";
 
 // One email page. The email stays visible at the top the whole time. Below it
 // the participant answers three questions, ONE at a time, each replacing the
@@ -25,7 +25,11 @@ export default function EmailPage({
   const REALISM_LABELS = t.realismLabels;
 
   const [subStep, setSubStep] = useState(1); // 1 = rating, 2 = reason, 3 = change
-  const [realism, setRealism] = useState(saved?.realism ?? 5); // slider starts at the midpoint
+  // Starts unanswered. It used to default to the slider's midpoint (5), which
+  // meant an untouched scale was stored as a real rating of 5 and the "please
+  // choose a rating" check below could never fire, so a participant could click
+  // through all 16 emails and record a 5 for every one.
+  const [realism, setRealism] = useState(saved?.realism ?? null);
   const [reason, setReason] = useState(saved?.realismReason ?? "");
   const [changeText, setChangeText] = useState(saved?.changeText ?? "");
   const [tried, setTried] = useState(false);
@@ -40,13 +44,28 @@ export default function EmailPage({
     saved?.editedEmail?.body ?? [...email.body]
   );
 
-  // A one-line plain-language summary of this email's conditions, worded to
-  // match the eight situations on the "Before you begin reading" page.
+  // The one-line summary of this email's conditions. It is taken VERBATIM from
+  // the matching situation on the first-task page, looked up by this email's
+  // own combination, so the participant reads exactly the sentence they already
+  // rated rather than a reworded version of it. That page is therefore the
+  // single place this wording is edited.
+  // The fallback assembles the sentence from email.conditions instead, and only
+  // comes into play if a combination has no matching situation (for example if
+  // one is deleted from priorJudgments.items).
   const c = email.conditions;
   const cond = t.conditions || {};
   const dirFrag = cond.dir?.[c.dir] || c.dir_label;
   const urgFrag = cond.urg?.[c.urg] || c.urg_label;
   const frameFrag = cond.frame?.[c.frame] || c.frame_label;
+  const comboKey = `${c.dir}_${c.urg}_${c.frame}`;
+  const situation =
+    (content.priorJudgments?.items || []).find((it) => it.key === comboKey)
+      ?.text ||
+    fmt(t.conditionsSentence, {
+      dir: dirFrag,
+      urg: urgFrag,
+      frame: frameFrag,
+    });
 
   const reasonOk = reason.trim().length > 0;
 
@@ -130,11 +149,9 @@ export default function EmailPage({
             {editing ? t.editBannerTitle : t.conditionsTitle}
           </div>
           <p className="condsentence">
-            {rich(editing ? t.editBannerSentence : t.conditionsSentence, {
-              dir: dirFrag,
-              urg: urgFrag,
-              frame: frameFrag,
-            })}
+            {editing
+              ? rich(t.editBannerSentence, { situation })
+              : rich(situation)}
           </p>
           {editing
             ? t.editBannerLead && (
@@ -202,7 +219,12 @@ export default function EmailPage({
             <div className="qsub">
               {rich(t.q1Sub, { role: email.recipient_role })}
             </div>
-            <RatingSlider
+            {/* Same control and same stored 1..10 scale as the eight scenarios
+                on the "first task" page, so a participant's prior expectation
+                and their rating of an actual email stay directly comparable.
+                The name is per email, or all 16 radio groups would merge. */}
+            <RatingBoxes
+              name={"realism_" + email.src}
               value={realism}
               onChange={(v) => {
                 setRealism(v);

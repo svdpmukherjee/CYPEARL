@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { rich } from "../content.jsx";
-import RatingSlider from "../RatingSlider.jsx";
+import RatingBoxes from "../RatingBoxes.jsx";
 
 // A tiny deterministic PRNG + Fisher-Yates shuffle. Seeded from the Prolific ID
 // so each participant sees the eight scenarios in a stable but individual order:
@@ -55,16 +55,14 @@ export default function PriorJudgments({
     [items, prolificId],
   );
 
-  // Every situation starts at the midpoint (5); participants slide from there.
-  // Seed any unrated item to 5 so an untouched slider still records a value.
-  const [ratings, setRatings] = useState(() => {
-    const base = {};
-    items.forEach((it) => {
-      base[it.key] = 5;
-    });
-    return { ...base, ...(initial || {}) };
-  });
+  // Nothing is pre-selected. An earlier version seeded every situation to the
+  // midpoint so an untouched slider still recorded a value, which meant a
+  // skipped item was stored as a genuine 5 and the "rate all eight" check below
+  // could never fire. Starting empty keeps "not answered" and "answered
+  // neutral" distinct, and makes every stored rating a real choice.
+  const [ratings, setRatings] = useState(() => ({ ...(initial || {}) }));
   const [tried, setTried] = useState(false);
+  const itemRefs = useRef({});
 
   const allRated = items.every((it) => ratings[it.key] != null);
 
@@ -76,6 +74,11 @@ export default function PriorJudgments({
   const next = () => {
     if (!allRated) {
       setTried(true);
+      // Eight items is enough that a missed one is easy to lose on the page, so
+      // take them to the first unanswered situation rather than just warning.
+      const missed = order.find((it) => ratings[it.key] == null);
+      const el = missed && itemRefs.current[missed.key];
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
     onNext(ratings);
@@ -87,26 +90,39 @@ export default function PriorJudgments({
       <p className="lead">{rich(t.lead, { role })}</p>
 
       <div className="judgelist">
-        {order.map((it, idx) => (
-          <div
-            className={"judgeitem" + (ratings[it.key] != null ? " done" : "")}
-            key={it.key}
-          >
-            <div className="judgeprompt">
-              <span className="jnum">{idx + 1}</span>
-              <span className="jtext">{rich(it.text, { role })}</span>
+        {order.map((it, idx) => {
+          const rated = ratings[it.key] != null;
+          return (
+            <div
+              className={
+                "judgeitem" +
+                (rated ? " done" : "") +
+                (tried && !rated ? " missing" : "")
+              }
+              key={it.key}
+              ref={(el) => {
+                itemRefs.current[it.key] = el;
+              }}
+            >
+              <div className="judgeprompt">
+                <span className="jnum">{idx + 1}.</span>
+                <span className="jtext">{rich(it.text, { role })}</span>
+              </div>
+              {/* Stored value stays 1..10, as it was with the slider, so
+                  ratings collected before this change remain comparable. */}
+              <RatingBoxes
+                name={"prior_" + it.key}
+                value={ratings[it.key] ?? null}
+                onChange={(v) => setRating(it.key, v)}
+                min={1}
+                max={10}
+                minLabel={minLabel}
+                maxLabel={maxLabel}
+                ariaLabel={"Believability rating, situation " + (idx + 1)}
+              />
             </div>
-            <RatingSlider
-              value={ratings[it.key] ?? null}
-              onChange={(v) => setRating(it.key, v)}
-              min={1}
-              max={10}
-              minLabel={minLabel}
-              maxLabel={maxLabel}
-              ariaLabel={"Believability rating, situation " + (idx + 1)}
-            />{/* stored value is now 1..10 (a slider), not the old 1..5 buttons */}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {t.closingLead && (

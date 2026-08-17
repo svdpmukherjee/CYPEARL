@@ -12,16 +12,36 @@ export default function Checks({ content, recipientRole, cluster, onBack, onNext
   const questions = t.questions || [];
   const [picks, setPicks] = useState({}); // question index -> chosen option (1-based)
   const [attempts, setAttempts] = useState(0);
-  const [wrong, setWrong] = useState(false);
+  // Result of the last attempt, per question: index -> true (right) / false
+  // (wrong). A question missing from here has not been graded yet. Marking each
+  // question rather than the whole page means a retry only costs the
+  // participant the questions they actually got wrong.
+  const [graded, setGraded] = useState({});
 
   const allAnswered = questions.every((_, i) => picks[i] != null);
+  const anyWrong = questions.some((_, i) => graded[i] === false);
+
+  const pick = (qi, value) => {
+    setPicks((p) => ({ ...p, [qi]: value }));
+    // Clear the mark on THIS question only, so the results of the others stay
+    // on screen while they rework it.
+    setGraded((g) => {
+      if (g[qi] == null) return g;
+      const next = { ...g };
+      delete next[qi];
+      return next;
+    });
+  };
 
   const submit = () => {
     const attemptNo = attempts + 1;
     setAttempts(attemptNo);
-    const allCorrect = questions.every((q, i) => picks[i] === q.answer);
-    if (allCorrect) onNext(attemptNo);
-    else setWrong(true);
+    const result = {};
+    questions.forEach((q, i) => {
+      result[i] = picks[i] === q.answer;
+    });
+    if (questions.every((_, i) => result[i])) return onNext(attemptNo);
+    setGraded(result);
   };
 
   return (
@@ -29,32 +49,43 @@ export default function Checks({ content, recipientRole, cluster, onBack, onNext
       <h1>{t.heading}</h1>
       <p className="lead">{rich(t.intro)}</p>
 
-      {questions.map((q, qi) => (
-        <div className="checkq" key={qi}>
-          <div className="qh">{rich(q.prompt, { role })}</div>
-          <div className="optlist">
-            {q.options.map((opt, oi) => {
-              const value = oi + 1; // options numbered from 1 in content.json
-              const on = picks[qi] === value;
-              return (
-                <button
-                  key={oi}
-                  type="button"
-                  className={"optbtn" + (on ? " on" : "")}
-                  onClick={() => {
-                    setPicks((p) => ({ ...p, [qi]: value }));
-                    setWrong(false);
-                  }}
-                >
-                  {fmt(opt, { role })}
-                </button>
-              );
-            })}
+      {questions.map((q, qi) => {
+        const mark = graded[qi]; // true = right, false = wrong, undefined = ungraded
+        return (
+          <div className="checkq" key={qi}>
+            <div className="qh">{rich(q.prompt, { role })}</div>
+            <div className="optlist">
+              {q.options.map((opt, oi) => {
+                const value = oi + 1; // options numbered from 1 in content.json
+                const on = picks[qi] === value;
+                // Only the option they actually chose is marked. The correct
+                // one is never revealed on a wrong answer, or the retry would
+                // stop being a comprehension check.
+                const verdict = on && mark != null ? (mark ? " ok" : " bad") : "";
+                return (
+                  <button
+                    key={oi}
+                    type="button"
+                    className={"optbtn" + (on ? " on" : "") + verdict}
+                    onClick={() => pick(qi, value)}
+                  >
+                    {fmt(opt, { role })}
+                    {/* the tick and cross are drawn in CSS, so the verdict is
+                        spelled out here for screen readers */}
+                    {verdict && (
+                      <span className="visually-hidden">
+                        {mark ? t.correctLabel : t.incorrectLabel}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
-      {wrong && <div className="warn">{rich(t.error)}</div>}
+      {anyWrong && <p className="error checkerror">{rich(t.error)}</p>}
 
       <div className="navbar">
         <button className="btn" onClick={onBack}>

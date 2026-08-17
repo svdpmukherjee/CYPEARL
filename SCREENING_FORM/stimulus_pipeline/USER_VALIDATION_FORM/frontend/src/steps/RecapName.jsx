@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { rich } from "../content.jsx";
 
-export default function RecapName({ content, recipientRole, cluster, initialName, onBack, onNext }) {
+// Forward only: the study has no Back control on any page, so an answer cannot
+// be revisited once the participant has moved past it.
+export default function RecapName({ content, recipientRole, cluster, initialName, onNext }) {
   const t = content.recap;
   const roleInfo = (content.roles && content.roles[cluster]) || {};
   const role = roleInfo.title || recipientRole;
@@ -57,9 +59,8 @@ export default function RecapName({ content, recipientRole, cluster, initialName
       </label>
 
       <div className="navbar">
-        <button className="btn" onClick={onBack}>
-          {t.backButton}
-        </button>
+        {/* empty span so the single control keeps its place on the right */}
+        <span />
         <button
           className="btn primary"
           disabled={!ready}

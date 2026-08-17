@@ -77,8 +77,7 @@
       "You will type free text when you rate and rewrite the emails. **Do not include any personal names (yours, colleagues', or a manager's) or company names**."
     ],
     "consentCheckbox": "I have read the information above and I consent to take part in this study.",
-    "consentButton": "I consent, continue",
-    "backButton": "Back"
+    "consentButton": "I consent, continue"
   },
 
   "clusterSelect": {
@@ -100,7 +99,6 @@
     "lead": "Please enter your Prolific ID exactly as it appears in your Prolific account.",
     "fieldLabel": "Prolific ID",
     "placeholder": "e.g. 5f8a2c3b1d9e4f0a7b6c5d4e",
-    "backButton": "Back",
     "continueButton": "Continue"
   },
 
@@ -174,7 +172,6 @@
     "fitQuestion": "Do you feel you know this kind of role well enough to judge who could realistically send it these emails, and in what way?",
     "fitConfirmButton": "Yes, I understand the task and know this role",
     "fitDeclineButton": "No, this is not a good fit for me",
-    "backButton": "Back",
     "exitTitle": "This study may not be a good fit",
     "exitText": "Thank you for your honesty. This study needs people who can judge, from their own working experience, who would realistically send these emails to the role shown and how. No data has been saved and you have not consented to anything.",
     "exitProlificNote": "Please return your submission on Prolific so it can be offered to someone else.",
@@ -222,8 +219,7 @@
     "error": "Not quite. Think again about your role, then choose again.",
     "correctLabel": "Correct",
     "incorrectLabel": "Not correct, choose again",
-    "submit": "Confirm and continue",
-    "backButton": "Back"
+    "submit": "Confirm and continue"
   },
 
   "recap": {
@@ -242,7 +238,6 @@
     "namePlaceholder": "e.g. Alex",
     "nameInvalidHint": "Please enter a single first name using letters only.",
     "nameConfirmCheckbox": "I confirm this is not my own real name.",
-    "backButton": "Back",
     "startButton": "Continue"
   },
 
@@ -268,7 +263,6 @@
       "Say **why** in a sentence or two.",
       "Optionally, **edit** anything that feels off to make it more realistic."
     ],
-    "backButton": "Back",
     "startButton": "Start reading the emails",
     "items": [
       {
@@ -358,7 +352,6 @@
     "q3NoteHeading": "Anything you want to add? (optional)",
     "q3NotePlaceholder": "Type here...",
     "continueButton": "Continue",
-    "backButton": "Back",
     "nextButton": "Next email",
     "finishButton": "Finish"
   },

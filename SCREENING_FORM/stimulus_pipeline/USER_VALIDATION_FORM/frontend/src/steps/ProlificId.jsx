@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { rich } from "../content.jsx";
 
-export default function ProlificId({ content, value, onBack, onNext }) {
+// Forward only: the study has no Back control on any page, so an answer cannot
+// be revisited once the participant has moved past it.
+export default function ProlificId({ content, value, onNext }) {
   const t = content.prolific;
   const [pid, setPid] = useState(value || "");
   const clean = pid.trim();
@@ -31,9 +33,8 @@ export default function ProlificId({ content, value, onBack, onNext }) {
       </div>
 
       <div className="navbar">
-        <button className="btn" onClick={onBack}>
-          {t.backButton}
-        </button>
+        {/* empty span so the single control keeps its place on the right */}
+        <span />
         <button
           className="btn primary"
           disabled={!valid}

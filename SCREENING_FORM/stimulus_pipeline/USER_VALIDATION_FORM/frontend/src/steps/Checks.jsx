@@ -4,7 +4,9 @@ import { rich, fmt } from "../content.jsx";
 // Two comprehension checks that confirm the participant has internalised the
 // role before they start rating emails. Soft gate: they retry until correct,
 // and we record how many attempts it took (roleCheckAttempts).
-export default function Checks({ content, recipientRole, cluster, onBack, onNext }) {
+// Forward only: the study has no Back control on any page, so an answer cannot
+// be revisited once the participant has moved past it.
+export default function Checks({ content, recipientRole, cluster, onNext }) {
   const t = content.checks;
   const roleInfo = (content.roles && content.roles[cluster]) || {};
   const role = roleInfo.title || recipientRole;
@@ -88,9 +90,8 @@ export default function Checks({ content, recipientRole, cluster, onBack, onNext
       {anyWrong && <p className="error checkerror">{rich(t.error)}</p>}
 
       <div className="navbar">
-        <button className="btn" onClick={onBack}>
-          {t.backButton}
-        </button>
+        {/* empty span so the single control keeps its place on the right */}
+        <span />
         <button className="btn primary" disabled={!allAnswered} onClick={submit}>
           {t.submit}
         </button>

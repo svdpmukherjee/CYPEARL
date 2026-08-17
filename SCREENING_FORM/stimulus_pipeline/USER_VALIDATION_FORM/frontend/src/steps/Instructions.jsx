@@ -1,7 +1,9 @@
 import React from "react";
 import { rich } from "../content.jsx";
 
-export default function Instructions({ content, recipientRole, cluster, consent, onConsent, onBack, onNext }) {
+// Forward only: the study has no Back control on any page, so an answer cannot
+// be revisited once the participant has moved past it.
+export default function Instructions({ content, recipientRole, cluster, consent, onConsent, onNext }) {
   const t = content.instructions;
   const roleInfo = (content.roles && content.roles[cluster]) || {};
   const role = roleInfo.title || recipientRole;
@@ -77,9 +79,8 @@ export default function Instructions({ content, recipientRole, cluster, consent,
       </div>
 
       <div className="navbar">
-        <button className="btn" onClick={onBack}>
-          {t.backButton}
-        </button>
+        {/* empty span so the single control keeps its place on the right */}
+        <span />
         <button className="btn primary" disabled={!consent} onClick={onNext}>
           {t.consentButton}
         </button>

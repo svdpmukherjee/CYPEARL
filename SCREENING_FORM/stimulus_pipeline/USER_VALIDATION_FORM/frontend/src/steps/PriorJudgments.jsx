@@ -33,13 +33,14 @@ function seededShuffle(arr, seedStr) {
 // email situations (the 2x2x2 sender / urgency / framing cells) BEFORE they see
 // any of our crafted examples. The three factors are deliberately never named
 // on screen: each cell is phrased as a plain-language situation.
+// Forward only: the study has no Back control on any page, so an answer cannot
+// be revisited once the participant has moved past it.
 export default function PriorJudgments({
   content,
   recipientRole,
   cluster,
   prolificId,
   initial,
-  onBack,
   onNext,
 }) {
   const t = content.priorJudgments;
@@ -142,9 +143,8 @@ export default function PriorJudgments({
       {tried && !allRated && <div className="warn">{rich(t.requiredHint)}</div>}
 
       <div className="navbar">
-        <button className="btn" onClick={onBack}>
-          {t.backButton}
-        </button>
+        {/* empty span so the single control keeps its place on the right */}
+        <span />
         <button className="btn primary" onClick={next}>
           {t.startButton}
         </button>

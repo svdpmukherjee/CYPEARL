@@ -23,6 +23,10 @@ const FALLBACK_COMPLETION_CODE =
 // Ordered list of the fixed steps before the per-email loop. The landing page
 // ("cluster") now also carries the assigned role and its familiarity gate, so a
 // poor-fit participant leaves before consenting or reading the instructions.
+// The wizard runs FORWARD ONLY: no page offers a Back control, so an answer
+// cannot be revisited once the participant has moved past it. The array still
+// defines the order (and drives the progress bar), it is just never walked
+// backwards.
 const PRE = ["cluster", "instructions", "prolific", "checks", "recap", "judgments"];
 const TOTAL_EMAILS = 16;
 
@@ -272,11 +276,6 @@ export default function App() {
     }
   };
 
-  const prevEmail = () => {
-    if (s.emailIdx === 0) patch({ step: "judgments" });
-    else patch({ emailIdx: s.emailIdx - 1 });
-  };
-
   const progress = useMemo(() => {
     // One continuous scale across all steps: the pre-email steps followed by the
     // 16 emails. Only the label changes between the two phases, not the maths,
@@ -347,7 +346,6 @@ export default function App() {
                 cluster={s.cluster}
                 consent={s.consent}
                 onConsent={(v) => patch({ consent: v })}
-                onBack={() => patch({ step: "cluster" })}
                 onNext={() => patch({ step: "prolific" })}
               />
             )}
@@ -357,7 +355,6 @@ export default function App() {
                 content={content}
                 value={s.prolificId}
                 cluster={s.cluster}
-                onBack={() => patch({ step: "instructions" })}
                 onNext={goProlific}
               />
             )}
@@ -367,7 +364,6 @@ export default function App() {
                 content={content}
                 recipientRole={s.recipientRole}
                 cluster={s.cluster}
-                onBack={() => patch({ step: "prolific" })}
                 onNext={(attempts) => patch({ step: "recap", roleCheckAttempts: attempts })}
               />
             )}
@@ -378,7 +374,6 @@ export default function App() {
                 recipientRole={s.recipientRole}
                 cluster={s.cluster}
                 initialName={s.name}
-                onBack={() => patch({ step: "checks" })}
                 onNext={(name) => patch({ name, step: "judgments" })}
               />
             )}
@@ -390,7 +385,6 @@ export default function App() {
                 cluster={s.cluster}
                 prolificId={s.prolificId}
                 initial={s.priorJudgments}
-                onBack={() => patch({ step: "recap" })}
                 onNext={startEmails}
               />
             )}
@@ -407,7 +401,6 @@ export default function App() {
                   total={TOTAL_EMAILS}
                   participantName={s.name}
                   saved={s.responses[currentEmail.src]}
-                  onBack={prevEmail}
                   onNext={(resp) => saveAndNext(currentEmail.src, resp)}
                 />
               ))}

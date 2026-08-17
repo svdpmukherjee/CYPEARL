@@ -11,6 +11,8 @@ import RatingBoxes from "../RatingBoxes.jsx";
 //      email in place. Only the subject and the message body are editable; the
 //      sender, the link, and the signature stay fixed so the manipulated sender
 //      and the constant link are preserved.
+// Forward only: there is no Back control, so a question cannot be reopened once
+// answered, and an email cannot be revisited once its three questions are done.
 export default function EmailPage({
   content,
   email,
@@ -18,7 +20,6 @@ export default function EmailPage({
   total,
   participantName,
   saved,
-  onBack,
   onNext,
 }) {
   const t = content.email;
@@ -75,12 +76,6 @@ export default function EmailPage({
   const resetEdits = () => {
     setEditSubject(email.subject);
     setEditBody([...email.body]);
-  };
-
-  const back = () => {
-    if (subStep === 1) return onBack();
-    setTried(false);
-    setSubStep(subStep - 1);
   };
 
   const forward = () => {
@@ -321,9 +316,8 @@ export default function EmailPage({
       </div>
 
       <div className="navbar sticky">
-        <button className="btn" onClick={back}>
-          {t.backButton}
-        </button>
+        {/* empty span so the single control keeps its place on the right */}
+        <span />
         <button className="btn primary" onClick={forward}>
           {primaryLabel}
         </button>

@@ -1,0 +1,254 @@
+{
+  "_README": [
+    "ALL participant-facing wording for the screening survey lives in this file.",
+    "It is a static asset the app fetches at runtime, so you can edit the words,",
+    "save, and refresh the browser to see the change. No code edit, no rebuild.",
+    "",
+    "Any key starting with _ (like this one, or the _note lines below) is a comment",
+    "for whoever edits this file and is never shown to a participant.",
+    "",
+    "You can use **bold** and *italic* inside any string. {placeholders} in curly",
+    "braces are filled in by the app: {role} is the assigned role name, {article} is",
+    "the 'a' or 'an' in front of it, {area} is the job area, {max} is the maximum",
+    "number of job areas someone may pick, {n} and {total} are the page number and",
+    "the number of pages.",
+    "",
+    "HOUSE RULE: no em-dashes anywhere. Use commas, colons, brackets or a new",
+    "sentence.",
+    "",
+    "The survey is FIVE pages, and the blocks below are grouped in that order:",
+    "  1. intro + prolific + jobTitle  what this is, what it pays, who they are",
+    "  2. areas + primary              which job areas, and which is current",
+    "  3. task                         what the follow-up study would ask of them",
+    "  4. areaBlock                    per picked area: recency, tenure, fit",
+    "  5. terms + decision             the terms, then the two buttons",
+    "",
+    "THE ORDER OF PAGES 2 AND 3 IS THE POINT. The job areas are claimed BEFORE the",
+    "task is described, so nobody can work out what we are recruiting for and then",
+    "claim the areas that get them into a paid study. Never move the task block",
+    "above the areas block.",
+    "",
+    "The job areas themselves, their qualifying job titles and the assigned role for",
+    "each are NOT here: they live in clusters.json at the project root, because the",
+    "backend and the assignment script share them. The 'roles' block at the bottom",
+    "of this file can override the role title and description for display only."
+  ],
+
+  "app": {
+    "brand": "Workplace Email Study",
+    "progress": {
+      "_note": "The label beside the progress bar. {n} is the current page, {total} the number of pages.",
+      "page": "Step {n} of {total}",
+      "complete": "Complete"
+    }
+  },
+
+  "intro": {
+    "_note": "PAGE 1. What this is, what it pays, and who they are. It says nothing about what the follow-up study asks: that is page 3, deliberately after the job areas have been claimed.",
+    "_titleNote": "Say what this is: a screening survey that decides who is invited to a separate paid study. Calling it 'a survey about your work background' hid the purpose, and people answered it as if it were the study itself.",
+    "title": "Screening survey for a paid study about workplace emails",
+    "lead": "This is a **short screening survey, not the study itself**. We are recruiting people from few job areas for a separate **paid follow-up study** about everyday work emails.",
+    "_payNote": "The strip with the two tiles. These are the terms for THIS short screening survey, not the follow-up study. Keep them matching what you set on Prolific. The follow-up study's own time and pay are stated in words on page 5, in the `terms` block, and deliberately not given a second strip of tiles.",
+    "payNote": "Everyone who completes this screening survey is paid, whatever they answer.",
+    "timeValue": "~2 min",
+    "timeLabel": "to complete",
+    "payValue": "£0.30",
+    "payLabel": "compensation",
+    "continueButton": "Continue"
+  },
+
+  "prolific": {
+    "_note": "Page 1. The study link carries no parameters at all, so every participant types this by hand and the field is never skipped. The ID is the only thing tying this response to a Prolific submission and to the follow-up invitation, so keep the help line explaining why we ask.",
+    "heading": "Enter your Prolific ID",
+    "help": "",
+    "label": "",
+    "placeholder": "Paste your Prolific ID here...",
+    "invalid": "That does not look like a Prolific ID. It is a long string of letters and numbers."
+  },
+
+  "jobTitle": {
+    "_note": "Page 1, under the Prolific ID. Free text, in the participant's own words, and never matched against their Prolific profile.",
+    "heading": "What is your current job title?",
+    "help": "",
+    "label": "",
+    "placeholder": "Type here..."
+  },
+
+  "areas": {
+    "_note": "PAGE 2. Multi-select, up to {max}. Asked BEFORE the task is described on page 3, so the claim is made without knowing what we are recruiting for. The overlap between areas is what lets the assignment step fill a scarce cluster from an abundant one, so do not reduce this to a single choice.",
+    "heading": "Which of these job areas have you worked in?",
+    "help": "Pick every job area you have real working experience in, up to {max}. The job titles under each area are there to help you decide.",
+    "_limitNote": "Shown once the participant has picked the maximum number of areas.",
+    "limitNote": "You have picked {max} areas, which is the maximum.",
+    "loading": "Loading job areas...",
+    "continueButton": "Continue"
+  },
+
+  "primary": {
+    "_note": "Page 2, below the grid. Appears only once two or more areas are ticked: with one area there is nothing to choose between and it is the current one by definition.",
+    "heading": "Which of those is your current or most recent job area?",
+    "help": "",
+    "placeholder": "Select one..."
+  },
+
+  "areasNote": {
+    "_note": [
+      "Page 2, last thing on it. Optional, never gates Continue, and never used",
+      "by the assignment.",
+      "",
+      "The titles printed under each area are Prolific's own demographic job",
+      "list, sorted into the ten areas by hand. Two separate things can go wrong",
+      "and this field is the only place either can be said. (1) A title is filed",
+      "under an area the participant would not have chosen, which is a defect in",
+      "clusters.json and applies to everyone who sees it, not just them. (2) The",
+      "real job title they typed on page 1 appears in none of the ten lists,",
+      "because their Prolific profile is old or they picked the nearest option",
+      "when they registered. The survey still forces a pick, so without this a",
+      "bad fit is silently recorded as a good one.",
+      "",
+      "The prompt asks about the filing, not about them, because (1) is the",
+      "answer worth having and people will not volunteer a judgment on our",
+      "categories unless invited. Someone who spots a title under the wrong area",
+      "is telling us something about the clusters even when their own pick was",
+      "fine.",
+      "",
+      "Read the answers while recruiting is running (they are listed by",
+      "/api/summary) and fix clusters.json, not the individual row: a job title",
+      "several people say is filed under the wrong area is a defect in the ten",
+      "clusters, and it is cheapest to find in week one.",
+      "",
+      "Keep the prompt short and clearly optional, or people treat it as another",
+      "required question on a two-minute survey and pad it."
+    ],
+    "heading": "Is any job title under the wrong area? (Optional)",
+    "help": "These job titles come from Prolific profiles and we sorted them into the ten areas ourselves, so we may have put one in the wrong place. Tell us if a title belongs under a different area, or if your own job title is not in any of the lists.",
+    "placeholder": "Leave blank if the areas look right..."
+  },
+
+  "task": {
+    "_taskExplainerNote": [
+      "PAGE 3, on its own. Tells people what the follow-up study would ask of them,",
+      "after the job areas are claimed (page 2) and before the fit question that",
+      "depends on knowing the task (page 4) and the opt-in (page 5).",
+      "",
+      "It must never move above page 2. Somebody who reads this first learns what",
+      "we are recruiting for, and the job areas stop being a report of their",
+      "working life and become a guess at what gets them into a £4.00 study.",
+      "",
+      "The narrative is the main study's, cut down: same three things to weigh,",
+      "same voice, so the two studies read as one piece of work. The screener",
+      "cannot name a role, because none is assigned yet, so it says 'that role'.",
+      "",
+      "The three things are spelled out in 'detail' as prose rather than as the",
+      "labels they carry in the main study. 'How hard they press' and 'what they",
+      "put at stake' are our shorthand, not the participant's: read cold they do",
+      "not say whether we mean urgency, tone, rewards or threats. So the detail",
+      "paragraph names the actual dimension each time (when it is wanted by,",
+      "what is offered, what follows if it is not done) and leaves the shorthand",
+      "to the paid study, where there is room to teach it.",
+      "",
+      "Two rules when editing, inherited from the main app. (1) NEVER add worked",
+      "examples or say which combinations are realistic. Telling people that, say,",
+      "a junior would not warn about a consequence hands them a rule and they stop",
+      "judging, which is the measurement. Each of the three is named as a QUESTION",
+      "the participant answers, never as an answer we supply. (2) Keep it short,",
+      "or they skip it: most people who read this page are never invited.",
+      "",
+      "'closing' is the one line that has to land, so it renders as its own",
+      "callout rather than as a trailing paragraph: people who read 'one work",
+      "role' and have never held that job title are the ones who drop out here,",
+      "and they are exactly who we want, since the areas overlap and the",
+      "assignment fills a scarce cluster from an abundant one.",
+      "",
+      "'contrast' and 'factors' are both left empty. The main study's landing page",
+      "spends two rows naming the wrong question before the right one, and three",
+      "tiles on the things to weigh; here the lead and the detail paragraph do",
+      "both in prose. Fill either array back in and its block renders again."
+    ],
+    "taskExplainer": {
+      "eyebrow": "What the follow-up study would ask you to do",
+      "heading": "",
+      "lead": "You would be given **one** work role, a job title taken from one of the job areas you picked, and shown ordinary work emails that role receives. The emails are already written. We are not checking spelling, wording, or whether what is being asked for is a sensible piece of work. What we need is your judgment on whether **that sender could realistically send that email to that role at all**.",
+      "contrast": [],
+      "detail": "Three things go into that judgment, and they are meant to be weighed together rather than one at a time. **Who is asking**: where the sender sits next to that role, and whether someone at that level would be the one bringing this. **When they want it by**: whether the email presses for it straight away or leaves the timing open. **What is attached to it**: whether the sender offers something in return for doing it, or points to what happens if it is not done.",
+      "factors": [],
+      "closing": "You do **not** need to have held the exact job title. You only need to know that kind of work well enough to picture who emails that role, and on what terms."
+    },
+    "continueButton": "Continue"
+  },
+
+  "areaBlock": {
+    "_note": "PAGE 4, repeated once for each job area the participant picked. {area} is the area name, {role} the assigned role, {article} the a/an in front of it. The fit question is answerable only because page 3 has just said what the judgment is.",
+    "pageLead": "A few quick questions about each job area you picked.",
+    "heading": "{area}",
+    "_rolePrefixNote": "The 'you would be asked to imagine you are a ...' panel. Left EMPTY, which hides the panel and its role description: the role is named in the fit question below anyway, so the panel only said the same thing twice. Put a line back here to show the panel again.",
+    "rolePrefix": "",
+    "recencyLabel": "How recently have you worked in this area?",
+    "recencyPlaceholder": "Select one...",
+    "recencyOptions": [
+      { "value": "current", "label": "I work in this area now" },
+      { "value": "within_2y", "label": "Within the last 2 years" },
+      { "value": "2_5y", "label": "Between 2 and 5 years ago" },
+      { "value": "over_5y", "label": "More than 5 years ago" }
+    ],
+    "tenureLabel": "In total, how long have you worked in this area?",
+    "tenurePlaceholder": "Select one...",
+    "tenureOptions": [
+      { "value": "lt_1y", "label": "Less than a year" },
+      { "value": "1_3y", "label": "Between 1 and 3 years" },
+      { "value": "3_7y", "label": "Between 3 and 7 years" },
+      { "value": "over_7y", "label": "More than 7 years" }
+    ],
+    "_fitQuestionNote": "Asks about familiarity with the role's everyday working life, not about confidence in doing our task. Someone can know exactly what an Operations Manager does and who emails them without feeling qualified to 'judge' anything, and the earlier wording lost those people.",
+    "fitQuestion": "Do you know what {article} **{role}** typically does in a company, and what kinds of email requests they would get from senior colleagues and from peers or junior ones?",
+    "fitYes": "Yes, I know this kind of role well",
+    "fitNo": "No, not well enough",
+    "continueButton": "Continue"
+  },
+
+  "terms": {
+    "_note": [
+      "PAGE 5. The follow-up study's terms, shown just above the decision buttons.",
+      "",
+      "The follow-up study's time and pay are written INTO the first point rather",
+      "than shown as a second strip of tiles. Page 1 already carries one such",
+      "strip, for this survey, and a second one here left people unsure which",
+      "figure they were about to be paid: the £0.30 for the survey in front of",
+      "them, or the £4.00 for a study they may never be invited to.",
+      "",
+      "Keep the £4.00 and ~25 min in step with the main study's own content.json",
+      "(instructions.compensation) and with what Prolific actually offers."
+    ],
+    "heading": "If you are invited to the follow-up study",
+    "note": "These terms are for the follow-up study only. Nothing you answer below changes what you are paid for this screening survey.",
+    "points": [
+      "It is a **separate, longer Prolific study**: about **25 minutes**, paid **£4.00**. If you are a good match, the invitation arrives in your Prolific account, usually within the next day or two.",
+      "An invitation is **not guaranteed**. We can take only a set number of people from each job area, so some people who are interested will not be invited."
+    ]
+  },
+
+  "decision": {
+    "question": "Would you like to be considered for the follow-up study?",
+    "yesButton": "Yes, I understand the task and I am interested",
+    "noButton": "This is not a good fit for me",
+    "submitting": "Saving your answers..."
+  },
+
+  "done": {
+    "title": "Thank you",
+    "lead": "Your answers have been recorded. You can now return to Prolific to complete your submission.",
+    "_interestedNote": "One extra line on the thank-you page, depending on which button they pressed.",
+    "interestedLine": "If your background matches one of the places we still have open, you will get an invitation to the follow-up study in your Prolific account.",
+    "notInterestedLine": "We will not invite you to the follow-up study. Thank you for telling us, it is just as useful to know.",
+    "alreadyLine": "Our records show you have already completed this survey. There is nothing more to do.",
+    "completionHeading": "Your completion code",
+    "completionHelp": "Copy this code and paste it into Prolific, or use the button below to return to Prolific and submit it automatically.",
+    "copyButton": "Copy code",
+    "copiedLabel": "Copied",
+    "submitButton": "Return to Prolific to submit",
+    "completionMissing": "Please return to Prolific to complete your submission."
+  },
+
+  "_rolesNote": "Optional display overrides, keyed by the job area exactly as it is written in clusters.json. Anything you put here wins over clusters.json for the role title and description shown on screen. Leave it empty to use clusters.json as it stands.",
+  "roles": {}
+}

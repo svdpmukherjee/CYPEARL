@@ -1,0 +1,131 @@
+{
+  "_README": [
+    "Single source of truth for the ten job clusters, shared by the backend API",
+    "(GET /api/clusters) and the assignment script. The 'cluster' values MUST match",
+    "the cluster names stored in the main study's all_emails collection, because the",
+    "allowlists produced from this survey are used to launch the main study per",
+    "cluster: Finance, IT Support, HR, Sales, Operations, Customer Service,",
+    "Marketing, Procurement, Administrative Support, Compliance.",
+    "",
+    "'titles' are the qualifying job titles as worded in the Prolific screener",
+    "(prolific_study_creation/screening.txt). They are shown under each job area on",
+    "the survey so a participant selects against concrete job titles rather than an",
+    "abstract area label, which is what went wrong in the first pilot.",
+    "",
+    "'role' and 'roleDescription' are the assigned role the main study would ask",
+    "them to imagine. They are copied from the main app's content.json 'roles' block",
+    "and must stay in step with it.",
+    "",
+    "'target' is how many completed participants the main study needs for that",
+    "cluster. Used only by scripts/assign_clusters.py, never by the survey itself."
+  ],
+  "clusters": [
+    {
+      "cluster": "Operations",
+      "titles": [
+        "Operations Manager or Specialist (logistics)",
+        "Operations Manager or Specialist (non-logistics)",
+        "Communications Specialist",
+        "Logistics Coordinator",
+        "Logistics Specialist"
+      ],
+      "role": "Operations Manager",
+      "roleDescription": "Runs day-to-day business operations, working with operations and facilities colleagues.",
+      "target": 20
+    },
+    {
+      "cluster": "Compliance",
+      "titles": [
+        "Compliance Officer",
+        "Compliance Analyst",
+        "Regulatory Compliance Specialist",
+        "Risk Analyst",
+        "Risk Manager"
+      ],
+      "role": "Compliance Officer",
+      "roleDescription": "Handles KYC/CDD checks, transaction-monitoring alerts and case escalations.",
+      "target": 20
+    },
+    {
+      "cluster": "Administrative Support",
+      "titles": [
+        "Administrative Assistant",
+        "Executive Assistant",
+        "Office Administrator",
+        "Secretary or Personal Assistant"
+      ],
+      "role": "Executive Assistant",
+      "roleDescription": "Supports senior leadership with scheduling, travel, correspondence and office coordination.",
+      "target": 20
+    },
+    {
+      "cluster": "Customer Service",
+      "titles": ["Customer Service Representative"],
+      "role": "Customer Support Specialist",
+      "roleDescription": "Handles corporate customer accounts, orders and complaints.",
+      "target": 20
+    },
+    {
+      "cluster": "Finance",
+      "titles": [
+        "Accountant",
+        "Auditor",
+        "Financial Analyst",
+        "Chartered or Certified Accountant"
+      ],
+      "role": "Financial Accountant",
+      "roleDescription": "Handles company accounts, ledgers, reconciliations and financial reporting.",
+      "target": 20
+    },
+    {
+      "cluster": "Sales",
+      "titles": [
+        "Sales Representative",
+        "Account Manager",
+        "Business Development Executive",
+        "Business Development Manager",
+        "Customer Success Manager"
+      ],
+      "role": "Sales Executive",
+      "roleDescription": "Manages business customer accounts, quotes, deals and follow-ups.",
+      "target": 20
+    },
+    {
+      "cluster": "Marketing",
+      "titles": [
+        "Marketing Manager",
+        "Digital Marketing Specialist",
+        "Market Research Analyst",
+        "Market Research Consultant",
+        "Communications Specialist"
+      ],
+      "role": "Marketing Manager",
+      "roleDescription": "Owns marketing campaigns and budgets, working with sales, finance and marketing colleagues.",
+      "target": 20
+    },
+    {
+      "cluster": "IT Support",
+      "titles": [
+        "IT Support Technician or Helpdesk Support",
+        "Technical Support Specialist"
+      ],
+      "role": "IT Support Analyst",
+      "roleDescription": "Front-line IT helpdesk, handling requests from managers, IT colleagues and internal staff.",
+      "target": 20
+    },
+    {
+      "cluster": "HR",
+      "titles": ["HR Manager or Specialist"],
+      "role": "Recruitment Coordinator",
+      "roleDescription": "Coordinates hiring end to end, working with managers and HR and payroll colleagues.",
+      "target": 20
+    },
+    {
+      "cluster": "Procurement",
+      "titles": ["Procurement Manager", "Procurement Specialist"],
+      "role": "Procurement Specialist",
+      "roleDescription": "Handles company purchasing, supplier quotes, orders and contracts.",
+      "target": 20
+    }
+  ]
+}

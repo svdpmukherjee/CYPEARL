@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+venv/
+__pycache__/
+*.pyc
+.vercel
+# assignment output: participant IDs, regenerate from the database instead
+allowlists/

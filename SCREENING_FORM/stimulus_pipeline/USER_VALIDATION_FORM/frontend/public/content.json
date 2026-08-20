@@ -23,7 +23,6 @@
     "on-screen renames live in clusterLabels. Each assigned role's title and",
     "description live in the roles section, keyed by the job area name."
   ],
-
   "app": {
     "brand": "Email Realism Validation",
     "_progressNote": "The small label next to the progress bar at the top of every page. 'screening' covers the pages up to the recap. 'scenarios' is the eight-situations page: it gets its own label because that page is the first half of the paid task, and labelling it 'Getting started' told participants the real work had not begun. In 'email', {n} and {total} are filled in automatically.",
@@ -34,11 +33,9 @@
       "complete": "Complete"
     }
   },
-
   "clusterLabels": {
     "_note": "Optional display overrides. Left side = the exact value stored in the database, right side = what participants see on screen. The job areas are already stored with readable names, so no overrides are needed. Add an entry here only if you ever want to show a different label for one."
   },
-
   "instructions": {
     "title": "About this study",
     "lead": "",
@@ -79,37 +76,38 @@
     "consentCheckbox": "I have read the information above and I consent to take part in this study.",
     "consentButton": "I consent, continue"
   },
-
   "clusterSelect": {
+    "_note": "The landing page. The study is invitation-only and every invited participant already gave us their job area and job title in the screening survey, so this page CONFIRMS both back to them instead of asking. Neither is editable: a participant whose job has changed since the screening survey is caught by the fit question further down, which is the one that matters for the task.",
     "title": "Email realism validation",
     "lead": "Thank you for taking part. You will take on a work role close to your own and judge whether the emails that role receives could realistically come from the people who send them.",
-    "selectPrompt": "Which job area is closest to yours?",
-    "selectHelp": "Pick the area that best matches your own work experience.",
-    "loading": "Loading job areas...",
-    "continueButton": "Continue",
-    "ownRoleHeading": "What is your job title?",
-    "ownRoleHelp": "",
-    "ownRoleLabel": "",
-    "ownRolePlaceholder": "Type here...",
-    "ownRoleContinue": "Continue"
+    "confirmHeading": "This is what you told us in the screening survey",
+    "confirmHelp": "You were invited to this study on the basis of these answers, so we have carried them over for you.",
+    "areaLabel": "Your job area",
+    "titleLabel": "Your job title",
+    "confirmNote": "If either of these is wrong, please message us through Prolific before going on.",
+    "confirmButton": "Yes, that is me",
+    "loading": "Loading your job role..."
   },
-
   "prolific": {
     "title": "Your Prolific ID",
-    "lead": "Please enter your Prolific ID exactly as it appears in your Prolific account.",
+    "lead": "Please enter your Prolific ID exactly as it appears in your Prolific account, so we can match you to the screening survey you completed earlier.",
     "fieldLabel": "Prolific ID",
     "placeholder": "e.g. 5f8a2c3b1d9e4f0a7b6c5d4e",
-    "continueButton": "Continue"
+    "continueButton": "Continue",
+    "_note": "Only seen by a participant who arrives without the ?PROLIFIC_PID= parameter Prolific normally adds to the study URL. Everybody else is matched automatically and never sees this page.",
+    "invalidHint": "That does not look like a Prolific ID. It is 24 letters and numbers.",
+    "checkingButton": "Checking..."
   },
-
   "blocked": {
+    "notInvitedTitle": "This study is by invitation only",
+    "notInvitedBody": "This study was sent to a specific group of people who completed our earlier screening survey, and this Prolific ID is not one of them. If you typed your ID in by hand, please check it and try again. If it is correct, please return the submission on Prolific so it goes back to somebody who was invited, and message us if you believe you were invited and are seeing this in error.",
     "completedTitle": "You have already completed this study",
     "completedBody": "Our records show that this Prolific ID has already finished the study. Each person can take part only once, so there is nothing more for you to do here. If you believe this is a mistake, please message us through Prolific.",
     "clusterTitle": "This Prolific ID is registered for a different job area",
-    "clusterBody": "This Prolific ID is already registered for the **{cluster}** job area. To keep the study valid, each participant stays with the job area they first chose. Please start again and select **{cluster}** to carry on where you left off.",
-    "startOverButton": "Start over"
+    "clusterBody": "This Prolific ID is already part-way through the study for the **{cluster}** job area, which is not the area we now have on record for you. To keep the study valid, each participant stays with the area they started in. Please message us through Prolific and we will put it right.",
+    "retryIdButton": "Try a different ID",
+    "_note": "Three refusals. NOT_INVITED is the only one that offers a way forward (a mistyped ID at manual entry), so it is the only one with a button. CLUSTER_LOCKED should be unreachable now that the job area is assigned rather than chosen; it shows only if the roster is regenerated mid-study."
   },
-
   "role": {
     "title": "You are assigned with a job role for this task",
     "lead": "For the rest of the study, please **imagine** you are the person described below, working inside a **large company** with many departments (finance, IT, HR, sales, operations and more).",
@@ -118,7 +116,10 @@
     "relHeading": "How does your own job role (**{ownRole}**) compare to the assigned role (**{role}**)?",
     "relPlaceholder": "Select one...",
     "relOptions": [
-      { "value": "same", "label": "They are the same" },
+      {
+        "value": "same",
+        "label": "They are the same"
+      },
       {
         "value": "above",
         "label": "More senior than {article} {role}"
@@ -131,7 +132,10 @@
         "value": "below",
         "label": "More junior than {article} {role}"
       },
-      { "value": "not_sure", "label": "Not sure" }
+      {
+        "value": "not_sure",
+        "label": "Not sure"
+      }
     ],
     "fitHeading": "",
     "fitText": "",
@@ -178,7 +182,6 @@
     "exitProlificButton": "Take me back to my Prolific",
     "exitProlificUrl": "https://prolific.com"
   },
-
   "checks": {
     "heading": "Quick checks",
     "intro": "A few quick questions to confirm the task is clear. The emails only make sense once you are picturing yourself in the role.",
@@ -221,7 +224,6 @@
     "incorrectLabel": "Not correct, choose again",
     "submit": "Confirm and continue"
   },
-
   "recap": {
     "pageTitle": "Before you begin",
     "recapHeading": "Quick recap of the task",
@@ -240,7 +242,6 @@
     "nameConfirmCheckbox": "I confirm this is not my own real name.",
     "startButton": "Continue"
   },
-
   "priorJudgments": {
     "_note": [
       "Shown once, right after the recap and before the 16 emails. Participants give their general expectation for eight everyday email situations BEFORE they have seen any of our example emails, so these are their un-primed judgments. The eight items are the 2x2x2 combinations of sender (more senior vs peer or junior), urgency (right away vs no rush) and framing (a problem to avoid vs a benefit to gain). Keep the wording plain and do NOT name those three factors on screen. The order is shuffled per participant automatically. 'key' is stored in the data and must not be changed; edit only the 'text'.",
@@ -299,7 +300,6 @@
       }
     ]
   },
-
   "email": {
     "conditionsTitle": "What to expect in this email",
     "_conditionsSentenceNote": "IMPORTANT: the sentence shown under 'What to expect in this email' is NOT taken from here. It is copied word for word from the matching situation in priorJudgments.items above, looked up by this email's combination of sender, urgency and framing, so the participant reads the identical wording for the scenario they rated on the first-task page. To change that wording, edit priorJudgments.items. The template below is only a fallback, used if a combination has no matching situation there.",
@@ -355,7 +355,6 @@
     "nextButton": "Next email",
     "finishButton": "Finish"
   },
-
   "done": {
     "title": "Thank you",
     "lead": "Your responses for all 16 emails have been recorded. You can now return to Prolific to complete your submission.",
@@ -368,7 +367,6 @@
     "completionMissing": "Please return to Prolific to complete your submission.",
     "restartButton": "Start over"
   },
-
   "roles": {
     "_note": "Each key is the job area as stored in the database. 'title' is the assigned role name and 'description' is the short blurb shown on the role and recap pages.",
     "Finance": {

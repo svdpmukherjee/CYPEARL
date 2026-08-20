@@ -33,6 +33,7 @@ export async function connect() {
         .collection("participants")
         .createIndex({ prolificId: 1 }, { unique: true }),
       db.collection("all_emails").createIndex({ cluster: 1, n: 1 }),
+      db.collection("roster").createIndex({ prolificId: 1 }, { unique: true }),
     ]).catch((err) => console.error("Index setup:", err.message));
   }
 
@@ -48,4 +49,7 @@ export const collections = {
   emails: () => getDb().collection("all_emails"),
   participants: () => getDb().collection("participants"),
   responses: () => getDb().collection("responses"),
+  // The invited participants, seeded by scripts/seed_roster.py. Holds Prolific
+  // IDs, which are personal data, so it lives here rather than in the repo.
+  roster: () => getDb().collection("roster"),
 };

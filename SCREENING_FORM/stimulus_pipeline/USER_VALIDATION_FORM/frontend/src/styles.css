@@ -578,43 +578,43 @@ textarea:focus,
   margin-top: 6px;
 }
 
-/* ---- cluster grid ---- */
-.clustergrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+/* ---- screener recap ----
+   The job area and job title the participant gave in the screening survey,
+   shown back to them on the landing page. It replaced a grid of job areas when
+   the study became invitation-only: these are facts we already hold, so they
+   are presented as a record rather than as controls. Deliberately NOT styled
+   like the inputs elsewhere in the study, so nobody tries to click into one. */
+.screenerecap {
   margin: var(--sp-group) 0 0;
-}
-.clustercard {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: left;
-  cursor: pointer;
-  background: var(--bg);
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 14px 15px;
-  color: var(--ink);
-  font: inherit;
-  transition:
-    border-color 0.15s,
-    background 0.15s;
+  background: var(--bg);
+  overflow: hidden;
 }
-.clustercard:hover {
-  border-color: var(--muted);
+.screenerow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: baseline;
+  padding: 14px 18px;
 }
-.clustercard.on {
-  border-color: transparent;
-  background: var(--soft-panel);
+.screenerow + .screenerow {
+  border-top: 1px solid var(--line);
 }
-.clustercard .cname {
-  font-weight: 700;
-  font-size: var(--fs-body);
-}
-.clustercard .crole {
-  font-size: var(--fs-meta);
+.screenerow dt {
+  flex: 0 0 auto;
+  min-width: 130px;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--muted);
+}
+.screenerow dd {
+  flex: 1 1 200px;
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  color: var(--ink);
 }
 
 /* ---- reading focus ----

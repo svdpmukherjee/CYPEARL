@@ -11,33 +11,50 @@ import EmailPage from "./steps/EmailPage.jsx";
 import Done from "./steps/Done.jsx";
 import Blocked from "./steps/Blocked.jsx";
 
-const STORAGE_KEY = "cypearl_user_validation_v1";
+// Bumped from _v1 when the study became invitation-only: the step order
+// changed (the Prolific ID is now asked first) and the job area is no longer
+// something the participant picks, so saved progress from the pilot round would
+// resume into a page that no longer exists. A new key simply ignores it.
+const STORAGE_KEY = "cypearl_user_validation_v2";
 
 // Prolific completion code shown on the Thank-you page. Overridable at build
 // time (VITE_PROLIFIC_COMPLETION_CODE) and, at runtime, by the backend
 // /api/config response. This literal is the study default so the page works
 // even without either. Not a secret: participants see it and it is in the URL.
-const FALLBACK_COMPLETION_CODE =
-  import.meta.env.VITE_PROLIFIC_COMPLETION_CODE || "C145A0QK";
+const FALLBACK_COMPLETION_CODE = import.meta.env.VITE_PROLIFIC_COMPLETION_CODE;
 
-// Ordered list of the fixed steps before the per-email loop. The landing page
-// ("cluster") now also carries the assigned role and its familiarity gate, so a
-// poor-fit participant leaves before consenting or reading the instructions.
+// Ordered list of the fixed steps before the per-email loop.
+//
+// The Prolific ID now comes FIRST. The study is sent only to participants we
+// screened, and their job area and job title come from what they told us in the
+// screener app, so the app has to know who it is talking to before it can show
+// them anything. "cluster" is no longer a menu: it confirms the area and title
+// we already hold, then reveals the assigned role and runs the familiarity
+// gate, so a poor-fit participant still leaves before consenting or reading the
+// instructions.
+//
 // The wizard runs FORWARD ONLY: no page offers a Back control, so an answer
 // cannot be revisited once the participant has moved past it. The array still
 // defines the order (and drives the progress bar), it is just never walked
 // backwards.
-const PRE = ["cluster", "instructions", "prolific", "checks", "recap", "judgments"];
+const PRE = [
+  "prolific",
+  "cluster",
+  "instructions",
+  "checks",
+  "recap",
+  "judgments",
+];
 const TOTAL_EMAILS = 16;
 
 const emptyState = () => ({
-  step: "cluster",
+  step: "prolific",
   emailIdx: 0,
   consent: false,
-  cluster: null,
+  cluster: null, // assigned from the roster, not chosen
   recipientRole: null,
   note: null,
-  ownRole: "", // the participant's own real job role, in their words
+  ownRole: "", // their own job title, as they typed it in the screener app
   roleRelation: null, // how their own role sits vs the assigned one: above|peer|below|not_sure
   prolificId: "",
   name: "",
@@ -52,9 +69,10 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const saved = { ...emptyState(), ...JSON.parse(raw) };
-      // The standalone "role" step was folded into the landing page. Any saved
-      // progress that paused there resumes on the landing instead.
-      if (saved.step === "role") saved.step = "cluster";
+      // A saved session with no Prolific ID predates the invitation-only flow
+      // (or stopped on the very first page). There is nothing to resume without
+      // an ID, since the job area is now looked up from it.
+      if (!saved.prolificId) return emptyState();
       return saved;
     }
   } catch (_) {}
@@ -67,6 +85,10 @@ export default function App() {
   const [loadingEmails, setLoadingEmails] = useState(false);
   const [error, setError] = useState("");
   const [content, setContent] = useState(null);
+  // True until the ?PROLIFIC_PID= lookup on mount has settled. Without it the
+  // manual ID page flashes on screen for a moment before the URL parameter
+  // resolves and moves the participant on.
+  const [bootstrapping, setBootstrapping] = useState(true);
   // Prolific completion code + redirect URL. The backend (/api/config) is the
   // source of truth via a Vercel env var, but we seed a build-time fallback so
   // the Thank-you page always shows the code even if that request is
@@ -112,8 +134,11 @@ export default function App() {
   // ignores this for completed participants.
   useEffect(() => {
     if (!s.prolificId) return;
-    if (["cluster", "instructions", "prolific", "blocked"].includes(s.step)) return;
-    api.saveProgress(s.prolificId, { step: s.step, emailIdx: s.emailIdx }).catch(() => {});
+    if (["cluster", "instructions", "prolific", "blocked"].includes(s.step))
+      return;
+    api
+      .saveProgress(s.prolificId, { step: s.step, emailIdx: s.emailIdx })
+      .catch(() => {});
   }, [s.step, s.emailIdx, s.prolificId]);
 
   const patch = (p) => setS((prev) => ({ ...prev, ...p }));
@@ -148,34 +173,101 @@ export default function App() {
     }));
 
   // --- navigation --------------------------------------------------------
-  // The landing page now confirms the role fit before returning here, so we go
-  // straight to the instructions.
-  const goCluster = ({ cluster, recipientRole, note, ownRole, roleRelation }) =>
-    patch({ cluster, recipientRole, note, ownRole, roleRelation, step: "instructions" });
 
-  // Submit the Prolific ID. This is where the one-ID-one-area rule is applied:
-  // register locks (id, cluster) on first sight; a returning ID either resumes
-  // (same cluster, unfinished) or is blocked (already completed, or a different
-  // cluster than the one it is locked to).
+  // Step 1. Look the Prolific ID up in the roster. This is where the study
+  // becomes invitation-only: an ID that was not sent this study is refused, an
+  // ID that already finished is refused, and an ID with work in progress jumps
+  // straight back to where it stopped. On success we take the job area and job
+  // title from the screener answers, so the next page can show them rather than
+  // ask for them again. Nothing is written to the database yet.
   const goProlific = async (prolificId) => {
     const pid = String(prolificId).trim();
     try {
-      const r = await api.registerParticipant({
-        prolificId: pid,
-        cluster: s.cluster,
-        recipientRole: s.recipientRole,
-        ownRole: s.ownRole,
-        roleRelation: s.roleRelation,
-      });
+      const r = await api.roster(pid);
       if (r.resume) {
         await resumeParticipant(pid, r);
       } else {
-        patch({ prolificId: pid, step: "checks" });
-      }
-    } catch (err) {
-      if (err.code === "ALREADY_COMPLETED" || err.code === "CLUSTER_LOCKED") {
         patch({
           prolificId: pid,
+          cluster: r.cluster,
+          ownRole: r.jobTitle || "",
+          step: "cluster",
+        });
+      }
+    } catch (err) {
+      if (
+        err.code === "NOT_INVITED" ||
+        err.code === "ALREADY_COMPLETED" ||
+        err.code === "CLUSTER_LOCKED"
+      ) {
+        patch({
+          prolificId: pid,
+          step: "blocked",
+          blocked: {
+            code: err.code,
+            cluster: err.cluster || null,
+            recipientRole: err.recipientRole || null,
+          },
+        });
+      } else {
+        setError(err.message);
+      }
+    }
+  };
+
+  // Prolific appends the participant's ID to the study URL when the study is
+  // set up with URL parameters (?PROLIFIC_PID=...). Reading it here means an
+  // invited participant never types their ID, which removes the single most
+  // common source of a mistyped ID and an unmatchable submission. The manual
+  // entry page stays as the fallback for anyone arriving without it.
+  //
+  // The URL always wins over saved progress: on a shared computer the leftover
+  // session belongs to somebody else, so a different ID starts clean.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlPid = (
+      params.get("PROLIFIC_PID") ||
+      params.get("prolific_pid") ||
+      ""
+    ).trim();
+    if (!urlPid) {
+      setBootstrapping(false);
+      return;
+    }
+    if (s.prolificId && s.prolificId.toLowerCase() === urlPid.toLowerCase()) {
+      // already resolved for this participant, keep their saved progress
+      setBootstrapping(false);
+      return;
+    }
+    if (s.prolificId) setS(emptyState());
+    goProlific(urlPid).finally(() => setBootstrapping(false));
+    // Runs once on mount: the URL cannot change without a reload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Step 2. The participant has read the assigned role and confirmed it is
+  // close enough to their own work. This is where the database row is created,
+  // so anyone who declines at the gate leaves no trace. The cluster is not sent:
+  // the server reads it from the roster.
+  const goCluster = async ({ recipientRole, note, roleRelation }) => {
+    try {
+      const r = await api.registerParticipant({
+        prolificId: s.prolificId,
+        recipientRole,
+        roleRelation,
+      });
+      if (r.resume) {
+        await resumeParticipant(s.prolificId, r);
+      } else {
+        patch({ recipientRole, note, roleRelation, step: "instructions" });
+      }
+    } catch (err) {
+      if (
+        err.code === "NOT_INVITED" ||
+        err.code === "ALREADY_COMPLETED" ||
+        err.code === "CLUSTER_LOCKED"
+      ) {
+        patch({
           step: "blocked",
           blocked: {
             code: err.code,
@@ -207,6 +299,10 @@ export default function App() {
       }
       patch({
         prolificId: pid,
+        // reg.cluster is the roster assignment; p.cluster is what was locked in
+        // when they registered. They agree unless the roster was regenerated
+        // mid-study, in which case the locked value is the one their existing
+        // answers belong to.
         cluster: p.cluster || reg.cluster,
         recipientRole: p.recipientRole || null,
         ownRole: p.ownRole || "",
@@ -216,7 +312,9 @@ export default function App() {
         roleCheckAttempts: p.roleCheckAttempts ?? null,
         priorJudgments: p.priorJudgments || {},
         responses,
-        emailIdx: Number.isFinite(reg.emailIdx) ? reg.emailIdx : p.emailIdx ?? 0,
+        emailIdx: Number.isFinite(reg.emailIdx)
+          ? reg.emailIdx
+          : (p.emailIdx ?? 0),
         step: reg.step || p.step || "checks",
         blocked: null,
       });
@@ -229,11 +327,11 @@ export default function App() {
     // persist participant meta (now including the un-primed prior judgments)
     // before the email loop begins
     try {
+      // cluster and ownRole are not sent: the server reads both from the
+      // roster, so there is one source of truth for them.
       await api.saveParticipant({
         prolificId: s.prolificId,
-        cluster: s.cluster,
         recipientRole: s.recipientRole,
-        ownRole: s.ownRole,
         roleRelation: s.roleRelation,
         personalizationName: s.name,
         consent: s.consent,
@@ -325,15 +423,17 @@ export default function App() {
       )}
 
       <main className="stage">
-        {!content ? (
-          <div className="card wide"><p>Loading...</p></div>
+        {!content || bootstrapping ? (
+          <div className="card wide">
+            <p>Loading...</p>
+          </div>
         ) : (
           <>
             {s.step === "cluster" && (
               <ClusterSelect
                 content={content}
-                selected={s.cluster}
-                initialOwnRole={s.ownRole}
+                cluster={s.cluster}
+                ownRole={s.ownRole}
                 initialRelation={s.roleRelation}
                 onNext={goCluster}
               />
@@ -346,7 +446,7 @@ export default function App() {
                 cluster={s.cluster}
                 consent={s.consent}
                 onConsent={(v) => patch({ consent: v })}
-                onNext={() => patch({ step: "prolific" })}
+                onNext={() => patch({ step: "checks" })}
               />
             )}
 
@@ -354,7 +454,6 @@ export default function App() {
               <ProlificId
                 content={content}
                 value={s.prolificId}
-                cluster={s.cluster}
                 onNext={goProlific}
               />
             )}
@@ -364,7 +463,9 @@ export default function App() {
                 content={content}
                 recipientRole={s.recipientRole}
                 cluster={s.cluster}
-                onNext={(attempts) => patch({ step: "recap", roleCheckAttempts: attempts })}
+                onNext={(attempts) =>
+                  patch({ step: "recap", roleCheckAttempts: attempts })
+                }
               />
             )}
 
@@ -391,7 +492,9 @@ export default function App() {
 
             {s.step === "email" &&
               (loadingEmails || !currentEmail ? (
-                <div className="card"><p>Loading emails...</p></div>
+                <div className="card">
+                  <p>Loading emails...</p>
+                </div>
               ) : (
                 <EmailPage
                   key={currentEmail.src}

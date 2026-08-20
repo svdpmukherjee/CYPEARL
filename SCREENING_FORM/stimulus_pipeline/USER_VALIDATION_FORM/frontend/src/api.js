@@ -30,9 +30,16 @@ export const api = {
   config: () => req("/api/config"),
   clusters: () => req("/api/clusters"),
   emails: (cluster) => req(`/api/emails/${encodeURIComponent(cluster)}`),
-  // Lock (or resume) a participant when they submit their Prolific ID. Rejects
-  // with err.code ALREADY_COMPLETED / CLUSTER_LOCKED; otherwise returns
-  // { resume, cluster, step, emailIdx }.
+  // The first call the app makes. Looks an invited Prolific ID up in the
+  // roster and returns { cluster, jobTitle, resume, step, emailIdx }: the job
+  // area and job title this person gave in the screener app, which the landing
+  // page shows back to them. Rejects with err.code NOT_INVITED (403) for an ID
+  // that was not sent this study, or ALREADY_COMPLETED (409). Creates nothing.
+  roster: (prolificId) => req(`/api/roster/${encodeURIComponent(prolificId)}`),
+  // Create (or resume) the participant row, once they confirm the assigned role
+  // is close enough to their own work. The cluster is not sent: the server
+  // reads it from the roster. Rejects with err.code ALREADY_COMPLETED /
+  // CLUSTER_LOCKED; otherwise returns { resume, cluster, step, emailIdx }.
   registerParticipant: (body) =>
     req("/api/participant/register", { method: "POST", body: JSON.stringify(body) }),
   // Fetch a participant + their saved responses, used to rehydrate on resume.

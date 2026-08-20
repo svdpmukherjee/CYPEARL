@@ -1,11 +1,19 @@
 import React, { useState } from "react";
 import { rich } from "../content.jsx";
 
+// The first page of the study. It is only reached by participants who arrived
+// without the ?PROLIFIC_PID= parameter Prolific normally appends, since App
+// resolves that automatically and skips straight past this page.
+//
+// Submitting looks the ID up in the invitation roster, which is a network call,
+// so the button reports that it is working and refuses a second click.
+//
 // Forward only: the study has no Back control on any page, so an answer cannot
 // be revisited once the participant has moved past it.
 export default function ProlificId({ content, value, onNext }) {
   const t = content.prolific;
   const [pid, setPid] = useState(value || "");
+  const [busy, setBusy] = useState(false);
   const clean = pid.trim();
   // Prolific IDs are 24-character alphanumeric strings; we accept a little
   // slack but require a plausible length so typos are caught early.
@@ -37,10 +45,17 @@ export default function ProlificId({ content, value, onNext }) {
         <span />
         <button
           className="btn primary"
-          disabled={!valid}
-          onClick={() => onNext(clean)}
+          disabled={!valid || busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await onNext(clean);
+            } finally {
+              setBusy(false);
+            }
+          }}
         >
-          {t.continueButton}
+          {busy ? t.checkingButton || t.continueButton : t.continueButton}
         </button>
       </div>
     </div>

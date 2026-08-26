@@ -1,0 +1,314 @@
+{
+  "_README": [
+    "This file holds ALL the words shown to participants in the company-wide",
+    "email study. You can edit any text below and the change appears in the app",
+    "after you save this file and refresh the browser. No coding, no rebuild.",
+    "",
+    "How to edit safely:",
+    "1. Only change the text INSIDE the double quotes, for example the part after",
+    "   a label like \"title\": \"...edit this...\".",
+    "2. Keep every quote, comma, colon and curly brace exactly where it is. If the",
+    "   page goes blank after an edit, you most likely deleted a quote or comma.",
+    "3. To make a word bold, wrap it in **double stars**. For italic, use *single",
+    "   stars*. Example: \"You will read **16 emails**, one at a time.\"",
+    "4. Words inside curly braces such as {role}, {name} or {total} are filled in",
+    "   automatically by the app. Leave the braces and the word inside them as is.",
+    "5. Lines starting with an underscore, like this _README, are notes for you",
+    "   and are never shown to participants.",
+    "",
+    "THE WORD 'GENERIC' IS NOT USED ANYWHERE PARTICIPANTS CAN SEE IT. To a",
+    "researcher it names the email set; to a participant it means nothing, or",
+    "worse, it sounds like the emails are fake. Say what the emails actually are",
+    "instead: the everyday ones that go to everybody in a company. Please keep it",
+    "out of any text you add.",
+    "",
+    "HOW THIS DIFFERS FROM THE JOB-SPECIFIC STUDY'S content.json:",
+    "- Same assigned role, carried over rather than assigned again. These are the",
+    "  same people, and they keep the role that study gave them, so the standing",
+    "  of the recipient is identical in both sets and the two sets of realism",
+    "  ratings mean the same thing. The role comes from their job-specific",
+    "  participant row; the 'roles' section at the foot of this file is the",
+    "  fallback, keyed by job area.",
+    "- There is no 'priorJudgments' section. Those eight un-primed ratings were",
+    "  collected in the job-specific study from these same people. Asking again",
+    "  would prime rather than measure.",
+    "- There is no familiarity gate and no 'how does your own role compare'",
+    "  question. Both were answered in the job-specific study.",
+    "- The FIRST page (prolific) opens by saying this study is a separate, optional",
+    "  addition to the one they already completed, and shows back their screening\n  answers once the ID is matched. The landing page after it is the study's\n  title, what the emails are, and the role they keep.",
+    "",
+    "Compensation and timing live in instructions.compensation below, and match the",
+    "job-specific study (~25 min, £4.00). Keep the two in step, and check they match",
+    "what the Prolific study actually offers before launch."
+  ],
+  "app": {
+    "brand": "Email Realism Validation",
+    "_progressNote": "The small label next to the progress bar at the top of every page. In 'email', {n} and {total} are filled in automatically.",
+    "progress": {
+      "screening": "Getting started",
+      "email": "Email {n} of {total}",
+      "complete": "Complete"
+    }
+  },
+  "clusterLabels": {
+    "_note": "Optional display overrides. Left side = the exact value stored in the database, right side = what participants see on screen. The job areas are already stored with readable names, so no overrides are needed."
+  },
+  "landing": {
+    "_note": "The second page: what the study is, and who they are in it. Kept deliberately SHORT, because these participants read the long version of all of this in the job-specific study and repeating it spends attention they need for the emails. Four things: the study's title, what the emails are, the role they keep, and what 'realistic' means.",
+    "title": "Email realism validation",
+    "_returningNoteNote": "The first thing on the page, and the reason this study looks different from the last one. Three things only: they have already taken part, this is separate, and it is their choice.",
+    "lead": "This time the emails are the everyday ones that go to **everybody in a company**, whatever their job: notices, reminders, invitations and announcements.",
+    "_roleNote": "The assigned role, carried over from the job-specific study rather than assigned again. The line under the role title is that role's own description, taken word for word from the job-specific study's 'roles' section so the participant reads exactly what they read there. Do NOT write anything else under it. Keep the word 'imagine' in rolePrefix: without it the line tells them they ARE that role rather than asking them to play it.",
+    "roleHeading": "You keep the same role as last time",
+    "rolePrefix": "Imagine you are",
+    "continueButton": "Yes, I would like to take part",
+    "continuingButton": "Starting...",
+    "explainer": {
+      "_note": "The 'Please read this before you continue' block. The job-specific version carries three factor cards to interrupt a misreading found in a pilot (people judged the email's content instead of the sender's standing relative to the role). These participants have already been through that, so this is the short reminder: a lead, one contrast pair, a closing line. Do NOT add worked examples or say which combinations are realistic: telling people that, say, a junior colleague would not warn them about a consequence teaches a rule and they stop judging.",
+      "eyebrow": "Please read this before you continue",
+      "heading": "What we mean by a realistic email",
+      "lead": "The emails are already written, and we are not checking spelling, wording, or whether what they ask for is a sensible piece of work.",
+      "contrast": [
+        {
+          "label": "Not",
+          "text": "Is this a well written email, and is what it asks for reasonable?"
+        },
+        {
+          "label": "But",
+          "text": "Could an email like this really reach {article} **{role}**, sent by **someone at that level**, pressing that hard, with that at stake?"
+        }
+      ],
+      "closing": "There is no right answer. Some of these will feel completely ordinary and others will not, and we want your honest read either way."
+    }
+  },
+  "instructions": {
+    "title": "About this study",
+    "lead": "",
+    "whatYouDoHeading": "What you will do",
+    "_whatYouDoNote": "Each item can be a plain string, or an object with a 'main' line, a 'sub' list of nested points, and an optional 'tail' line shown after that list. The job-specific version had two steps because that study began with eight scenarios to rate. This one goes straight to the emails, so there is a single step.",
+    "whatYouDo": [
+      {
+        "main": "You will read **16 emails**, one at a time, each addressed to you as {article} **{role}**. Each is the kind of email that goes to everybody in a company rather than to one particular job. For every email you will:",
+        "sub": [
+          "rate **how realistic** it is that you would receive it in that role, and say why in a sentence or two,",
+          "if something does not feel right, edit the email in place to make it more realistic."
+        ],
+        "tail": "Before each email we tell you **who it is from** (a senior colleague, or a peer or junior one), **how urgent** it is, and **what is at stake** (a reward for doing it, or a consequence for not doing it). Weigh those three together rather than one at a time."
+      }
+    ],
+    "compensation": {
+      "_note": "Matches the job-specific study exactly (~25 min, £4.00). Keep the two in step: these are the same people, and a second study that pays less for the same kind of work reads as a downgrade. If the Prolific study offers something different, change it there or here so the two agree.",
+      "note": "There are no right or wrong answers, just your honest judgement.",
+      "timeValue": "~25 min",
+      "timeLabel": "to complete",
+      "payValue": "£4.00",
+      "payLabel": "compensation"
+    },
+    "consentHeading": "Informed consent & privacy",
+    "consentText": [
+      "Participation is **voluntary**, and this study is a separate addition to the one you have already completed. You may withdraw at any time by closing the tab, and your responses will not be submitted.",
+      "Your **Prolific ID** is collected only to pay you. After the study it is **detached from your responses**, so the data is made anonymous and used solely for academic research.",
+      "You will type free text when you rate and rewrite the emails. **Do not include any personal names (yours, colleagues', or a manager's) or company names**."
+    ],
+    "consentCheckbox": "I have read the information above and I consent to take part in this study.",
+    "consentButton": "I consent, continue"
+  },
+  "prolific": {
+    "title": "Welcome back",
+    "lead": "Please enter your Prolific ID, so we can match you to the studies you have already completed.",
+    "fieldLabel": "Prolific ID",
+    "placeholder": "e.g. 5f8a2c3b1d9e4f0a7b6c5d4e",
+    "continueButton": "Continue",
+    "_note": "The FIRST page every participant sees, and the one that opens the study. It does three things in order: it tells a returning participant what this is and that it is optional, it takes (or confirms) their Prolific ID, and once that ID is matched it shows back the screening-survey answers we hold for them. Participants who arrive from Prolific with ?PROLIFIC_PID= in the URL have the ID filled in and checked for them, but they still see this page: the returning-participant note is the whole reason the study looks different from the last one, and skipping past it would mean most people never read it.",
+    "invalidHint": "That does not look like a Prolific ID. It is 24 letters and numbers.",
+    "checkingButton": "Checking...",
+    "_returningNoteNote": "The first thing on the page, before the ID is asked for. Three things only: they have already taken part, this is separate, and it is their choice.",
+    "returningNote": "You have already completed our email screening survey and the study on emails written for your own job area. Thank you for both. **This study is a separate addition to them, and taking part is entirely your choice.** If you would rather not, simply return the submission on Prolific.",
+    "_confirmNote": "Shown below the ID once it has been matched to our records, so the participant can see we have the right person before they go any further.",
+    "confirmHeading": "This is what you told us in the screening survey",
+    "areaLabel": "Your job area",
+    "titleLabel": "Your job title",
+    "confirmNote": "Shown so you can see we have the right person. If either of these is wrong, please message us through Prolific before going on.",
+    "verifyButton": "Yes, that is me, continue",
+    "idLabel": "Your Prolific ID"
+  },
+  "blocked": {
+    "_note": "Two refusals, not three. The job-specific study also has CLUSTER_LOCKED, which keeps a participant with the job area they started in. There is no equivalent here: everybody rates the same 16 emails, so the job area locks nothing.",
+    "notInvitedTitle": "This study is by invitation only",
+    "notInvitedBody": "This study was sent to the people who completed our earlier screening survey, and this Prolific ID is not one of them. If you typed your ID in by hand, please check it and try again. If it is correct, please return the submission on Prolific so it goes back to somebody who was invited, and message us if you believe you were invited and are seeing this in error.",
+    "completedTitle": "You have already completed this study",
+    "completedBody": "Our records show that this Prolific ID has already finished this study. Each person can take part only once, so there is nothing more for you to do here. If you believe this is a mistake, please message us through Prolific.",
+    "retryIdButton": "Try a different ID"
+  },
+  "checks": {
+    "heading": "Quick checks",
+    "intro": "Three quick questions to confirm the task is clear. The emails only make sense once you are picturing yourself in the role.",
+    "_note": "For each question, 'answer' is the number of the correct option, counting the options from the top starting at 1. Keep the correct option and 'answer' in sync if you reorder them. These mirror the job-specific study's three checks, because the task is the same one: the first fixes the role, the second fixes what is being judged, the third fixes that the three factors are weighed together.",
+    "questions": [
+      {
+        "prompt": "For the rest of this study, who should you imagine you are?",
+        "options": [
+          "Myself, in my own current job",
+          "{Article} {role} at a large company",
+          "A customer writing in to the company",
+          "A job applicant hoping to be hired"
+        ],
+        "answer": 2
+      },
+      {
+        "prompt": "When you rate each email, what are you mainly judging?",
+        "options": [
+          "Whether the email has spelling or grammar mistakes",
+          "Whether the task it asks for is a sensible piece of work",
+          "Whether a sender at that level could realistically send an email like this to {article} {role}",
+          "Whether the email is polite enough"
+        ],
+        "answer": 3
+      },
+      {
+        "prompt": "To judge whether an email is realistic for your role, you weigh up whether a sender at that level, with their authority, would...",
+        "options": [
+          "be the one sending you the email in the first place",
+          "send the email with the mentioned level of urgency",
+          "offer any reward, or hold out consequences for not doing it",
+          "All of the above, weighed together"
+        ],
+        "answer": 4
+      }
+    ],
+    "_feedbackNote": "After a failed attempt, the answer the participant chose is marked with a green tick or a red cross. Only their own answer is marked: the correct option is never revealed on a wrong one, or the retry would stop being a comprehension check. correctLabel and incorrectLabel are not shown on screen: they are read out by screen readers, so the marks are not colour alone.",
+    "error": "Not quite. Have another look at the question, then choose again.",
+    "correctLabel": "Correct",
+    "incorrectLabel": "Not correct, choose again",
+    "submit": "Confirm and continue"
+  },
+  "recap": {
+    "pageTitle": "Before you begin",
+    "recapHeading": "Quick recap of the task",
+    "recapPoints": [
+      "Read **16 emails**, one per page, each addressed to you as {article} **{role}** and each of the kind that goes to everybody in a company.",
+      "For each, rate **how realistic** it is that you would receive it in that role, and say **why** in a sentence or two.",
+      "If **anything feels off**, use the **Edit** buttons to rewrite just those parts.",
+      "You can add an optional comment for each email."
+    ],
+    "nameHeading": "Pick a name for the emails",
+    "nameLead": "So the emails read naturally, each will greet you by a first name you choose (for example, *Dear Alex,*).",
+    "nameWarning": "Please do **not** use your own real name.",
+    "nameFieldLabel": "First name to use in the emails",
+    "namePlaceholder": "e.g. Alex",
+    "nameInvalidHint": "Please enter a single first name using letters only.",
+    "nameConfirmCheckbox": "I confirm this is not my own real name.",
+    "startButton": "Start reading the emails"
+  },
+  "email": {
+    "conditionsTitle": "What to expect in this email",
+    "_conditionsSentenceNote": "In the job-specific study this sentence is copied word for word from that study's eight-scenarios page, so participants read the wording they had already rated. There is no such page here, so the template below is the only source and the fragments under 'conditions' fill it in.",
+    "conditionsSentence": "This email is from {dir}. It reaches you {urg}, and mentions {frame}.",
+    "editBannerTitle": "Keep your edits true to this email",
+    "_editBannerSentenceNote": "{situation} is filled in with the same sentence shown above, so the reminder shown while editing matches what the participant read before editing.",
+    "editBannerSentence": "Keep your changes in line with this email's situation: {situation}",
+    "editBannerWarn": "The sender stays as shown. You can rephrase the request, its urgency and its framing so they fit what a sender at this level could realistically send. Please DO NOT turn it into a different kind of email.",
+    "conditions": {
+      "_note": "The summary line at the top of each email is built from these parts. Keep the **bold** on the sender, the urgency phrase and the reward/consequence. 'peer' is the key this email set uses; 'peerlower' is kept as well so the same file works if the data is ever regenerated with the job-specific study's key.",
+      "dir": {
+        "higher": "a **senior** colleague",
+        "peer": "a **peer or junior** colleague",
+        "peerlower": "a **peer or junior** colleague"
+      },
+      "urg": {
+        "high": "**with a priority**",
+        "low": "**with no rush**"
+      },
+      "frame": {
+        "threat": "a **potential consequence** if you do not act on it",
+        "reward": "a **reward** if you do"
+      }
+    },
+    "subjectLabel": "Subject:",
+    "greeting": "Dear {name},",
+    "signOff": "Best regards,",
+    "mobileLabel": "Mobile",
+    "questionsIntro": "Now please answer the questions below about the email.",
+    "stepLabel": "Question {n} of 3",
+    "q1Heading": "1. Is this email realistic for your role?",
+    "q1Sub": "Could an email like this really arrive for {article} **{role}**, from **someone at that level**, pressing you like that, with that at stake? Judge the three **together**, not one at a time.",
+    "realismLabels": [
+      "Not at all realistic",
+      "Slightly realistic",
+      "Moderately realistic",
+      "Very realistic",
+      "Completely realistic"
+    ],
+    "q1Required": "Please choose a rating to continue.",
+    "q2Heading": "2. In a sentence or two, why did you give that rating?",
+    "q2Sub": "Tell us what made it feel realistic or not, and say something about **the sender**: what someone at their level could or could not credibly ask, promise, or warn {article} **{role}** about.",
+    "q2Placeholder": "Type here...",
+    "q2Required": "Please add a short explanation for your rating to continue.",
+    "q3Heading": "3. Would you like to change anything to make it more realistic?",
+    "q3Sub": "**Optional**. If something felt unrealistic, use the edit option to reword it.",
+    "q3EditButton": "Improve the email",
+    "q3EditHint": "You can now edit the subject and the message text above. The sender, the link, and the signature stay as they are. Click **Done editing** when you have finished.",
+    "q3DoneButton": "Done editing",
+    "q3ResetButton": "Undo my edits",
+    "q3NoteHeading": "Anything you want to add? (optional)",
+    "q3NotePlaceholder": "Type here...",
+    "continueButton": "Continue",
+    "nextButton": "Next email",
+    "finishButton": "Finish"
+  },
+  "done": {
+    "title": "Thank you",
+    "lead": "Your responses for all 16 emails have been recorded. You can now return to Prolific to complete your submission.",
+    "prolificLabel": "Prolific ID on file:",
+    "completionHeading": "Your completion code",
+    "completionHelp": "Copy this code and paste it into Prolific, or use the button below to return to Prolific and submit it automatically.",
+    "copyButton": "Copy code",
+    "copiedLabel": "Copied",
+    "submitButton": "Return to Prolific to submit",
+    "completionMissing": "Please return to Prolific to complete your submission.",
+    "restartButton": "Start over"
+  },
+  "roles": {
+    "_note": "Taken WORD FOR WORD from the job-specific study's 'roles' section, titles and descriptions both, so a participant reads exactly the role they read there. The role a participant keeps is looked up from their job-specific participant row (recipientRole); this map supplies the description that goes with it, and is the fallback for the title when that row cannot be found. If the job-specific file's roles change, change them here too.",
+    "Finance": {
+      "title": "Financial Accountant",
+      "description": "Handles company accounts, ledgers, reconciliations and financial reporting."
+    },
+    "IT Support": {
+      "title": "IT Support Analyst",
+      "description": "Front-line IT helpdesk, handling requests from managers, IT colleagues and internal staff."
+    },
+    "HR": {
+      "title": "Recruitment Coordinator",
+      "description": "Coordinates hiring end to end, working with managers and HR and payroll colleagues."
+    },
+    "Sales": {
+      "title": "Sales Executive",
+      "description": "Manages business customer accounts, quotes, deals and follow-ups."
+    },
+    "Operations": {
+      "title": "Operations Manager",
+      "description": "Runs day-to-day business operations, working with operations and facilities colleagues."
+    },
+    "Customer Service": {
+      "title": "Customer Support Specialist",
+      "description": "Handles corporate customer accounts, orders and complaints."
+    },
+    "Marketing": {
+      "title": "Marketing Manager",
+      "description": "Owns marketing campaigns and budgets, working with sales, finance and marketing colleagues."
+    },
+    "Procurement": {
+      "title": "Procurement Specialist",
+      "description": "Handles company purchasing, supplier quotes, orders and contracts."
+    },
+    "Administrative Support": {
+      "title": "Executive Assistant",
+      "description": "Supports senior leadership with scheduling, travel, correspondence and office coordination."
+    },
+    "Compliance": {
+      "title": "Compliance Officer",
+      "description": "Handles KYC/CDD checks, transaction-monitoring alerts and case escalations."
+    }
+  }
+}

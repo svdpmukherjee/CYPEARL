@@ -37,7 +37,10 @@ export default function Landing({ content, role, roleDescription, onNext }) {
     <div className="card wide" ref={pageRef}>
       <div className="focusblock">
         <h1>{t.title}</h1>
-        <p className="lead">{rich(t.lead)}</p>
+        {/* vars passed even though the lead sits above the role panel and so names
+            the role as "the role below": every other rich() call on this page takes
+            them, and a copy edit that used {role} here would otherwise print it raw. */}
+        <p className="lead">{rich(t.lead, { role })}</p>
 
         {/* The role they keep, carried over rather than assigned again. Only
             shown when we actually resolved one, so a participant whose role we

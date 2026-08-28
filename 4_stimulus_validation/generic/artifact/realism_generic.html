@@ -1,0 +1,691 @@
+<title>Realism of the Generic Emails</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plane:        #f7f7f4;
+    --surface:      #fcfcfb;
+    --ink:          #12120f;
+    --ink-2:        #55544f;
+    --muted:        #8a887f;
+    --grid:         #e3e2da;
+    --axis:         #c8c7bd;
+    --hairline:     rgba(18, 18, 15, 0.11);
+    --band-tint:    rgba(18, 18, 15, 0.028);
+    --senior:       #2a78d6;
+    --peer:         #eb6834;
+    --flag:         #b4531f;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plane:     #0d0d0c;
+      --surface:   #1a1a19;
+      --ink:       #f5f5f0;
+      --ink-2:     #c3c2b7;
+      --muted:     #8f8d84;
+      --grid:      #2c2c2a;
+      --axis:      #3d3d39;
+      --hairline:  rgba(245, 245, 240, 0.13);
+      --band-tint: rgba(245, 245, 240, 0.035);
+      --senior:    #3987e5;
+      --peer:      #d95926;
+      --flag:      #e8a07d;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane:     #0d0d0c;
+    --surface:   #1a1a19;
+    --ink:       #f5f5f0;
+    --ink-2:     #c3c2b7;
+    --muted:     #8f8d84;
+    --grid:      #2c2c2a;
+    --axis:      #3d3d39;
+    --hairline:  rgba(245, 245, 240, 0.13);
+    --band-tint: rgba(245, 245, 240, 0.035);
+    --senior:    #3987e5;
+    --peer:      #d95926;
+    --flag:      #e8a07d;
+  }
+
+  body {
+    background: var(--plane);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 40px 24px 64px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(27px, 3.6vw, 37px); line-height: 1.1; letter-spacing: -0.021em;
+    font-weight: 640; margin: 0 0 12px; text-wrap: balance;
+  }
+  .standfirst { max-width: 68ch; color: var(--ink-2); margin: 0; font-size: 15.5px; }
+  .cohort-note {
+    max-width: 68ch; margin: 12px 0 0; font-size: 13.5px; color: var(--flag);
+    border-left: 2px solid var(--flag); padding-left: 11px;
+  }
+
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px 26px;
+    padding: 13px 18px; background: var(--surface);
+    border: 1px solid var(--hairline); border-radius: 3px;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+  .lg { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink-2); }
+  .lg i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 3px; padding: 16px 18px 12px;
+  }
+  .panel.hero { padding: 20px 24px 14px; }
+  .phead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  .pname { font-size: 14.5px; font-weight: 600; letter-spacing: -0.008em; }
+  .panel.hero .pname, .panel.emails .pname { font-size: 17px; }
+  .pn { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap;
+        font-variant-numeric: tabular-nums; }
+  .pn.warn { color: var(--flag); }
+  .pnote { font-size: 13px; color: var(--muted); margin: 2px 0 10px; max-width: 76ch; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(336px, 1fr)); gap: 16px; }
+  .sechead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+             padding: 0 2px; margin-bottom: -4px; }
+  .secname { font-size: 14.5px; font-weight: 600; letter-spacing: -0.008em; }
+  .secnote { font-size: 13px; color: var(--muted); margin: 0 2px 2px; max-width: 82ch; }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Averages by factor: one factor at a time, the other two collapsed. */
+  .marg { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2px;
+          background: var(--hairline); border: 1px solid var(--hairline); border-radius: 3px; }
+  .mg { background: var(--surface); padding: 13px 18px 14px; }
+  .mg-h { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+          text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .mg-r { display: flex; align-items: baseline; gap: 9px; padding: 2px 0; }
+  .mg-r i { width: 9px; height: 9px; border-radius: 50%; flex: none; transform: translateY(-1px); }
+  .mg-r i.s-higher { background: var(--senior); }
+  .mg-r i.s-peerlower { background: var(--peer); }
+  .mg-r i.none { background: transparent; border-top: 1.5px solid var(--axis); height: 0; border-radius: 0;
+                 transform: translateY(-4px); }
+  .mg-l { font-size: 13.5px; color: var(--ink-2); }
+  .mg-v { margin-left: auto; font-family: var(--mono); font-size: 15px; font-weight: 600;
+          font-variant-numeric: tabular-nums; color: var(--ink); }
+  .mg-v em { font-style: normal; font-size: 11.5px; font-weight: 400; color: var(--muted); margin-left: 5px; }
+
+  /* SVG ink through classes: var() in presentation attributes is not dependable */
+  .bt { fill: var(--band-tint); }
+  .gl { stroke: var(--grid); stroke-width: 1; }
+  .bl { stroke: var(--axis); stroke-width: 1; }
+  .ax-t { font-family: var(--mono); fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .ax-h { font-family: var(--sans); fill: var(--muted); }
+  .row-l { font-family: var(--sans); fill: var(--ink-2); }
+  .row-s { font-family: var(--mono); fill: var(--muted); }
+  .val { font-family: var(--mono); fill: var(--ink); font-variant-numeric: tabular-nums; }
+  .val-sd { fill: var(--muted); }
+  .vio { stroke-width: 1.25; fill-opacity: 0.17; }
+  .vio.s-higher { stroke: var(--senior); fill: var(--senior); }
+  .vio.s-peerlower { stroke: var(--peer); fill: var(--peer); }
+  .rug { stroke-width: 1.25; opacity: 0.5; }
+  .rug.s-higher { stroke: var(--senior); }
+  .rug.s-peerlower { stroke: var(--peer); }
+  .mnse { stroke-width: 1.5; fill: none; }
+  .mnse.s-higher { stroke: var(--senior); }
+  .mnse.s-peerlower { stroke: var(--peer); }
+  .mn { fill: var(--surface); stroke-width: 1.75; }
+  .mn.s-higher { stroke: var(--senior); }
+  .mn.s-peerlower { stroke: var(--peer); }
+  .wh { stroke-width: 2; opacity: 0.42; fill: none; }
+  .wh.s-higher { stroke: var(--senior); }
+  .wh.s-peerlower { stroke: var(--peer); }
+  .dot { stroke: var(--surface); stroke-width: 2; }
+  .dot.s-higher { fill: var(--senior); }
+  .dot.s-peerlower { fill: var(--peer); }
+  .hit { fill: transparent; stroke: none; }
+
+  details.numbers { border: 1px solid var(--hairline); border-radius: 3px; background: var(--surface); }
+  details.numbers > summary {
+    cursor: pointer; padding: 12px 18px; font-size: 13.5px; color: var(--ink-2);
+    font-weight: 550; list-style-position: inside;
+  }
+  details.numbers > summary:focus-visible { outline: 2px solid var(--senior); outline-offset: -2px; }
+  .tbl-wrap { overflow-x: auto; padding: 0 18px 18px; }
+  .tbl-wrap + .tbl-wrap { border-top: 1px solid var(--hairline); padding-top: 16px; }
+  .tbl-h { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase;
+           color: var(--muted); margin: 0 0 9px; }
+  table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+  th, td { text-align: right; padding: 5px 10px; white-space: nowrap;
+           border-bottom: 1px solid var(--hairline); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { font-weight: 550; color: var(--muted); font-size: 11.5px; }
+  tbody td { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  tbody th { font-weight: 500; color: var(--ink-2); text-align: left; font-size: 12.5px; }
+  td.na { color: var(--muted); }
+
+  #tip {
+    position: fixed; z-index: 40; pointer-events: none; opacity: 0; transition: opacity 0.09s ease;
+    background: var(--surface); color: var(--ink); border: 1px solid var(--hairline);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+    border-radius: 3px; padding: 11px 13px; max-width: 330px; font-size: 12.5px; line-height: 1.45;
+  }
+  #tip .t-c { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+              text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  #tip .t-s { color: var(--ink-2); margin-bottom: 8px; }
+  #tip .t-v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 600; }
+  #tip .t-r { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 5px; }
+  @media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+  @media (max-width: 560px) { body { padding: 28px 14px 48px; } .legend { margin-left: 0; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow" id="eyebrow">CYPEARL · generic set</p>
+    <h1>How realistic the generic emails read</h1>
+    <p class="standfirst">
+      Sixteen everyday emails, the ones that arrive because you work at the company rather than
+      because of the job you do, rated 1&ndash;10 for realism by <span id="n-people">&ndash;</span> people
+      after reading each one. The eight conditions are the same factorial as the job-specific set:
+      sender standing &times; urgency &times; framing, two emails in each. The pooled panel shows the
+      whole distribution behind each condition; every other number on the page is a mean with
+      &plusmn;1 SE.
+    </p>
+    <p class="cohort-note" id="cohort-note" hidden></p>
+  </header>
+
+  <div class="controls">
+    <div class="legend">
+      <span class="lg"><i style="background:var(--senior)"></i>From a senior colleague</span>
+      <span class="lg"><i style="background:var(--peer)"></i>From a peer or junior</span>
+    </div>
+  </div>
+
+  <div class="marg" id="marg"></div>
+
+  <div class="stack">
+    <div class="panel hero">
+      <div class="phead">
+        <span class="pname" id="hero-name"></span>
+        <span class="pn" id="hero-n"></span>
+      </div>
+      <p class="pnote">
+        Senior sender above the line, peer or junior below; ticks are individual participants and the
+        circle is the mean with &plusmn;1 SE. Read shape, not height: one tight bulge is agreement, a long even shape is
+        disagreement, two bulges are two groups of people.
+      </p>
+      <div id="hero"></div>
+    </div>
+
+    <div class="sechead">
+      <span class="secname">By job area</span>
+      <span class="pn" id="grid-n"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="panel emails">
+    <div class="phead">
+      <span class="pname">The sixteen emails, one at a time</span>
+      <span class="pn" id="emails-n"></span>
+    </div>
+    <p class="pnote">Each condition pools two different everyday situations, which can read very differently.</p>
+    <div id="emails"></div>
+  </div>
+
+  <details class="numbers">
+    <summary>The numbers, as tables</summary>
+    <div class="tbl-wrap">
+      <p class="tbl-h">Mean realism &plusmn; SE, by condition and job area</p>
+      <div id="tbl-cells"></div>
+    </div>
+    <div class="tbl-wrap">
+      <p class="tbl-h">Mean realism &plusmn; SE, by email</p>
+      <div id="tbl-emails"></div>
+    </div>
+  </details>
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = {"meta":{"cohort":"complete","complete":23,"partial":0,"included":23,"rated":23,"ratings":368,"stimuli":16,"built":"2026-08-28"},"post":{"overall":{"cluster":"All job areas pooled","n":23,"cells":{"higher_high_threat":{"n":23,"mean":7.696,"median":8.0,"sd":2.476,"se":0.516,"values":[1.5,2.5,3.5,4.5,6.5,7.0,7.5,7.5,8.0,8.0,8.0,8.0,8.5,8.5,9.0,9.5,9.5,9.5,10.0,10.0,10.0,10.0,10.0]},"higher_high_reward":{"n":23,"mean":8.304,"median":9.0,"sd":2.043,"se":0.426,"values":[3.0,4.0,4.5,7.0,7.0,7.0,7.5,8.0,9.0,9.0,9.0,9.0,9.5,9.5,9.5,9.5,9.5,9.5,10.0,10.0,10.0,10.0,10.0]},"higher_low_threat":{"n":23,"mean":7.739,"median":8.0,"sd":1.87,"se":0.39,"values":[3.0,4.5,5.5,5.5,6.5,7.0,7.0,7.0,7.0,7.5,7.5,8.0,8.5,8.5,8.5,9.0,9.0,9.0,9.5,10.0,10.0,10.0,10.0]},"higher_low_reward":{"n":23,"mean":8.457,"median":9.5,"sd":1.994,"se":0.416,"values":[1.0,6.5,7.0,7.0,7.0,7.5,8.0,8.0,8.0,9.0,9.0,9.5,9.5,9.5,9.5,9.5,9.5,9.5,10.0,10.0,10.0,10.0,10.0]},"peerlower_high_threat":{"n":23,"mean":7.978,"median":8.0,"sd":1.78,"se":0.371,"values":[4.0,5.5,6.0,6.0,6.5,6.5,6.5,6.5,7.0,8.0,8.0,8.0,8.5,9.0,9.0,9.0,9.5,10.0,10.0,10.0,10.0,10.0,10.0]},"peerlower_high_reward":{"n":23,"mean":7.13,"median":8.5,"sd":2.773,"se":0.578,"values":[1.0,2.0,2.5,4.0,4.0,5.5,6.0,6.0,6.5,7.5,8.0,8.5,8.5,8.5,9.0,9.0,9.0,9.5,9.5,9.5,10.0,10.0,10.0]},"peerlower_low_threat":{"n":23,"mean":7.196,"median":8.0,"sd":2.61,"se":0.544,"values":[1.0,2.5,3.5,4.5,4.5,4.5,6.0,6.5,7.0,7.5,8.0,8.0,8.5,8.5,9.0,9.0,9.0,9.0,9.5,9.5,10.0,10.0,10.0]},"peerlower_low_reward":{"n":23,"mean":7.652,"median":8.5,"sd":1.754,"se":0.366,"values":[1.5,6.0,6.0,6.5,6.5,6.5,7.0,7.0,7.5,7.5,7.5,8.5,8.5,8.5,8.5,8.5,9.0,9.0,9.0,9.0,9.0,9.5,9.5]}}},"clusters":[{"cluster":"Administrative Support","n":3,"cells":{"higher_high_threat":{"n":3,"mean":7.5,"median":8.0,"sd":2.784,"se":1.607,"values":[4.5,8.0,10.0]},"higher_high_reward":{"n":3,"mean":8.333,"median":8.0,"sd":1.528,"se":0.882,"values":[7.0,8.0,10.0]},"higher_low_threat":{"n":3,"mean":8.667,"median":8.5,"sd":1.258,"se":0.726,"values":[7.5,8.5,10.0]},"higher_low_reward":{"n":3,"mean":9.0,"median":9.5,"sd":0.866,"se":0.5,"values":[8.0,9.5,9.5]},"peerlower_high_threat":{"n":3,"mean":9.667,"median":10.0,"sd":0.577,"se":0.333,"values":[9.0,10.0,10.0]},"peerlower_high_reward":{"n":3,"mean":8.833,"median":9.5,"sd":1.155,"se":0.667,"values":[7.5,9.5,9.5]},"peerlower_low_threat":{"n":3,"mean":6.5,"median":6.0,"sd":2.291,"se":1.323,"values":[4.5,6.0,9.0]},"peerlower_low_reward":{"n":3,"mean":7.0,"median":6.5,"sd":1.323,"se":0.764,"values":[6.0,6.5,8.5]}}},{"cluster":"Customer Service","n":3,"cells":{"higher_high_threat":{"n":3,"mean":5.833,"median":8.0,"sd":3.753,"se":2.167,"values":[1.5,8.0,8.0]},"higher_high_reward":{"n":3,"mean":9.667,"median":9.5,"sd":0.289,"se":0.167,"values":[9.5,9.5,10.0]},"higher_low_threat":{"n":3,"mean":7.167,"median":9.0,"sd":3.617,"se":2.088,"values":[3.0,9.0,9.5]},"higher_low_reward":{"n":3,"mean":9.0,"median":9.5,"sd":0.866,"se":0.5,"values":[8.0,9.5,9.5]},"peerlower_high_threat":{"n":3,"mean":7.167,"median":7.0,"sd":0.764,"se":0.441,"values":[6.5,7.0,8.0]},"peerlower_high_reward":{"n":3,"mean":6.167,"median":8.5,"sd":4.481,"se":2.587,"values":[1.0,8.5,9.0]},"peerlower_low_threat":{"n":3,"mean":7.167,"median":7.5,"sd":2.517,"se":1.453,"values":[4.5,7.5,9.5]},"peerlower_low_reward":{"n":3,"mean":8.667,"median":9.0,"sd":1.041,"se":0.601,"values":[7.5,9.0,9.5]}}},{"cluster":"Operations","n":3,"cells":{"higher_high_threat":{"n":3,"mean":7.333,"median":8.5,"sd":3.403,"se":1.965,"values":[3.5,8.5,10.0]},"higher_high_reward":{"n":3,"mean":8.333,"median":9.0,"sd":1.155,"se":0.667,"values":[7.0,9.0,9.0]},"higher_low_threat":{"n":3,"mean":8.667,"median":9.0,"sd":1.528,"se":0.882,"values":[7.0,9.0,10.0]},"higher_low_reward":{"n":3,"mean":10.0,"median":10.0,"sd":0.0,"se":0.0,"values":[10.0,10.0,10.0]},"peerlower_high_threat":{"n":3,"mean":7.5,"median":8.5,"sd":3.122,"se":1.803,"values":[4.0,8.5,10.0]},"peerlower_high_reward":{"n":3,"mean":7.0,"median":8.5,"sd":3.969,"se":2.291,"values":[2.5,8.5,10.0]},"peerlower_low_threat":{"n":3,"mean":7.0,"median":8.5,"sd":3.969,"se":2.291,"values":[2.5,8.5,10.0]},"peerlower_low_reward":{"n":3,"mean":6.333,"median":8.5,"sd":4.193,"se":2.421,"values":[1.5,8.5,9.0]}}},{"cluster":"Procurement","n":3,"cells":{"higher_high_threat":{"n":3,"mean":8.5,"median":8.0,"sd":1.323,"se":0.764,"values":[7.5,8.0,10.0]},"higher_high_reward":{"n":3,"mean":7.0,"median":7.0,"sd":3.0,"se":1.732,"values":[4.0,7.0,10.0]},"higher_low_threat":{"n":3,"mean":7.167,"median":7.5,"sd":1.528,"se":0.882,"values":[5.5,7.5,8.5]},"higher_low_reward":{"n":3,"mean":8.0,"median":8.0,"sd":1.0,"se":0.577,"values":[7.0,8.0,9.0]},"peerlower_high_threat":{"n":3,"mean":7.833,"median":8.0,"sd":1.258,"se":0.726,"values":[6.5,8.0,9.0]},"peerlower_high_reward":{"n":3,"mean":4.5,"median":4.0,"sd":0.866,"se":0.5,"values":[4.0,4.0,5.5]},"peerlower_low_threat":{"n":3,"mean":7.167,"median":7.0,"sd":2.754,"se":1.59,"values":[4.5,7.0,10.0]},"peerlower_low_reward":{"n":3,"mean":6.667,"median":7.0,"sd":0.577,"se":0.333,"values":[6.0,7.0,7.0]}}},{"cluster":"Compliance","n":2,"cells":{"higher_high_threat":{"n":2,"mean":5.0,"median":5.0,"sd":3.536,"se":2.5,"values":[2.5,7.5]},"higher_high_reward":{"n":2,"mean":9.5,"median":9.5,"sd":0.0,"se":0.0,"values":[9.5,9.5]},"higher_low_threat":{"n":2,"mean":7.0,"median":7.0,"sd":0.0,"se":0.0,"values":[7.0,7.0]},"higher_low_reward":{"n":2,"mean":4.0,"median":4.0,"sd":4.243,"se":3.0,"values":[1.0,7.0]},"peerlower_high_threat":{"n":2,"mean":7.75,"median":7.75,"sd":3.182,"se":2.25,"values":[5.5,10.0]},"peerlower_high_reward":{"n":2,"mean":8.75,"median":8.75,"sd":0.354,"se":0.25,"values":[8.5,9.0]},"peerlower_low_threat":{"n":2,"mean":5.0,"median":5.0,"sd":5.657,"se":4.0,"values":[1.0,9.0]},"peerlower_low_reward":{"n":2,"mean":8.0,"median":8.0,"sd":0.707,"se":0.5,"values":[7.5,8.5]}}},{"cluster":"Finance","n":2,"cells":{"higher_high_threat":{"n":2,"mean":9.25,"median":9.25,"sd":1.061,"se":0.75,"values":[8.5,10.0]},"higher_high_reward":{"n":2,"mean":7.25,"median":7.25,"sd":3.889,"se":2.75,"values":[4.5,10.0]},"higher_low_threat":{"n":2,"mean":7.25,"median":7.25,"sd":3.889,"se":2.75,"values":[4.5,10.0]},"higher_low_reward":{"n":2,"mean":8.75,"median":8.75,"sd":1.768,"se":1.25,"values":[7.5,10.0]},"peerlower_high_threat":{"n":2,"mean":6.25,"median":6.25,"sd":0.354,"se":0.25,"values":[6.0,6.5]},"peerlower_high_reward":{"n":2,"mean":8.0,"median":8.0,"sd":2.828,"se":2.0,"values":[6.0,10.0]},"peerlower_low_threat":{"n":2,"mean":8.25,"median":8.25,"sd":2.475,"se":1.75,"values":[6.5,10.0]},"peerlower_low_reward":{"n":2,"mean":8.5,"median":8.5,"sd":1.414,"se":1.0,"values":[7.5,9.5]}}},{"cluster":"IT Support","n":2,"cells":{"higher_high_threat":{"n":2,"mean":9.25,"median":9.25,"sd":0.354,"se":0.25,"values":[9.0,9.5]},"higher_high_reward":{"n":2,"mean":9.75,"median":9.75,"sd":0.354,"se":0.25,"values":[9.5,10.0]},"higher_low_threat":{"n":2,"mean":9.0,"median":9.0,"sd":1.414,"se":1.0,"values":[8.0,10.0]},"higher_low_reward":{"n":2,"mean":9.5,"median":9.5,"sd":0.0,"se":0.0,"values":[9.5,9.5]},"peerlower_high_threat":{"n":2,"mean":9.75,"median":9.75,"sd":0.354,"se":0.25,"values":[9.5,10.0]},"peerlower_high_reward":{"n":2,"mean":8.75,"median":8.75,"sd":1.061,"se":0.75,"values":[8.0,9.5]},"peerlower_low_threat":{"n":2,"mean":9.0,"median":9.0,"sd":0.707,"se":0.5,"values":[8.5,9.5]},"peerlower_low_reward":{"n":2,"mean":8.75,"median":8.75,"sd":0.354,"se":0.25,"values":[8.5,9.0]}}},{"cluster":"Marketing","n":2,"cells":{"higher_high_threat":{"n":2,"mean":9.5,"median":9.5,"sd":0.0,"se":0.0,"values":[9.5,9.5]},"higher_high_reward":{"n":2,"mean":8.25,"median":8.25,"sd":1.061,"se":0.75,"values":[7.5,9.0]},"higher_low_threat":{"n":2,"mean":8.75,"median":8.75,"sd":0.354,"se":0.25,"values":[8.5,9.0]},"higher_low_reward":{"n":2,"mean":9.25,"median":9.25,"sd":0.354,"se":0.25,"values":[9.0,9.5]},"peerlower_high_threat":{"n":2,"mean":7.25,"median":7.25,"sd":1.061,"se":0.75,"values":[6.5,8.0]},"peerlower_high_reward":{"n":2,"mean":7.5,"median":7.5,"sd":2.121,"se":1.5,"values":[6.0,9.0]},"peerlower_low_threat":{"n":2,"mean":8.5,"median":8.5,"sd":0.707,"se":0.5,"values":[8.0,9.0]},"peerlower_low_reward":{"n":2,"mean":8.75,"median":8.75,"sd":0.354,"se":0.25,"values":[8.5,9.0]}}},{"cluster":"Sales","n":2,"cells":{"higher_high_threat":{"n":2,"mean":8.5,"median":8.5,"sd":2.121,"se":1.5,"values":[7.0,10.0]},"higher_high_reward":{"n":2,"mean":6.0,"median":6.0,"sd":4.243,"se":3.0,"values":[3.0,9.0]},"higher_low_threat":{"n":2,"mean":6.25,"median":6.25,"sd":1.061,"se":0.75,"values":[5.5,7.0]},"higher_low_reward":{"n":2,"mean":8.25,"median":8.25,"sd":2.475,"se":1.75,"values":[6.5,10.0]},"peerlower_high_threat":{"n":2,"mean":9.5,"median":9.5,"sd":0.707,"se":0.5,"values":[9.0,10.0]},"peerlower_high_reward":{"n":2,"mean":6.0,"median":6.0,"sd":5.657,"se":4.0,"values":[2.0,10.0]},"peerlower_low_threat":{"n":2,"mean":6.25,"median":6.25,"sd":3.889,"se":2.75,"values":[3.5,9.0]},"peerlower_low_reward":{"n":2,"mean":7.75,"median":7.75,"sd":1.768,"se":1.25,"values":[6.5,9.0]}}},{"cluster":"HR","n":1,"cells":{"higher_high_threat":{"n":1,"mean":6.5,"median":6.5,"sd":null,"se":null,"values":[6.5]},"higher_high_reward":{"n":1,"mean":9.5,"median":9.5,"sd":null,"se":null,"values":[9.5]},"higher_low_threat":{"n":1,"mean":6.5,"median":6.5,"sd":null,"se":null,"values":[6.5]},"higher_low_reward":{"n":1,"mean":7.0,"median":7.0,"sd":null,"se":null,"values":[7.0]},"peerlower_high_threat":{"n":1,"mean":6.0,"median":6.0,"sd":null,"se":null,"values":[6.0]},"peerlower_high_reward":{"n":1,"mean":6.5,"median":6.5,"sd":null,"se":null,"values":[6.5]},"peerlower_low_threat":{"n":1,"mean":8.0,"median":8.0,"sd":null,"se":null,"values":[8.0]},"peerlower_low_reward":{"n":1,"mean":6.5,"median":6.5,"sd":null,"se":null,"values":[6.5]}}}],"marginals":{"senior":{"n":23,"mean":8.049,"median":8.125,"sd":1.437,"se":0.3,"values":[5.0,5.625,5.875,6.25,6.875,7.125,7.375,7.5,7.625,7.75,7.875,8.125,8.625,8.625,9.0,9.125,9.125,9.125,9.25,9.625,9.75,9.875,10.0]},"peerlower":{"n":23,"mean":7.489,"median":7.875,"sd":1.693,"se":0.353,"values":[2.625,5.25,5.375,5.75,6.25,6.5,6.5,6.75,6.875,7.625,7.875,7.875,8.0,8.25,8.375,8.5,8.625,8.875,9.0,9.0,9.25,9.5,9.625]},"priority":{"n":23,"mean":7.777,"median":8.25,"sd":1.591,"se":0.332,"values":[4.25,4.75,5.25,6.25,6.625,6.625,7.125,7.125,7.125,7.75,7.75,8.25,8.5,8.625,8.625,8.625,8.875,9.125,9.25,9.375,9.5,9.75,9.75]},"norush":{"n":23,"mean":7.761,"median":7.875,"sd":1.485,"se":0.31,"values":[4.125,5.25,5.875,6.25,6.5,7.0,7.0,7.25,7.375,7.375,7.375,7.875,8.375,8.5,8.75,8.75,8.75,9.0,9.125,9.125,9.375,9.625,9.875]},"consequence":{"n":23,"mean":7.652,"median":8.0,"sd":1.728,"se":0.36,"values":[3.875,4.0,4.25,6.375,6.625,6.75,7.0,7.5,7.5,7.5,7.875,8.0,8.375,8.5,8.5,8.625,8.625,8.75,9.0,9.125,9.5,9.75,10.0]},"reward":{"n":23,"mean":7.886,"median":8.375,"sd":1.467,"se":0.306,"values":[4.5,5.25,6.125,6.375,6.5,6.75,7.0,7.125,7.375,7.75,8.0,8.375,8.375,8.5,8.875,9.0,9.125,9.125,9.125,9.375,9.375,9.5,9.875]}}},"emails":[{"src":"GEN-S01-P","scenario_id":"S01","scenario":"IT planned downtime / system maintenance","topic":"IT planned downtime","sender_role":"IT Support","dir":"peerlower","urg":"high","frame":"threat","order":2,"orphan":false,"n":23,"mean":8.783,"median":10.0,"sd":2.131,"se":0.444,"values":[1.0,5.0,7.0,7.0,8.0,9.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S08-H","scenario_id":"S08","scenario":"All-hands or town hall meeting invite","topic":"All-hands meeting","sender_role":"Chief of Staff","dir":"higher","urg":"high","frame":"reward","order":15,"orphan":false,"n":23,"mean":8.739,"median":9.0,"sd":1.685,"se":0.351,"values":[4.0,5.0,7.0,7.0,8.0,8.0,8.0,8.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S15-P","scenario_id":"S15","scenario":"Staff party, birthday or celebration invite","topic":"Staff party and celebrations","sender_role":"Social Committee","dir":"peerlower","urg":"low","frame":"reward","order":12,"orphan":false,"n":23,"mean":8.565,"median":9.0,"sd":1.903,"se":0.397,"values":[2.0,4.0,8.0,8.0,8.0,8.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S09-H","scenario_id":"S09","scenario":"Company newsletter, results or performance update","topic":"Company newsletter and results","sender_role":"Chief Executive Officer","dir":"higher","urg":"low","frame":"reward","order":1,"orphan":false,"n":23,"mean":8.478,"median":9.0,"sd":2.254,"se":0.47,"values":[1.0,4.0,6.0,6.0,8.0,8.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S19-H","scenario_id":"S19","scenario":"Payroll or pay-deal notification","topic":"Pay award and payroll","sender_role":"HR Director","dir":"higher","urg":"low","frame":"reward","order":9,"orphan":false,"n":23,"mean":8.435,"median":10.0,"sd":2.409,"se":0.502,"values":[1.0,5.0,5.0,5.0,6.0,8.0,8.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S21-H","scenario_id":"S21","scenario":"New tool or software rollout for everyone","topic":"New tool rollout","sender_role":"Onboarding Manager","dir":"higher","urg":"low","frame":"threat","order":13,"orphan":false,"n":23,"mean":8.13,"median":9.0,"sd":2.455,"se":0.512,"values":[2.0,2.0,5.0,6.0,6.0,7.0,7.0,8.0,9.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S22-P","scenario_id":"S22","scenario":"Benefits or insurance enrolment window","topic":"Benefits enrolment","sender_role":"Benefits Administrator","dir":"peerlower","urg":"low","frame":"threat","order":16,"orphan":false,"n":23,"mean":8.0,"median":9.0,"sd":2.594,"se":0.541,"values":[1.0,2.0,4.0,6.0,7.0,7.0,7.0,8.0,8.0,8.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S06-H","scenario_id":"S06","scenario":"Public holiday or office closure notice","topic":"Public holiday and office closure","sender_role":"HR Director","dir":"higher","urg":"high","frame":"reward","order":7,"orphan":false,"n":23,"mean":7.87,"median":9.0,"sd":2.581,"se":0.538,"values":[1.0,2.0,4.0,6.0,6.0,7.0,7.0,7.0,8.0,9.0,9.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S04-H","scenario_id":"S04","scenario":"Mandatory training or e-learning with a due date","topic":"Mandatory training","sender_role":"Head of IT and Security","dir":"higher","urg":"high","frame":"threat","order":3,"orphan":false,"n":23,"mean":7.783,"median":9.0,"sd":2.795,"se":0.583,"values":[2.0,3.0,3.0,4.0,4.0,5.0,7.0,7.0,8.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S12-H","scenario_id":"S12","scenario":"Building, facilities or commute disruption","topic":"Building and commute disruption","sender_role":"Facilities Manager","dir":"higher","urg":"high","frame":"threat","order":11,"orphan":false,"n":23,"mean":7.609,"median":8.0,"sd":2.692,"se":0.561,"values":[1.0,1.0,4.0,6.0,6.0,6.0,6.0,7.0,8.0,8.0,8.0,8.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S13-H","scenario_id":"S13","scenario":"Workplace etiquette: parking, desks, shared kitchen","topic":"Office etiquette: desks, kitchen, parking","sender_role":"Office Manager","dir":"higher","urg":"low","frame":"threat","order":5,"orphan":false,"n":23,"mean":7.348,"median":8.0,"sd":2.587,"se":0.539,"values":[2.0,4.0,4.0,4.0,4.0,4.0,5.0,7.0,7.0,7.0,8.0,8.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S20-P","scenario_id":"S20","scenario":"Canteen, staff offers or leftover food","topic":"Canteen and staff food","sender_role":"Receptionist","dir":"peerlower","urg":"high","frame":"reward","order":14,"orphan":false,"n":23,"mean":7.217,"median":9.0,"sd":3.204,"se":0.668,"values":[1.0,1.0,2.0,3.0,3.0,5.0,5.0,7.0,7.0,8.0,8.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S07-P","scenario_id":"S07","scenario":"Policy update or personal details review","topic":"Policy update and personal details","sender_role":"HR Administrator","dir":"peerlower","urg":"high","frame":"threat","order":10,"orphan":false,"n":23,"mean":7.174,"median":8.0,"sd":2.64,"se":0.55,"values":[3.0,3.0,3.0,4.0,4.0,5.0,5.0,5.0,6.0,7.0,8.0,8.0,8.0,8.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S05-P","scenario_id":"S05","scenario":"Annual leave booking reminder","topic":"Annual leave booking","sender_role":"HR Assistant","dir":"peerlower","urg":"high","frame":"reward","order":6,"orphan":false,"n":23,"mean":7.043,"median":8.0,"sd":3.24,"se":0.676,"values":[1.0,1.0,1.0,2.0,3.0,5.0,6.0,7.0,7.0,8.0,8.0,8.0,9.0,9.0,9.0,9.0,9.0,10.0,10.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S10-P","scenario_id":"S10","scenario":"New starters, promotions and internal moves","topic":"New starters and internal moves","sender_role":"Onboarding Assistant","dir":"peerlower","urg":"low","frame":"reward","order":4,"orphan":false,"n":23,"mean":6.739,"median":7.0,"sd":2.684,"se":0.56,"values":[1.0,3.0,3.0,3.0,3.0,4.0,6.0,6.0,7.0,7.0,7.0,7.0,8.0,8.0,8.0,8.0,8.0,9.0,9.0,10.0,10.0,10.0,10.0]},{"src":"GEN-S11-P","scenario_id":"S11","scenario":"Fire drill or health and safety notice","topic":"Fire drill and health and safety","sender_role":"Floor Fire Warden","dir":"peerlower","urg":"low","frame":"threat","order":8,"orphan":false,"n":23,"mean":6.391,"median":8.0,"sd":3.244,"se":0.676,"values":[1.0,1.0,1.0,2.0,2.0,2.0,5.0,6.0,6.0,7.0,8.0,8.0,8.0,8.0,8.0,8.0,8.0,9.0,9.0,10.0,10.0,10.0,10.0]}]};
+
+const BANDS = [
+  { urg: "high", frame: "threat", label: "Priority · Consequence" },
+  { urg: "high", frame: "reward", label: "Priority · Reward" },
+  { urg: "low",  frame: "threat", label: "No rush · Consequence" },
+  { urg: "low",  frame: "reward", label: "No rush · Reward" }
+];
+const DIRS = [{ id: "higher" }, { id: "peerlower" }];
+const TICKS = [1, 4, 7, 10];
+const CELLS = [];
+["higher", "peerlower"].forEach((d) => ["high", "low"].forEach((u) =>
+  ["threat", "reward"].forEach((f) => CELLS.push(d + "_" + u + "_" + f))));
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const f1 = (v) => (v == null ? "–" : v.toFixed(1));
+const f2 = (v) => (v == null ? "–" : v.toFixed(2));
+const dirWord = (d) => (d === "higher" ? "A senior colleague" : "A peer or junior colleague");
+const cellLabel = (u, f) =>
+  (u === "high" ? "Priority" : "No rush") + " · " + (f === "threat" ? "Consequence" : "Reward");
+
+// One statistic off the pooled panel: the mean and its standard error. The
+// data carries median and SD too, for whoever reads the JSON, but showing four
+// numbers per mark asks the reader to arbitrate between them.
+const statList = (c) =>
+  [["mean", c.mean.toFixed(2)]].concat(c.se == null ? [] : [["SE", c.se.toFixed(2)]]);
+
+// Kernel density for one cell, evaluated on GRID.
+//
+// Two things this has to get right on a 1-10 rating scale. It is BOUNDED, so a
+// plain Gaussian kernel leaks mass past 10 and redraws exactly the overhang that
+// made ±1 SD misleading here; the fix is the reflection method, mirroring the
+// sample about both ends so the leaked mass folds back inside. And it is
+// DISCRETE, in half-points, so an all-10s cell has zero spread and Silverman's
+// rule returns a zero bandwidth; the floor keeps that from collapsing into an
+// infinitely thin spike.
+const GRID = [];
+for (let g = 0; g <= 90; g++) GRID.push(1 + g / 10);
+
+function quant(sorted, pr) {
+  const h = (sorted.length - 1) * pr, lo = Math.floor(h), hi = Math.ceil(h);
+  return sorted[lo] + (h - lo) * (sorted[hi] - sorted[lo]);
+}
+
+function kde(values) {
+  const n = values.length;
+  const v = values.slice().sort((a, b) => a - b);
+  const m = v.reduce((a, z) => a + z, 0) / n;
+  const sd = Math.sqrt(v.reduce((a, z) => a + (z - m) * (z - m), 0) / (n - 1));
+  const iqrs = (quant(v, 0.75) - quant(v, 0.25)) / 1.349;
+  const spread = sd > 0 && iqrs > 0 ? Math.min(sd, iqrs) : Math.max(sd, iqrs);
+  const raw = spread > 0 ? 0.9 * spread * Math.pow(n, -0.2) : 0;
+  const bw = Math.min(Math.max(raw, 0.40), 0.95);
+  const K = (u) => Math.exp(-0.5 * u * u);
+  return GRID.map((g) => {
+    let d = 0;
+    for (const z of v) {
+      d += K((g - z) / bw) + K((g - (2 - z)) / bw) + K((g - (20 - z)) / bw);
+    }
+    return d / n;                    // constants drop out: everything is rescaled
+  });
+}
+
+function sentence(dir, urg, frame) {
+  return dirWord(dir) + " asks you to do a task " +
+    (urg === "high" ? "with a priority" : "with no rush") + ", " +
+    (frame === "threat" ? "mentioning a potential consequence if you do not do it"
+                        : "mentioning a reward if you do it") + ".";
+}
+
+// --- the eight conditions for one job area: mean and ±1 SE ----------------
+function panel(entry) {
+  const W = 420, labelW = 138, valueW = 0;
+  const x0 = labelW + 14;
+  const x1 = W - valueW - 10;
+  const bandH = 30;
+  const top = 8;
+  const plotH = bandH * 4;
+  const axisY = top + plotH + 6;
+  const H = axisY + 22;
+  const x = (v) => x0 + ((Math.max(1, Math.min(10, v)) - 1) / 9) * (x1 - x0);
+
+  let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Mean realism and ±1 SE for ' +
+          esc(entry.cluster) + '">';
+
+  BANDS.forEach((b, i) => {
+    if (i % 2 === 1) return;
+    s += '<rect class="bt" x="' + x0 + '" y="' + (top + i * bandH) + '" width="' + (x1 - x0) +
+         '" height="' + bandH + '"/>';
+  });
+  TICKS.forEach((t) => {
+    s += '<line class="gl" x1="' + x(t) + '" y1="' + top + '" x2="' + x(t) + '" y2="' + (top + plotH) + '"/>';
+  });
+  s += '<line class="bl" x1="' + x0 + '" y1="' + (top + plotH) + '" x2="' + x1 + '" y2="' + (top + plotH) + '"/>';
+  TICKS.forEach((t) => {
+    s += '<text class="ax-t" x="' + x(t) + '" y="' + (axisY + 10) + '" text-anchor="middle" ' +
+         'font-size="10.5">' + t + "</text>";
+  });
+
+  BANDS.forEach((b, i) => {
+    const cy = top + i * bandH + bandH / 2;
+    s += '<text class="row-l" x="' + labelW + '" y="' + (cy + 4) + '" text-anchor="end" ' +
+         'font-size="12">' + esc(b.label) + "</text>";
+
+    DIRS.forEach((d, di) => {
+      const c = entry.cells[d.id + "_" + b.urg + "_" + b.frame];
+      if (!c) return;
+      const y = cy + (di === 0 ? -7 : 7);
+      const r = 4.5;
+      const tipData = ' data-tip="' + esc(JSON.stringify({
+        head: entry.cluster, s: sentence(d.id, b.urg, b.frame), n: c.n,
+        stats: statList(c)
+      })) + '"';
+
+      // ±1 SE of the mean, not ±1 SD: these panels are about how well each job
+      // area's mean is pinned down, and at n = 1 or 2 that is barely at all.
+      if (c.se != null && c.se > 0) {
+        s += '<line class="wh s-' + d.id + '" x1="' + x(c.mean - c.se) + '" y1="' + y +
+             '" x2="' + x(c.mean + c.se) + '" y2="' + y + '"/>';
+        [c.mean - c.se, c.mean + c.se].forEach((e) => {
+          if (e < 1 || e > 10) return;          // runs off the scale: no cap
+          s += '<line class="wh s-' + d.id + '" x1="' + x(e) + '" y1="' + (y - 4) +
+               '" x2="' + x(e) + '" y2="' + (y + 4) + '"/>';
+        });
+      }
+      s += '<circle class="dot s-' + d.id + '" cx="' + x(c.mean) + '" cy="' + y + '" r="' + r + '"' +
+           tipData + "/>";
+      s += '<circle class="hit" cx="' + x(c.mean) + '" cy="' + y + '" r="' + (r + 6) + '"' + tipData + "/>";
+
+    });
+  });
+
+  return s + "</svg>";
+}
+
+// --- all job areas pooled: the distribution behind each condition ---------
+// Back to back on a shared baseline, senior above and peer or junior below, so
+// the sender contrast is read without moving the eye between panels.
+function violinPanel(entry) {
+  const W = 900, labelW = 186, valueW = 148;
+  const x0 = labelW + 14;
+  const x1 = W - valueW - 10;
+  const halfH = 44, gap = 12, bandH = halfH * 2 + gap;
+  const top = 10;
+  const plotH = bandH * 4;
+  const axisY = top + plotH + 8;
+  const H = axisY + 34;
+  const x = (v) => x0 + ((Math.max(1, Math.min(10, v)) - 1) / 9) * (x1 - x0);
+
+  // Each violin is scaled to its own maximum, the "width" scaling ggplot and
+  // seaborn default to. Every cell holds the same participants, so the equal
+  // areas of a shared scale carry no extra information here, and they cost a
+  // lot: one near-unanimous cell peaks hard and squashes the genuinely spread
+  // ones into invisible ribbons, which is the opposite of what this is for.
+  // Height is therefore not comparable between violins; shape is.
+  const dens = {}, dmax = {};
+  BANDS.forEach((b) => DIRS.forEach((d) => {
+    const key = d.id + "_" + b.urg + "_" + b.frame;
+    const c = entry.cells[key];
+    if (!c || c.values.length < 2) return;
+    const y = kde(c.values);
+    dens[key] = y;
+    dmax[key] = Math.max.apply(null, y);
+  }));
+  const hOf = (key, v) => (dmax[key] > 0 ? (v / dmax[key]) * halfH : 0);
+
+  let s = '<svg viewBox="0 0 ' + W + " " + H +
+          '" role="img" aria-label="Distribution of realism ratings across participants, for each of ' +
+          'the eight conditions">';
+
+  BANDS.forEach((b, i) => {
+    if (i % 2 === 1) return;
+    s += '<rect class="bt" x="' + x0 + '" y="' + (top + i * bandH) + '" width="' + (x1 - x0) +
+         '" height="' + bandH + '"/>';
+  });
+  TICKS.forEach((t) => {
+    s += '<line class="gl" x1="' + x(t) + '" y1="' + top + '" x2="' + x(t) + '" y2="' + (top + plotH) + '"/>';
+    s += '<text class="ax-t" x="' + x(t) + '" y="' + (axisY + 12) + '" text-anchor="middle" ' +
+         'font-size="11">' + t + "</text>";
+  });
+  s += '<line class="bl" x1="' + x0 + '" y1="' + (top + plotH) + '" x2="' + x1 + '" y2="' + (top + plotH) + '"/>';
+  s += '<text class="ax-h" x="' + ((x0 + x1) / 2) + '" y="' + (axisY + 29) + '" text-anchor="middle" ' +
+       'font-size="11">1 = not at all realistic · 10 = completely realistic</text>';
+
+  BANDS.forEach((b, i) => {
+    const baseY = top + i * bandH + bandH / 2;
+    s += '<text class="row-l" x="' + labelW + '" y="' + (baseY + 4) + '" text-anchor="end" ' +
+         'font-size="13">' + esc(b.label) + "</text>";
+    s += '<line class="gl" x1="' + x0 + '" y1="' + baseY + '" x2="' + x1 + '" y2="' + baseY + '"/>';
+
+    DIRS.forEach((d, di) => {
+      const key = d.id + "_" + b.urg + "_" + b.frame;
+      const c = entry.cells[key];
+      if (!c) return;
+      const up = di === 0 ? -1 : 1;             // senior above the line, peer below
+      const y = dens[key];
+      const tipData = ' data-tip="' + esc(JSON.stringify({
+        head: entry.cluster, s: sentence(d.id, b.urg, b.frame), n: c.n,
+        stats: statList(c)
+      })) + '"';
+
+      // Rug first, so the translucent violin lies over the sample rather than
+      // the sample poking out through the top of it. One tick per participant.
+      c.values.forEach((v) => {
+        s += '<line class="rug s-' + d.id + '" x1="' + x(v) + '" y1="' + baseY +
+             '" x2="' + x(v) + '" y2="' + (baseY + up * 7) + '"/>';
+      });
+
+      if (y) {
+        let path = "M" + x(GRID[0]) + " " + baseY;
+        for (let g = 0; g < GRID.length; g++) {
+          path += "L" + x(GRID[g]).toFixed(1) + " " + (baseY + up * hOf(key, y[g])).toFixed(1);
+        }
+        path += "L" + x(GRID[GRID.length - 1]) + " " + baseY + "Z";
+        s += '<path class="vio s-' + d.id + '" d="' + path + '"/>';
+      }
+
+      // The mean and its SE, so the panel carries the statistic the rest of the
+      // page uses without the reader having to hold two charts in their head.
+      // Bar first, circle over it: the circle's surface fill masks the line
+      // behind it rather than the line cutting the marker in half.
+      const my = baseY + up * 11;
+      if (c.se != null && c.se > 0) {
+        s += '<line class="mnse s-' + d.id + '" x1="' + x(c.mean - c.se) + '" y1="' + my +
+             '" x2="' + x(c.mean + c.se) + '" y2="' + my + '"/>';
+        [c.mean - c.se, c.mean + c.se].forEach((e) => {
+          if (e < 1 || e > 10) return;
+          s += '<line class="mnse s-' + d.id + '" x1="' + x(e) + '" y1="' + (my - 3.5) +
+               '" x2="' + x(e) + '" y2="' + (my + 3.5) + '"/>';
+        });
+      }
+      s += '<circle class="mn s-' + d.id + '" cx="' + x(c.mean) + '" cy="' + my + '" r="3.2"/>';
+
+      const ty = baseY + (di === 0 ? -9 : 16);
+      s += '<text class="val" x="' + (x1 + 16) + '" y="' + ty + '" font-size="12">' + f1(c.mean) +
+           '<tspan class="val-sd" font-size="11">  ±' + f2(c.se) + "</tspan>" +
+           '<tspan class="val-sd" font-size="11">  n' + c.n + "</tspan></text>";
+
+      // a hit band over the whole half, so the tooltip is easy to reach
+      s += '<rect class="hit" x="' + x0 + '" y="' + (di === 0 ? baseY - halfH : baseY) +
+           '" width="' + (x1 - x0) + '" height="' + halfH + '"' + tipData + "/>";
+    });
+  });
+
+  return s + "</svg>";
+}
+
+// --- the sixteen emails, one row each -------------------------------------
+function emailChart(rows) {
+  const W = 980, labelW = 372, valueW = 128;   // labelW fits the longest scenario name whole
+  const x0 = labelW + 14;
+  const x1 = W - valueW - 10;
+  const rowH = 34, top = 8;
+  const plotH = rowH * rows.length;
+  const axisY = top + plotH + 6;
+  const H = axisY + 32;
+  const x = (v) => x0 + ((Math.max(1, Math.min(10, v)) - 1) / 9) * (x1 - x0);
+
+  let s = '<svg viewBox="0 0 ' + W + " " + H +
+          '" role="img" aria-label="Mean realism after reading, for each of the sixteen generic emails">';
+
+  rows.forEach((e, i) => {
+    if (i % 2 === 1) return;
+    s += '<rect class="bt" x="' + x0 + '" y="' + (top + i * rowH) + '" width="' + (x1 - x0) +
+         '" height="' + rowH + '"/>';
+  });
+  TICKS.forEach((t) => {
+    s += '<line class="gl" x1="' + x(t) + '" y1="' + top + '" x2="' + x(t) + '" y2="' + (top + plotH) + '"/>';
+  });
+  s += '<line class="bl" x1="' + x0 + '" y1="' + (top + plotH) + '" x2="' + x1 + '" y2="' + (top + plotH) + '"/>';
+  TICKS.forEach((t) => {
+    s += '<text class="ax-t" x="' + x(t) + '" y="' + (axisY + 10) + '" text-anchor="middle" font-size="11">' + t + "</text>";
+  });
+  s += '<text class="ax-h" x="' + ((x0 + x1) / 2) + '" y="' + (axisY + 27) + '" text-anchor="middle" ' +
+       'font-size="11">1 = not at all realistic · 10 = completely realistic</text>';
+
+  rows.forEach((e, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    const scen = e.scenario || e.src;
+    s += '<text class="row-l" x="' + labelW + '" y="' + (cy - 1) + '" text-anchor="end" font-size="12.5">' +
+         esc(scen.length > 54 ? scen.slice(0, 53) + "…" : scen) + "</text>";
+    s += '<text class="row-s" x="' + labelW + '" y="' + (cy + 12) + '" text-anchor="end" font-size="10">' +
+         esc(cellLabel(e.urg, e.frame)) + " · " + esc(e.sender_role || e.src) + "</text>";
+
+    const tipData = ' data-tip="' + esc(JSON.stringify({
+      head: e.src + (e.orphan ? " · not in the master list" : ""),
+      s: scen + (e.sender_role ? " — signed by the " + e.sender_role : "") + ". " +
+         sentence(e.dir, e.urg, e.frame),
+      n: e.n, stats: statList(e)
+    })) + '"';
+
+    if (e.se != null && e.se > 0) {
+      s += '<line class="wh s-' + e.dir + '" x1="' + x(e.mean - e.se) + '" y1="' + cy +
+           '" x2="' + x(e.mean + e.se) + '" y2="' + cy + '"/>';
+      [e.mean - e.se, e.mean + e.se].forEach((p) => {
+        if (p < 1 || p > 10) return;            // runs off the scale: no cap
+        s += '<line class="wh s-' + e.dir + '" x1="' + x(p) + '" y1="' + (cy - 4) +
+             '" x2="' + x(p) + '" y2="' + (cy + 4) + '"/>';
+      });
+    }
+    s += '<circle class="dot s-' + e.dir + '" cx="' + x(e.mean) + '" cy="' + cy + '" r="5"' + tipData + "/>";
+    s += '<circle class="hit" cx="' + x(e.mean) + '" cy="' + cy + '" r="11"' + tipData + "/>";
+    s += '<text class="val" x="' + (x1 + 18) + '" y="' + (cy + 4) + '" font-size="12">' + f1(e.mean) +
+         '<tspan class="val-sd" font-size="11">  ±' + f2(e.se) + "</tspan>" +
+         '<tspan class="val-sd" font-size="11">   n=' + e.n + "</tspan></text>";
+  });
+
+  return s + "</svg>";
+}
+
+// --- tables, so every number on the page can be read and copied -----------
+function cellsTable(cur) {
+  const cols = [cur.overall].concat(cur.clusters);
+  let h = "<table><thead><tr><th>Condition</th><th>Sender</th>" +
+    cols.map((c) => "<th>" + esc(c.cluster) + "<br><span style='font-weight:400'>n = " + c.n +
+                    "</span></th>").join("") + "</tr></thead><tbody>";
+  BANDS.forEach((b) => {
+    DIRS.forEach((d, di) => {
+      h += "<tr><th>" + (di === 0 ? esc(b.label) : "") + "</th>" +
+        "<td style='text-align:left'>" + (d.id === "higher" ? "Senior" : "Peer or junior") + "</td>" +
+          cols.map((c) => {
+          const v = c.cells[d.id + "_" + b.urg + "_" + b.frame];
+          return v ? "<td>" + f2(v.mean) +
+                     (v.se == null ? "" : "<span class='na'> ± " + f2(v.se) + "</span>") + "</td>"
+                   : "<td class='na'>–</td>";
+        }).join("") + "</tr>";
+    });
+  });
+  return h + "</tbody></table>";
+}
+
+function emailsTable(rows) {
+  let h = "<table><thead><tr><th>ID</th><th>Email</th><th>Sender</th><th>Condition</th>" +
+    "<th>n</th><th>Mean</th><th>SE</th></tr></thead><tbody>";
+  rows.forEach((e) => {
+    h += "<tr><td style='text-align:left'>" + esc(e.src) + "</td><th>" + esc(e.scenario || e.src) +
+      "</th><td style='text-align:left'>" + esc(e.sender_role || "–") + "</td>" +
+      "<td style='text-align:left'>" + (e.dir === "higher" ? "Senior" : "Peer or junior") + " · " +
+      esc(cellLabel(e.urg, e.frame)) + "</td>" +
+      "<td>" + e.n + "</td><td>" + f2(e.mean) + "</td><td>" +
+      (e.se == null ? "<span class='na'>–</span>" : f2(e.se)) + "</td></tr>";
+  });
+  return h + "</tbody></table>";
+}
+
+// --- render ---------------------------------------------------------------
+const MARG = [
+  { head: "Sender standing · mean ± SE", rows: [["senior", "From a more senior colleague", "higher"],
+                                   ["peerlower", "From a peer or junior colleague", "peerlower"]] },
+  { head: "Urgency · mean ± SE", rows: [["priority", "Priority", null], ["norush", "No rush", null]] },
+  { head: "Framing · mean ± SE", rows: [["consequence", "Consequence if you do not", null],
+                                    ["reward", "Reward if you do", null]] }
+];
+
+const cur = DATA.post;
+const meta = DATA.meta;
+
+// Counts live in the data, never in the prose: a rebuild with more completers
+// must not leave the header describing the previous cohort.
+document.getElementById("eyebrow").textContent =
+  "CYPEARL · generic set · " + cur.overall.n + " participants · " + meta.ratings + " ratings";
+document.getElementById("n-people").textContent = cur.overall.n;
+
+if (meta.cohort !== "complete") {
+  const note = document.getElementById("cohort-note");
+  note.hidden = false;
+  note.textContent = "Interim cohort: " + meta.complete + " finished all sixteen emails and " +
+    meta.partial + " are part-way through. A part-way participant contributes whichever emails they " +
+    "have reached, so the conditions they have not got to yet rest on fewer people than the ones they have.";
+}
+
+document.getElementById("marg").innerHTML = MARG.map((g) =>
+  '<div class="mg"><div class="mg-h">' + esc(g.head) + "</div>" +
+  g.rows.map(([key, label, dir]) => {
+    const m = cur.marginals[key];
+    return '<div class="mg-r"><i class="' + (dir ? "s-" + dir : "none") + '"></i>' +
+      '<span class="mg-l">' + esc(label) + "</span>" +
+      '<span class="mg-v">' + (m ? f1(m.mean) : "–") +
+      (m && m.se != null ? "<em>± " + f2(m.se) + "</em>" : "") + "</span></div>";
+  }).join("") + "</div>"
+).join("");
+
+document.getElementById("hero-name").textContent = "All job areas pooled";
+document.getElementById("hero-n").textContent =
+  "n = " + cur.overall.n + " participants · distribution, mean ± 1 SE";
+document.getElementById("hero").innerHTML = violinPanel(cur.overall);
+
+document.getElementById("grid-n").textContent =
+  cur.clusters.length + " areas · mean ± 1 SE";
+document.getElementById("grid").innerHTML = cur.clusters.map((c) =>
+  '<div class="panel"><div class="phead"><span class="pname">' + esc(c.cluster) + "</span>" +
+  '<span class="pn' + (c.n < 3 ? " warn" : "") + '">n = ' + c.n + (c.n === 1 ? " · no SE" : "") +
+  "</span></div>" + panel(c) + "</div>"
+).join("");
+
+document.getElementById("emails-n").textContent =
+  DATA.emails.length + " of " + meta.stimuli + " rated · mean ± 1 SE";
+document.getElementById("tbl-cells").innerHTML = cellsTable(cur);
+
+// Highest rated first, which is the order the builder already sorted them in.
+document.getElementById("emails").innerHTML = DATA.emails.length
+  ? emailChart(DATA.emails)
+  : '<p class="pnote">No ratings yet.</p>';
+document.getElementById("tbl-emails").innerHTML =
+  DATA.emails.length ? emailsTable(DATA.emails) : "";
+
+// --- tooltip --------------------------------------------------------------
+const tip = document.getElementById("tip");
+document.addEventListener("pointerover", (e) => {
+  const t = e.target.closest("[data-tip]");
+  if (!t) return;
+  const o = JSON.parse(t.getAttribute("data-tip"));
+  tip.innerHTML =
+    '<div class="t-c">' + esc(o.head) + "</div>" +
+    '<div class="t-s">' + esc(o.s) + "</div>" +
+    '<div class="t-v">' + o.stats.map(([k, v]) =>
+      esc(k) + " " + v).join('<span style="color:var(--muted);font-weight:400"> · </span>') +
+    '<span style="color:var(--muted);font-weight:500"> · n = ' + o.n + "</span></div>";
+  tip.style.opacity = "1";
+});
+document.addEventListener("pointerout", (e) => {
+  if (e.target.closest("[data-tip]")) tip.style.opacity = "0";
+});
+document.addEventListener("pointermove", (e) => {
+  if (tip.style.opacity !== "1") return;
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 16, y = e.clientY + 16;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 16;
+  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - 16;
+  tip.style.left = Math.max(8, x) + "px";
+  tip.style.top = Math.max(8, y) + "px";
+});
+</script>
